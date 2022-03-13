@@ -6,9 +6,10 @@ class Vehicle:
 
 
 class Customer:
-    def __init__(self, x, y, time_window, request_volume, request_weight, time_service):
-        self.x = x
-        self.y = y
+    def __init__(self, id, latitude, longitude, time_window, request_volume, request_weight, time_service):
+        self.id = id
+        self.latitude = latitude
+        self.longitude = longitude
         self.time_window = time_window
         self.request_volume = request_volume
         self.request_weight = request_weight
