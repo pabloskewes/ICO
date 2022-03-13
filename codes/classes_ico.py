@@ -7,6 +7,7 @@ class Vehicle:
     def __str__(self):
         return f'Vehicle of volume {self.volume}, weight {self.weight}'
 
+    
 class Customer:
     def __init__(self, identifier, latitude, longitude, time_window, request_volume, request_weight, time_service):
         self.id = identifier
