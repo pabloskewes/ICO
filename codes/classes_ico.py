@@ -5,7 +5,7 @@ class Vehicle:
         self.cost_km = cost_km
 
 
-class Costumer:
+class Customer:
     def __init__(self, x, y, time_window, request_volume, request_weight, time_service):
         self.x = x
         self.y = y

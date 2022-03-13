@@ -4,8 +4,8 @@ class Vehicle:
         self.weight = weight
         self.cost_km = cost_km
 
-        
-class Costumer:
+
+class Customer:
     def __init__(self, x, y, time_window, request_volume, request_weight, time_service):
         self.x = x
         self.y = y
@@ -13,12 +13,12 @@ class Costumer:
         self.request_volume = request_volume
         self.request_weight = request_weight
         self.time_service = time_service
- 
+
 
 class VRPTW:
-    '''
+    """
     Vehicle Routing Problem Time Windows
-    '''
+    """
     def __init__(self, costumers, distances, time_matrix, vehicle):
         self.costumers = costumers
         self.distances = distances
@@ -26,7 +26,6 @@ class VRPTW:
         self.vehicle = vehicle
         
         
-
         
 
 
