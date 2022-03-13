@@ -20,20 +20,21 @@ depots_dist = pd.read_excel(DEPOTS_DISTANCES_DIR)
 customers_dist = pd.read_excel(CUSTOMER_DISTANCES_DIR)
 
 
-def load_vehicle(vehicles, MODE="mean", vehicle_nb=None):
+def load_vehicle(vehicles, MODE_VEHICLE="mean", vehicle_nb=None):
     if vehicle_nb:
         volume = vehicles[vehicles["VEHICLE_CODE"]==vehicle_nb]["VEHICLE_TOTAL_VOLUME_M3"]
         weight = vehicles[vehicles["VEHICLE_CODE"]==vehicle_nb]["VEHICLE_TOTAL_WEIGHT_KG"]
         cost_km = vehicles[vehicles["VEHICLE_CODE"]==vehicle_nb]["VEHICLE_VARIABLE_COST_KM"]  
     else :
-        volume = getattr(vehicles["VEHICLE_TOTAL_VOLUME_M3"], MODE)()
-        weight = getattr(vehicles["VEHICLE_TOTAL_WEIGHT_KG"], MODE)()
-        cost_km = getattr(vehicles["VEHICLE_VARIABLE_COST_KM"], MODE)()  
+        volume = getattr(vehicles["VEHICLE_TOTAL_VOLUME_M3"], MODE_VEHICLE)()
+        weight = getattr(vehicles["VEHICLE_TOTAL_WEIGHT_KG"], MODE_VEHICLE)()
+        cost_km = getattr(vehicles["VEHICLE_VARIABLE_COST_KM"], MODE_VEHICLE)()  
     vehicle = Vehicle(volume, weight, cost_km)
     return vehicle
 
 
-def load_customers(customers):
+def load_customers(customers, depots, route_id=2946091):
+    customers = customers.drop(customers["ROUTE_ID"]!=route_id)
     # we supress the lines where the CUSTOMER_CODE repeat itself
     customers = customers.drop_duplicates(subset=["CUSTOMER_CODE"], keep='first')
     # The first customer of the list is the depot, whose id is 0.
@@ -65,8 +66,6 @@ def data_from_route(path, route_id):
     df = pd.read_excel(path)
     return df[df['ROUTE_ID'] == route_id].drop(['ROUTE_ID'], axis=1)
 
-# esto es una prueba para cachar los conflictos xdd
-# ceci est un test pour comprendre les conflits sur git
 
 # REVISAR EL ORDEN DE LOS CUSTOMERS
 def matrix_generator(depot_data, customer_data):
@@ -86,3 +85,17 @@ def matrix_generator(depot_data, customer_data):
         time_matrix[i, 1:] = groups_customer[keys[i-1]]['TIME_DISTANCE_MIN'].to_numpy()
         distance_matrix[i, 1:] = groups_customer[keys[i-1]]['DISTANCE_KM'].to_numpy()
     return time_matrix, distance_matrix, keys
+
+
+# Create VRPTW :
+def create_vrptw(CUSTOMER_DIR, DEPOTS_DIR, VEHICLES_DIR, route_id=2946091, MODE_VEHICLE="mean", vehicle_nb=None):
+    customers = pd.read_excel(CUSTOMER_DIR)
+    vehicles = pd.read_excel(VEHICLES_DIR)
+    depots = pd.read_excel(DEPOTS_DIR)
+    list_costumers = load_customers(customers, depots, route_id=2946091)
+    time_matrix, distances = matrix_generator(depots, customers)[0,1]
+    vehicle = load_vehicle(vehicles, MODE_VEHICLE="mean", vehicle_nb=None)
+    vrptw = VRPTW(costumers, distances, time_matrix, vehicle)
+    return vrptw
+
+
