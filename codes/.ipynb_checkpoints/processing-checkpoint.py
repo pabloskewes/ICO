@@ -65,6 +65,8 @@ def data_from_route(path, route_id):
     df = pd.read_excel(path)
     return df[df['ROUTE_ID'] == route_id].drop(['ROUTE_ID'], axis=1)
 
+
+# esto es una prueba para cachar los conflictos xdd
 # REVISAR EL ORDEN DE LOS CUSTOMERS
 def matrix_generator(depot_data, customer_data):
     n = len(depot_data)//2
