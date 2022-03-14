@@ -66,12 +66,15 @@ def data_from_route(path, route_id):
     df = pd.read_excel(path)
     return df[df['ROUTE_ID'] == route_id].drop(['ROUTE_ID'], axis=1)
 
-
-# REVISAR EL ORDEN DE LOS CUSTOMERS
+# matrix_generator
+# Creates the time and distances matrix, and also returns the list with the customer codes used
 def matrix_generator(depot_data, customer_data):
     n = len(depot_data)//2
-    depot_data.sort_values(['CUSTOMER_CODE']).reset_index(drop=True, inplace=True)
-    customer_data.sort_values(['CUSTOMER_CODE_FROM', 'CUSTOMER_CODE_TO']).reset_index(drop=True, inplace=True)
+    depot_data['CUSTOMER_CODE'] = pd.to_numeric(depot_data['CUSTOMER_CODE'], downcast='integer')
+    customer_data['CUSTOMER_CODE_FROM'] = pd.to_numeric(customer_data['CUSTOMER_CODE_FROM'], downcast='integer')
+    customer_data['CUSTOMER_CODE_TO'] = pd.to_numeric(customer_data['CUSTOMER_CODE_TO'], downcast='integer')
+    depot_data = depot_data.sort_values(['CUSTOMER_CODE']).reset_index(drop=True)
+    customer_data = customer_data.sort_values(['CUSTOMER_CODE_FROM', 'CUSTOMER_CODE_TO']).reset_index(drop=True)
     time_matrix = np.zeros((n+1,n+1))
     distance_matrix = np.zeros((n+1,n+1))
     groups_depot = dict(tuple(depot_data.groupby(['DIRECTION'])))
@@ -81,6 +84,7 @@ def matrix_generator(depot_data, customer_data):
     distance_matrix[1:, 0] = groups_depot['CUSTOMER->DEPOT']['DISTANCE_KM'].to_numpy()
     groups_customer = dict(tuple(customer_data.groupby(['CUSTOMER_CODE_FROM'])))
     keys = np.array(list(groups_customer.keys()))
+    print(groups_customer[keys[1]])
     for i in range(1, n+1):
         time_matrix[i, 1:] = groups_customer[keys[i-1]]['TIME_DISTANCE_MIN'].to_numpy()
         distance_matrix[i, 1:] = groups_customer[keys[i-1]]['DISTANCE_KM'].to_numpy()
@@ -93,9 +97,11 @@ def create_vrptw(CUSTOMER_DIR, DEPOTS_DIR, VEHICLES_DIR, route_id=2946091, MODE_
     vehicles = pd.read_excel(VEHICLES_DIR)
     depots = pd.read_excel(DEPOTS_DIR)
     list_costumers = load_customers(customers, depots, route_id=2946091)
-    time_matrix, distances = matrix_generator(depots, customers)[0,1]
+    time_matrix, distances, cust_codes = matrix_generator(depots, customers)[0,1]
     vehicle = load_vehicle(vehicles, MODE_VEHICLE="mean", vehicle_nb=None)
-    vrptw = VRPTW(costumers, distances, time_matrix, vehicle)
+    vrptw = VRPTW(costumers, distances, time_matrix, vehicle, cust_codes)
     return vrptw
 
 
+if __name__ == '__main__':
+    

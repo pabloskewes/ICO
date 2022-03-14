@@ -97,9 +97,9 @@ def create_vrptw(CUSTOMER_DIR, DEPOTS_DIR, VEHICLES_DIR, route_id=2946091, MODE_
     vehicles = pd.read_excel(VEHICLES_DIR)
     depots = pd.read_excel(DEPOTS_DIR)
     list_costumers = load_customers(customers, depots, route_id=2946091)
-    time_matrix, distances = matrix_generator(depots, customers)[0,1]
+    time_matrix, distances, cust_codes = matrix_generator(depots, customers)[0,1]
     vehicle = load_vehicle(vehicles, MODE_VEHICLE="mean", vehicle_nb=None)
-    vrptw = VRPTW(costumers, distances, time_matrix, vehicle)
+    vrptw = VRPTW(costumers, distances, time_matrix, vehicle, cust_codes)
     return vrptw
 
 
