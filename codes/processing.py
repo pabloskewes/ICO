@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import os
 
+from classes_ico import Vehicle, Customer, VRPTW
+
 ROOT_DIR = os.path.abspath('..')
 DATA_DIR = os.path.join(ROOT_DIR, 'data')
 
@@ -34,7 +36,7 @@ def load_vehicle(vehicles, MODE_VEHICLE="mean", vehicle_nb=None):
 
 
 def load_customers(customers, depots, route_id=2946091):
-    customers = customers.drop(customers["ROUTE_ID"]!=route_id)
+    customers = customers[customers["ROUTE_ID"]==route_id]
     # we supress the lines where the CUSTOMER_CODE repeat itself
     customers = customers.drop_duplicates(subset=["CUSTOMER_CODE"], keep='first')
     # The first customer of the list is the depot, whose id is 0.
@@ -97,7 +99,7 @@ def create_vrptw(CUSTOMER_DIR, DEPOTS_DIR, VEHICLES_DIR, route_id=2946091, MODE_
     vehicles = pd.read_excel(VEHICLES_DIR)
     depots = pd.read_excel(DEPOTS_DIR)
     list_costumers = load_customers(customers, depots, route_id=2946091)
-    time_matrix, distances, cust_codes = matrix_generator(depots, customers)[0,1]
+    time_matrix, distances, cust_codes = matrix_generator(depots, customers)
     vehicle = load_vehicle(vehicles, MODE_VEHICLE="mean", vehicle_nb=None)
     vrptw = VRPTW(costumers, distances, time_matrix, vehicle, cust_codes)
     return vrptw
