@@ -94,12 +94,14 @@ def matrix_generator(depot_data, customer_data):
 
 
 # Create VRPTW :
-def create_vrptw(CUSTOMER_DIR, DEPOTS_DIR, VEHICLES_DIR, route_id=2946091, MODE_VEHICLE="mean", vehicle_nb=None):
+def create_vrptw(CUSTOMER_DIR, DEPOTS_DIR, VEHICLES_DIR, DEPOTS_DISTANCES_DIR, CUSTOMER_DISTANCES_DIR, route_id=2946091, MODE_VEHICLE="mean", vehicle_nb=None):
     customers = pd.read_excel(CUSTOMER_DIR)
     vehicles = pd.read_excel(VEHICLES_DIR)
     depots = pd.read_excel(DEPOTS_DIR)
+    depots_dist = pd.read_excel(DEPOTS_DISTANCES_DIR)
+    customers_dist = pd.read_excel(CUSTOMER_DISTANCES_DIR)
     list_costumers = load_customers(customers, depots, route_id=2946091)
-    time_matrix, distances, cust_codes = matrix_generator(depots, customers)
+    time_matrix, distances, cust_codes = matrix_generator(depots_dist, customers_dist)
     vehicle = load_vehicle(vehicles, MODE_VEHICLE="mean", vehicle_nb=None)
     vrptw = VRPTW(costumers, distances, time_matrix, vehicle, cust_codes)
     return vrptw
