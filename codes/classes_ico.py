@@ -9,8 +9,9 @@ class Vehicle:
 
     
 class Customer:
-    def __init__(self, identifier, latitude, longitude, time_window, request_volume, request_weight, time_service):
+    def __init__(self, identifier, code_customer, latitude, longitude, time_window, request_volume, request_weight, time_service):
         self.id = identifier
+        self.code_customer = code_customer
         self.latitude = latitude
         self.longitude = longitude
         self.time_window = time_window
