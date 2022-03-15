@@ -72,8 +72,8 @@ def data_from_route(path, route_id):
 # Creates the time and distances matrix, and also returns the list with the customer codes used
 def matrix_generator(depot_data, customer_data):
     n = len(depot_data)//2
-    depot_data['CUSTOMER_CODE'] = pd.to_numeric(depot_data['CUSTOMER_CODE'], downcast='integer')
-    customer_data['CUSTOMER_CODE_FROM'] = pd.to_numeric(customer_data['CUSTOMER_CODE_FROM'], downcast='integer')
+    depot_data['CUSTOMER_CODE'] = pd.to_numeric(depot_data['CUSTOMER_CODE'], errors='ignore', downcast='integer', )
+    customer_data['CUSTOMER_CODE_FROM'] = pd.to_numeric(customer_data['CUSTOMER_CODE_FROM'], errors='ignore', downcast='integer')
     customer_data['CUSTOMER_CODE_TO'] = pd.to_numeric(customer_data['CUSTOMER_CODE_TO'], downcast='integer')
     depot_data = depot_data.sort_values(['CUSTOMER_CODE']).reset_index(drop=True)
     customer_data = customer_data.sort_values(['CUSTOMER_CODE_FROM', 'CUSTOMER_CODE_TO']).reset_index(drop=True)
@@ -86,7 +86,6 @@ def matrix_generator(depot_data, customer_data):
     distance_matrix[1:, 0] = groups_depot['CUSTOMER->DEPOT']['DISTANCE_KM'].to_numpy()
     groups_customer = dict(tuple(customer_data.groupby(['CUSTOMER_CODE_FROM'])))
     keys = np.array(list(groups_customer.keys()))
-    print(groups_customer[keys[1]])
     for i in range(1, n+1):
         time_matrix[i, 1:] = groups_customer[keys[i-1]]['TIME_DISTANCE_MIN'].to_numpy()
         distance_matrix[i, 1:] = groups_customer[keys[i-1]]['DISTANCE_KM'].to_numpy()
