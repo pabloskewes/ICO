@@ -151,7 +151,7 @@ def load_solomon(filename):
             x1, y1 = df.at[i, 'XCOORD'], df.at[i, 'YCOORD']
             x2, y2 = df.at[j, 'XCOORD'], df.at[j, 'YCOORD']
             distances[i,j] = sqrt( (x2 - x1)**2 + (y2 - y1)**2 )
-    vrptw = VRPTW(costumers=customers,
+    vrptw = VRPTW(custumers=customers,
                   distances=distances,
                   time_matrix=distances,
                   vehicle=vehicle,
