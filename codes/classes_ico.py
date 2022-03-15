@@ -27,8 +27,8 @@ class VRPTW:
     """
     Vehicle Routing Problem Time Windows
     """
-    def __init__(self, costumers, distances, time_matrix, vehicle, cust_codes):
-        self.costumers = costumers
+    def __init__(self, customers, distances, time_matrix, vehicle, cust_codes):
+        self.customers = customers
         self.distances = distances
         self.time_matrix = time_matrix
         self.vehicle = vehicle
