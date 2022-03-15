@@ -27,18 +27,22 @@ def solution_checker(vrptw, sol):
     sol_routes = sol_to_list_routes(sol)
     time_matrix = vrptw.time_matrix
     customers = vrptw.customers
+    print("")
     for route in sol_routes:
         weight_cust, volume_cust, time_delivery = 0, 0, 0
         for identifier in route:
-            cust = [customer for customer in customers if customer.id == identifier][0]
+            cust = customers[identifier]
+            print(cust)
             weight_cust += cust.request_weight
             volume_cust += cust.request_volume
+            print(weight_cust, volume_cust)
         # If the weight (or volume) capacity of the vehicle is < to the total weight asked by customers, return False
+        print(weight, volume, weight_cust, volume_cust)
         if weight < weight_cust or volume < volume_cust :
             print("Not a solution : the weight (or volume) capacity of the vehicle is < to the total weight asked by customers")
             return False
         for index,identifier in enumerate(route):
-            cust = [customer for customer in costumers if customer.id == identifier][0]
+            cust = [customer for customer in customers if customer.id == identifier][0]
             cust_plus_1 = [customer for customer in customers if customer.id == route[index+1]][0]
             time_delivery += time_matrix[cust.code_customer,cust_plus_1.code_customer]
             # If the vehicle gets there befor the beginning of the customer's time window, return False
