@@ -40,11 +40,11 @@ def solution_checker(vrptw, sol):
                 return False
     return True
     
-
+'''
 def cost(vrptw, sol):
     w = 1000
     nb_vehicle = 
-
+'''
 
 
 '''

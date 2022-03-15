@@ -40,7 +40,7 @@ def load_customers(customers, depots, route_id=2946091):
     # we supress the lines where the CUSTOMER_CODE repeat itself
     customers = customers.drop_duplicates(subset=["CUSTOMER_CODE"], keep='first')
     # The first customer of the list is the depot, whose id is 0.
-    id = 0
+    identifier = 0
     customer_code = 1000
     latitude = depots.loc[0,"DEPOT_LATITUDE"]
     longitude = depots.loc[0,"DEPOT_LONGITUDE"]
@@ -49,11 +49,11 @@ def load_customers(customers, depots, route_id=2946091):
     request_volume =0
     request_weight = 0
     time_service = 0
-    depot = Customer(id, latitude, longitude, time_window, request_volume, request_weight, time_service)
+    depot = Customer(identifier, customer_code, latitude, longitude, time_window, request_volume, request_weight, time_service)
     list_customers = [depot]
     # We add every new customer to the list :
     for i, code in enumerate(customers["CUSTOMER_CODE"], start=1):
-        id = i
+        identifier = i
         customer_code = code
         latitude = customers[customers["CUSTOMER_CODE"]==code]["CUSTOMER_LATITUDE"]
         longitude = customers[customers["CUSTOMER_CODE"]==code]["CUSTOMER_LONGITUDE"]
@@ -62,7 +62,7 @@ def load_customers(customers, depots, route_id=2946091):
         request_volume = customers[customers["CUSTOMER_CODE"]==code]["TOTAL_VOLUME_M3"]
         request_weight = customers[customers["CUSTOMER_CODE"]==code]["TOTAL_WEIGHT_KG"]
         time_service = customers[customers["CUSTOMER_CODE"]==code]["CUSTOMER_DELIVERY_SERVICE_TIME_MIN"]
-        customer = Customer(id, latitude, longitude, time_window, request_volume, request_weight, time_service)
+        customer = Customer(identifier, customer_code, latitude, longitude, time_window, request_volume, request_weight, time_service)
         list_customers.append(customer)
     return list_customers
 
@@ -73,26 +73,33 @@ def data_from_route(path, route_id):
 
 # matrix_generator
 # Creates the time and distances matrix, and also returns the list with the customer codes used
-def matrix_generator(depot_data, customer_data):
-    n = len(depot_data)//2
-    depot_data['CUSTOMER_CODE'] = pd.to_numeric(depot_data['CUSTOMER_CODE'], downcast='integer')
-    customer_data['CUSTOMER_CODE_FROM'] = pd.to_numeric(customer_data['CUSTOMER_CODE_FROM'], downcast='integer')
+def matrix_generator(depot_data, customer_data, route_id):
+    
+    # data filtering and reordering
+    depot_data = depot_data[depot_data['ROUTE_ID'] == route_id].drop(['ROUTE_ID'], axis=1)
+    customer_data = customer_data[customer_data['ROUTE_ID'] == route_id].drop(['ROUTE_ID'], axis=1)
+    depot_data['CUSTOMER_CODE'] = pd.to_numeric(depot_data['CUSTOMER_CODE'], errors='ignore', downcast='integer')
+    customer_data['CUSTOMER_CODE_FROM'] = pd.to_numeric(customer_data['CUSTOMER_CODE_FROM'], errors='ignore', downcast='integer')
     customer_data['CUSTOMER_CODE_TO'] = pd.to_numeric(customer_data['CUSTOMER_CODE_TO'], downcast='integer')
     depot_data = depot_data.sort_values(['CUSTOMER_CODE']).reset_index(drop=True)
     customer_data = customer_data.sort_values(['CUSTOMER_CODE_FROM', 'CUSTOMER_CODE_TO']).reset_index(drop=True)
+    
+    # matrix creation and filling
+    n = len(depot_data)//2
     time_matrix = np.zeros((n+1,n+1))
     distance_matrix = np.zeros((n+1,n+1))
     groups_depot = dict(tuple(depot_data.groupby(['DIRECTION'])))
+    groups_customer = dict(tuple(customer_data.groupby(['CUSTOMER_CODE_FROM'])))
+    keys = np.array(list(groups_customer.keys()))
+    
     time_matrix[0, 1:] = groups_depot['DEPOT->CUSTOMER']['TIME_DISTANCE_MIN'].to_numpy()
     time_matrix[1:, 0] = groups_depot['CUSTOMER->DEPOT']['TIME_DISTANCE_MIN'].to_numpy()
     distance_matrix[0, 1:] = groups_depot['DEPOT->CUSTOMER']['DISTANCE_KM'].to_numpy()
-    distance_matrix[1:, 0] = groups_depot['CUSTOMER->DEPOT']['DISTANCE_KM'].to_numpy()
-    groups_customer = dict(tuple(customer_data.groupby(['CUSTOMER_CODE_FROM'])))
-    keys = np.array(list(groups_customer.keys()))
-    print(groups_customer[keys[1]])
+    distance_matrix[1:, 0] = groups_depot['CUSTOMER->DEPOT']['DISTANCE_KM'].to_numpy()   
     for i in range(1, n+1):
         time_matrix[i, 1:] = groups_customer[keys[i-1]]['TIME_DISTANCE_MIN'].to_numpy()
         distance_matrix[i, 1:] = groups_customer[keys[i-1]]['DISTANCE_KM'].to_numpy()
+    
     return time_matrix, distance_matrix, keys
 
 

@@ -40,7 +40,7 @@ def load_customers(customers, depots, route_id=2946091):
     # we supress the lines where the CUSTOMER_CODE repeat itself
     customers = customers.drop_duplicates(subset=["CUSTOMER_CODE"], keep='first')
     # The first customer of the list is the depot, whose id is 0.
-    id = 0
+    identifier = 0
     customer_code = 1000
     latitude = depots.loc[0,"DEPOT_LATITUDE"]
     longitude = depots.loc[0,"DEPOT_LONGITUDE"]
@@ -49,11 +49,11 @@ def load_customers(customers, depots, route_id=2946091):
     request_volume =0
     request_weight = 0
     time_service = 0
-    depot = Customer(id, latitude, longitude, time_window, request_volume, request_weight, time_service)
+    depot = Customer(identifier, customer_code, latitude, longitude, time_window, request_volume, request_weight, time_service)
     list_customers = [depot]
     # We add every new customer to the list :
     for i, code in enumerate(customers["CUSTOMER_CODE"], start=1):
-        id = i
+        identifier = i
         customer_code = code
         latitude = customers[customers["CUSTOMER_CODE"]==code]["CUSTOMER_LATITUDE"]
         longitude = customers[customers["CUSTOMER_CODE"]==code]["CUSTOMER_LONGITUDE"]
@@ -62,7 +62,8 @@ def load_customers(customers, depots, route_id=2946091):
         request_volume = customers[customers["CUSTOMER_CODE"]==code]["TOTAL_VOLUME_M3"]
         request_weight = customers[customers["CUSTOMER_CODE"]==code]["TOTAL_WEIGHT_KG"]
         time_service = customers[customers["CUSTOMER_CODE"]==code]["CUSTOMER_DELIVERY_SERVICE_TIME_MIN"]
-        customer = Customer(id, latitude, longitude, time_window, request_volume, request_weight, time_service)
+        customer = Customer(identifier, customer_code, latitude, longitude, 
+                            time_window, request_volume, request_weight, time_service)
         list_customers.append(customer)
     return list_customers
 
@@ -111,11 +112,15 @@ def create_vrptw(CUSTOMER_DIR, DEPOTS_DIR, VEHICLES_DIR, DEPOTS_DISTANCES_DIR, C
     depots_dist = pd.read_excel(DEPOTS_DISTANCES_DIR)
     customers_dist = pd.read_excel(CUSTOMER_DISTANCES_DIR)
     list_costumers = load_customers(customers, depots, route_id=2946091)
-    time_matrix, distances, cust_codes = matrix_generator(depots_dist, customers_dist)
+    time_matrix, distances, cust_codes = matrix_generator(depots_dist, customers_dist, route_id)
     vehicle = load_vehicle(vehicles, MODE_VEHICLE="mean", vehicle_nb=None)
-    vrptw = VRPTW(costumers, distances, time_matrix, vehicle, cust_codes)
+    vrptw = VRPTW(customers, distances, time_matrix, vehicle, cust_codes)
     return vrptw
 
+vrptw_test = create_vrptw(CUSTOMER_DIR, DEPOTS_DIR, VEHICLES_DIR, DEPOTS_DISTANCES_DIR, CUSTOMER_DISTANCES_DIR, route_id=2946091, MODE_VEHICLE="mean", vehicle_nb=None)
 
-if __name__ == '__main__':
+print(vrptw_test)
+
+
+#if __name__ == '__main__':
     
