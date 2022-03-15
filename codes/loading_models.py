@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 import os
+from math import sqrt
+import sys
 
 from classes_ico import Vehicle, Customer, VRPTW
 
@@ -151,7 +153,7 @@ def load_solomon(filename):
             x1, y1 = df.at[i, 'XCOORD'], df.at[i, 'YCOORD']
             x2, y2 = df.at[j, 'XCOORD'], df.at[j, 'YCOORD']
             distances[i,j] = sqrt( (x2 - x1)**2 + (y2 - y1)**2 )
-    vrptw = VRPTW(custumers=customers,
+    vrptw = VRPTW(customers=customers,
                   distances=distances,
                   time_matrix=distances,
                   vehicle=vehicle,
