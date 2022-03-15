@@ -35,7 +35,7 @@ class VRPTW:
         self.cust_codes = cust_codes
         
     def __str__(self):
-        return 'Here are the customers : {self.costumers}'
+        return f'Here are the customers : {self.customers}'
         
         
         
