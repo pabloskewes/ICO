@@ -41,9 +41,11 @@ def load_customers(customers, depots, route_id=2946091):
     customers = customers.drop_duplicates(subset=["CUSTOMER_CODE"], keep='first')
     # The first customer of the list is the depot, whose id is 0.
     id = 0
+    customer_code = 1000
     latitude = depots.loc[0,"DEPOT_LATITUDE"]
     longitude = depots.loc[0,"DEPOT_LONGITUDE"]
-    time_window = (depots.loc[0,"DEPOT_AVAILABLE_TIME_FROM_MIN"], depots.loc[0,"DEPOT_AVAILABLE_TIME_TO_MIN"])
+    #time_window = (depots.loc[0,"DEPOT_AVAILABLE_TIME_FROM_MIN"], depots.loc[0,"DEPOT_AVAILABLE_TIME_TO_MIN"])
+    time_window = (0,1440)
     request_volume =0
     request_weight = 0
     time_service = 0
@@ -52,6 +54,7 @@ def load_customers(customers, depots, route_id=2946091):
     # We add every new customer to the list :
     for i, code in enumerate(customers["CUSTOMER_CODE"], start=1):
         id = i
+        customer_code = code
         latitude = customers[customers["CUSTOMER_CODE"]==code]["CUSTOMER_LATITUDE"]
         longitude = customers[customers["CUSTOMER_CODE"]==code]["CUSTOMER_LONGITUDE"]
         time_window = (customers[customers["CUSTOMER_CODE"]==code]["CUSTOMER_TIME_WINDOW_FROM_MIN"], 
