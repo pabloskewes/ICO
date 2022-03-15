@@ -62,7 +62,8 @@ def load_customers(customers, depots, route_id=2946091):
         request_volume = customers[customers["CUSTOMER_CODE"]==code]["TOTAL_VOLUME_M3"]
         request_weight = customers[customers["CUSTOMER_CODE"]==code]["TOTAL_WEIGHT_KG"]
         time_service = customers[customers["CUSTOMER_CODE"]==code]["CUSTOMER_DELIVERY_SERVICE_TIME_MIN"]
-        customer = Customer(identifier, customer_code, latitude, longitude, time_window, request_volume, request_weight, time_service)
+        customer = Customer(identifier, customer_code, latitude, longitude, 
+                            time_window, request_volume, request_weight, time_service)
         list_customers.append(customer)
     return list_customers
 
@@ -111,11 +112,52 @@ def create_vrptw(CUSTOMER_DIR, DEPOTS_DIR, VEHICLES_DIR, DEPOTS_DISTANCES_DIR, C
     depots_dist = pd.read_excel(DEPOTS_DISTANCES_DIR)
     customers_dist = pd.read_excel(CUSTOMER_DISTANCES_DIR)
     list_costumers = load_customers(customers, depots, route_id=2946091)
-    time_matrix, distances, cust_codes = matrix_generator(depots_dist, customers_dist)
+    time_matrix, distances, cust_codes = matrix_generator(depots_dist, customers_dist, route_id)
     vehicle = load_vehicle(vehicles, MODE_VEHICLE="mean", vehicle_nb=None)
-    vrptw = VRPTW(costumers, distances, time_matrix, vehicle, cust_codes)
+    vrptw = VRPTW(customers, distances, time_matrix, vehicle, cust_codes)
+    return vrptw
+
+vrptw_test = create_vrptw(CUSTOMER_DIR, DEPOTS_DIR, VEHICLES_DIR, DEPOTS_DISTANCES_DIR, CUSTOMER_DISTANCES_DIR, route_id=2946091, MODE_VEHICLE="mean", vehicle_nb=None)
+
+print(vrptw_test)
+
+
+
+def load_solomon(filename):
+    ROOT_DIR = os.path.abspath('..')
+    DATA_DIR = os.path.join(ROOT_DIR, 'data_solomon')
+    DIR = os.path.join(DATA_DIR, filename)
+    df = pd.read_csv(DIR)
+    vehicle = Vehicle(volume=sys.maxsize,
+                      weight=df.at[0, 'CAPACITY'],
+                      cost_km=1)
+    df = df.drop('CAPACITY', axis=1)
+    n = len(df)
+    customers = []
+    for k in range(n):
+        cust = Customer(identifier=k,
+                 code_customer=k,
+                 latitude=df.at[k,'XCOORD'],
+                 longitude=df.at[k,'YCOORD'],
+                 time_window=(df.at[k,'READYTIME'], df.at[k, 'DUETIME']),
+                 request_volume=0,
+                 request_weight=df.at[k,'DEMAND'],
+                 time_service=df.at[k,'SERVICETIME'])
+        customers.append(cust)
+    cust_codes = {i:i for i in range(n)}
+    distances = np.zeros((n,n))
+    for i in range(n):
+        for j in range(n):
+            x1, y1 = df.at[i, 'XCOORD'], df.at[i, 'YCOORD']
+            x2, y2 = df.at[j, 'XCOORD'], df.at[j, 'YCOORD']
+            distances[i,j] = sqrt( (x2 - x1)**2 + (y2 - y1)**2 )
+    vrptw = VRPTW(custumers=customers,
+                  distances=distances,
+                  time_matrix=distances,
+                  vehicle=vehicle,
+                  cust_codes=cust_codes)
     return vrptw
 
 
-if __name__ == '__main__':
+#if __name__ == '__main__':
     
