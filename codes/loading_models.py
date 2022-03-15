@@ -122,5 +122,42 @@ vrptw_test = create_vrptw(CUSTOMER_DIR, DEPOTS_DIR, VEHICLES_DIR, DEPOTS_DISTANC
 print(vrptw_test)
 
 
+
+def load_solomon(filename):
+    ROOT_DIR = os.path.abspath('..')
+    DATA_DIR = os.path.join(ROOT_DIR, 'data_solomon')
+    DIR = os.path.join(DATA_DIR, filename)
+    df = pd.read_csv(DIR)
+    vehicle = Vehicle(volume=sys.maxsize,
+                      weight=df.at[0, 'CAPACITY'],
+                      cost_km=1)
+    df = df.drop('CAPACITY', axis=1)
+    n = len(df)
+    customers = []
+    for k in range(n):
+        cust = Customer(identifier=k,
+                 code_customer=k,
+                 latitude=df.at[k,'XCOORD'],
+                 longitude=df.at[k,'YCOORD'],
+                 time_window=(df.at[k,'READYTIME'], df.at[k, 'DUETIME']),
+                 request_volume=0,
+                 request_weight=df.at[k,'DEMAND'],
+                 time_service=df.at[k,'SERVICETIME'])
+        customers.append(cust)
+    cust_codes = {i:i for i in range(n)}
+    distances = np.zeros((n,n))
+    for i in range(n):
+        for j in range(n):
+            x1, y1 = df.at[i, 'XCOORD'], df.at[i, 'YCOORD']
+            x2, y2 = df.at[j, 'XCOORD'], df.at[j, 'YCOORD']
+            distances[i,j] = sqrt( (x2 - x1)**2 + (y2 - y1)**2 )
+    vrptw = VRPTW(costumers=customers,
+                  distances=distances,
+                  time_matrix=distances,
+                  vehicle=vehicle,
+                  cust_codes=cust_codes)
+    return vrptw
+
+
 #if __name__ == '__main__':
     

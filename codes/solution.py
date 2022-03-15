@@ -39,7 +39,8 @@ def solution_checker(vrptw, sol):
             if time_delivery>cust_plus_1.time_window[1]:
                 return False
     return True
-    
+
+
 '''
 def cost(vrptw, sol):
     w = 1000
