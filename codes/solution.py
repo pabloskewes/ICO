@@ -2,6 +2,13 @@ def sol_to_list_routes(sol):
     indexes = [i for i,x in enumerate(liste) if x == 0]
     liste_divided = [liste[indexes[i]:indexes[i+1]]+[0] for i in range(len(indexes)-1)]
     return liste_divided
+
+
+def list_routes_to_sol(sol_list):
+    final_sol = []
+    for sol in sol_list:
+        final_sol += sol[:-1]
+    return final_sol + [0]
     
 
 def solution_checker(vrptw, sol):
