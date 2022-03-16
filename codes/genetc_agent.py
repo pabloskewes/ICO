@@ -1,11 +1,6 @@
-from ast import In
-from email.mime import application
-from logging import critical
 import random
 from random import randrange, sample
 from statistics import median
-
-
 
 class client():
     def __init__(self,id,weight,volumn,time_window,vehicles,possition,service_time):
@@ -24,7 +19,7 @@ class vehicle():
         self.cap_volumn=cap_volumn
         
 
-class Problem_Genetic():
+class modele_genetic():
     
     def __init__(self,genes,individuals_length,fitness):
         self.genes=genes
@@ -82,101 +77,101 @@ class Problem_Genetic():
         
         return  process_gen_repeated(child1, child2)
 
+class VRP_GA():
 
-#   Contraintes-faut-il-repecter pour les chromosomes:
-#   Il faut qu'un chromosome réaliser tous les divrasons. Sinon il aura une fitness négatiff
-#   1 - respect du time window
-#   2 - capacité camion kg
-#   3 - capacité camion m3
-#   4 - chaque customer doit etre visité une fois
-#   5 - 1 route = 1 camion
+    def __init__(self,modele_genetic,num_generation,population,rate_mutation,num_parent,num_pop):
+        self.modele_genetic = modele_genetic
+        self.num_generation = num_generation
+        self.population = population
+        self.rate_mutation = rate_mutation
+        self.num_parent = num_parent
+        self.num_pop=num_pop
 
+    def verification(chromosome):
+        if chromosome :
+            return True
+        else:
+            return False
 
-# tri la population par ordre croissant de la fitness
-# sumpprimer la moins forte chromosome
-
-def verification(chromosome):
-    if chromosome :
-        return True
-    else:
-        return False
-
-def genetic_algorithm(Problem_Genetic,target_optimisation,num_generation,population,rate_cross,rate_mutation,num_parent):
-
-    def initialize_population(Problem_Genetic,size):
-        def generate_chromosome():
-            chromosome=[]
-            for i in chromosome_modele:# chromosome_modele: a liste consiste of all of the client number only for once.
-                chromosome.append(i)
-            number_car=11
-            for i in range(random.randint(0,number_car-1)):
-                chromosome.append(0)
-            random.shuffle(chromosome)
+    def generate_chromosome():
+        chromosome=[]
+        for i in chromosome_modele:# chromosome_modele: a liste consiste of all of the client number only for once.
+            chromosome.append(i)
+        number_car=11
+        for i in range(random.randint(0,number_car-1)):
             chromosome.append(0)
-            chromosome.insert(0,0)
+        random.shuffle(chromosome)
+        chromosome.append(0)
+        chromosome.insert(0,0)
 
-            return chromosome
-        return [generate_chromosome() for _ in range(size)]
+        return chromosome
+
+    def initialize_population(self,num_pop):
+
+        return [self.generate_chromosome() for _ in range(num_pop)]
     
-    def evolution(Problem_Genetic,num_parent,population,rate_mutation):
-    #   selection      
-    #   crossover
-    #   mutation
-    #   elimination
-        def binary_tournement(Problem_Genetic,population,num_parent):
+    def evolution(modele_genetic,num_parent,population,rate_mutation,num_pop): # Realize a generation, including the mating, the mutation, the elimination and the regeneration
+
+        def binary_tournement(self,population,num_parent):# Select certain individuals as parents by their fitness
             parents=[]            
             for i in range(num_parent):
-                candidate=random.sample(population,2)
-                if fitness(candidate[0])> fitness(candidate[1]):
+                candidate=sample(population,2)
+                if self.fitness(candidate[0])> self.fitness(candidate[1]):
                     parents.append(candidate[0])
                 else:
                     parents.append(candidate[1])
             return parents
 
-        def pop_crossover(Problem_Genetic,parents,population):
-            for i in len(parents):#生四个
-                parent=random.sample(parents,2)
-                population.append(Problem_Genetic.crossover(parent[0],parent[1]))
+        def pop_crossover(modele_genetic,parents,population):# Realize mating between parents 
+            for i in len(parents): 
+                parent=sample(parents,2)
+                population.append(modele_genetic.crossover(parent[0],parent[1]))
             return population
         
-        def pop_mutation(Problem_Genetic,population,rate_mutation):
+        def pop_mutation(modele_genetic,population,rate_mutation):# Realize mutation for all members in the population
             for i in population:
-                i=Problem_Genetic.mutation(i,rate_mutation)
+                i=modele_genetic.mutation(i,rate_mutation)
             return population
         
-        def eliminate(population): #num_elimination=num_parent: num_pop stable
+        def eliminate(self,population): # Eliminate the less strong half of the population
             list_fitness=[]
             for chromosome in population:
-                list_fitness.append(fitness(chromosome))
+                list_fitness.append(self.fitness(chromosome))
             critere=median(list_fitness)
             for i in population:
-                if fitness(i)<critere:
+                if self.fitness(i)<critere:
                     population.remove(i)
-        
-        def regeneration(population):
-            
-                
+            return population
 
+        def regeneration(self,population,num_pop): # Generate new-borns to maintain the number of population remains stable
+            curr_population=len(population)
+            for i in num_pop-curr_population:
+                population.append(self.generate_chromosome())
+            return population
 
-def distance(client1,client2):
-    return pow((pow((map_client(position1)[0]-map_client(position2)[0]),2)+pow((map_client(position1)[1]-map_client(position2)[1]),2)),0.5)
+        parents=binary_tournement(modele_genetic,population,num_parent)
+        population=pop_crossover(modele_genetic,parents,population)
+        population=pop_mutation(modele_genetic,population,rate_mutation)
+        population=eliminate(population)
+        population=regeneration(population,num_pop)
 
-def TripDistance(chromosome):
+    def distance(self,position1,position2): # Calculate the distance between two positions
+        return pow((pow((map_client(position1)[0]-map_client(position2)[0]),2)+pow((map_client(position1)[1]-map_client(position2)[1]),2)),0.5)
 
-    trip_distance =0
-    for i in range(len(chromosome)-1):
-        trip_distance+=distance(chromosome[i],chromosome[i+1])
-    return trip_distance
+    def TripDistance(self,chromosome): # Calculate the total distance of a solution indicated by a chromosome 
 
-def fitness(chromosome):
+        trip_distance =0
+        for i in range(len(chromosome)-1):
+            trip_distance+=self.distance(chromosome[i],chromosome[i+1])
+        return trip_distance
 
-    fitness=cost_per_car*(chromosome.count(0)-1)+TripDistance(chromosome)
-    return fitness
+    def fitness(self,chromosome):# Calculate the fitness of a chromosome, here the fitness is determined by the reciprocal of cost
+
+        cost_per_car=1000
+        cost_route=0.2
+        cost=cost_per_car*(chromosome.count(0)-1)+cost_route*self.TripDistance(chromosome)
+        fitness=1/cost
+        return fitness
 
 
     
-
-for g in num_generation:
-
-    #   fitness evaluation
-    #   demande met verification
