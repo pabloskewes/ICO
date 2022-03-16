@@ -15,10 +15,12 @@ def solution_checker(vrptw, sol):
     nb_cust = len(vrptw.customers) # Number of customers (depot included)
     # If all customers are not visited, return False
     if set(sol)!= set(range(nb_cust)):
+        print("All customers are not visited.")
         return False
     # If some nodes (customers) are visited more than once (except for the depot), return False
     nb_depot = sol.count(0)
     if len(sol) != nb_depot+nb_cust-1:
+        print("There are customers visited more than once.")
         return False
     vehicle = vrptw.vehicle
     volume, weight, cost_km = vehicle.volume, vehicle.weight, vehicle.cost_km 
@@ -33,21 +35,24 @@ def solution_checker(vrptw, sol):
             print(cust)
             weight_cust += cust.request_weight
             volume_cust += cust.request_volume
-            print(weight_cust, volume_cust)
+            print(f'weight_cust is {weight_cust} and volume_cust is {volume_cust}')
         # If the weight (or volume) capacity of the vehicle is < to the total weight asked by customers, return False
         print(weight, volume, weight_cust, volume_cust)
         if weight < weight_cust or volume < volume_cust :
+            print("The weight (or volume) capacity of the vehicle is < to the total weight asked by customers on the road :", route)
             return False
         for index,identifier in enumerate(route):
-            cust = [customer for customer in customers if customer.id == identifier][0]
-            cust_plus_1 = [customer for customer in customers if customer.id == route[index+1]][0]
-            time_delivery += time_matrix[cust.code_customer,cust_plus_1.code_customer]
+            cust = customers[identifier]
+            cust_plus_1 = customers[route[index+1]]
+            #time_delivery += time_matrix[cust.code_customer,cust_plus_1.code_customer]
+            time_delivery += time_matrix[cust.id,cust_plus_1.id]
             # If the vehicle gets there befor the beginning of the customer's time window, return False
             if time_delivery<cust_plus_1.time_window[0]:
-                return False
+                time_delivery=cust_plus_1.time_window[0]
             time_delivery += cust_plus_1.time_service
             # If the end of the delivery is after the end of the customer's time window, return False
             if time_delivery>cust_plus_1.time_window[1]:
+                print("The vehicle gets there after the end of the time window")
                 return False
     return True
     
