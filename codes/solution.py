@@ -11,7 +11,7 @@ def list_routes_to_sol(sol_list):
     return final_sol + [0]
     
 
-def solution_checker(vrptw, sol):
+def solution_checker(vrptw, sol, verbose=0):
     nb_cust = len(vrptw.customers) # Number of customers (depot included)
     # If all customers are not visited, return False
     if set(sol)!= set(range(nb_cust)):
@@ -27,32 +27,41 @@ def solution_checker(vrptw, sol):
     sol_routes = sol_to_list_routes(sol)
     time_matrix = vrptw.time_matrix
     customers = vrptw.customers
-    print("")
     for route in sol_routes:
-        weight_cust, volume_cust, time_delivery = 0, 0, 0
+        if verbose >= 1:
+            print(f'Working on route: {route}')
+        weight_cust, volume_cust = 0, 0
         for identifier in route:
             cust = customers[identifier]
-            print(cust)
+            if verbose >= 2:
+                print(cust)
             weight_cust += cust.request_weight
             volume_cust += cust.request_volume
             print(f'weight_cust is {weight_cust} and volume_cust is {volume_cust}')
         # If the weight (or volume) capacity of the vehicle is < to the total weight asked by customers, return False
-        print(weight, volume, weight_cust, volume_cust)
+        if verbose >= 1:
+            print(weight, volume, weight_cust, volume_cust)
         if weight < weight_cust or volume < volume_cust :
-            print("The weight (or volume) capacity of the vehicle is < to the total weight asked by customers on the road :", route)
+            print(f"The weight (or volume) capacity of the vehicle ({weight}) is < to the total weight asked by customers ({identifier}) on the road ({weight_cust}):")
             return False
-        for index,identifier in enumerate(route):
+        time_delivery = 0
+        for index, identifier in enumerate(route[:-1]):
+            print(f'index={index}, id={identifier}')
             cust = customers[identifier]
             cust_plus_1 = customers[route[index+1]]
             #time_delivery += time_matrix[cust.code_customer,cust_plus_1.code_customer]
-            time_delivery += time_matrix[cust.id,cust_plus_1.id]
+            time_delivery += time_matrix[cust.id, cust_plus_1.id]
             # If the vehicle gets there befor the beginning of the customer's time window, return False
-            if time_delivery<cust_plus_1.time_window[0]:
-                time_delivery=cust_plus_1.time_window[0]
+            if time_delivery > cust_plus_1.time_window[1]:
+                print(f"The vehicle is getting to late ({time_delivery}): customers' ({cust_plus_1.id}) time window's closed {cust_plus_1.time_window[1]}")
+                return False
+            if time_delivery < cust_plus_1.time_window[0]:
+                # waiting for time window to open
+                time_delivery = cust_plus_1.time_window[0]
             time_delivery += cust_plus_1.time_service
             # If the end of the delivery is after the end of the customer's time window, return False
-            if time_delivery>cust_plus_1.time_window[1]:
-                print("The vehicle gets there after the end of the time window")
+            if time_delivery > cust_plus_1.time_window[1]:
+                print(f"The vehicle gets there after the end of the time window ({time_delivery} > {cust_plus_1.time_window[1]})")
                 return False
     return True
     
