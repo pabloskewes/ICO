@@ -57,13 +57,13 @@ def load_customers(customers, depots, route_id=2946091):
     for i, code in enumerate(customers["CUSTOMER_CODE"], start=1):
         identifier = i
         customer_code = code
-        latitude = customers[customers["CUSTOMER_CODE"]==code]["CUSTOMER_LATITUDE"]
-        longitude = customers[customers["CUSTOMER_CODE"]==code]["CUSTOMER_LONGITUDE"]
-        time_window = (customers[customers["CUSTOMER_CODE"]==code]["CUSTOMER_TIME_WINDOW_FROM_MIN"], 
-                       customers[customers["CUSTOMER_CODE"]==code]["CUSTOMER_TIME_WINDOW_TO_MIN"])
-        request_volume = customers[customers["CUSTOMER_CODE"]==code]["TOTAL_VOLUME_M3"]
-        request_weight = customers[customers["CUSTOMER_CODE"]==code]["TOTAL_WEIGHT_KG"]
-        time_service = customers[customers["CUSTOMER_CODE"]==code]["CUSTOMER_DELIVERY_SERVICE_TIME_MIN"]
+        latitude = customers[customers["CUSTOMER_CODE"]==code]["CUSTOMER_LATITUDE"].iloc[0]
+        longitude = customers[customers["CUSTOMER_CODE"]==code]["CUSTOMER_LONGITUDE"].iloc[0]
+        time_window = (customers[customers["CUSTOMER_CODE"]==code]["CUSTOMER_TIME_WINDOW_FROM_MIN"].iloc[0],
+                       customers[customers["CUSTOMER_CODE"]==code]["CUSTOMER_TIME_WINDOW_TO_MIN"].iloc[0])
+        request_volume = customers[customers["CUSTOMER_CODE"]==code]["TOTAL_VOLUME_M3"].iloc[0]
+        request_weight = customers[customers["CUSTOMER_CODE"]==code]["TOTAL_WEIGHT_KG"].iloc[0]
+        time_service = customers[customers["CUSTOMER_CODE"]==code]["CUSTOMER_DELIVERY_SERVICE_TIME_MIN"].iloc[0]
         customer = Customer(identifier, customer_code, latitude, longitude, 
                             time_window, request_volume, request_weight, time_service)
         list_customers.append(customer)
@@ -119,9 +119,9 @@ def create_vrptw(CUSTOMER_DIR, DEPOTS_DIR, VEHICLES_DIR, DEPOTS_DISTANCES_DIR, C
     vrptw = VRPTW(customers, distances, time_matrix, vehicle, cust_codes)
     return vrptw
 
-vrptw_test = create_vrptw(CUSTOMER_DIR, DEPOTS_DIR, VEHICLES_DIR, DEPOTS_DISTANCES_DIR, CUSTOMER_DISTANCES_DIR, route_id=2946091, MODE_VEHICLE="mean", vehicle_nb=None)
+#vrptw_test = create_vrptw(CUSTOMER_DIR, DEPOTS_DIR, VEHICLES_DIR, DEPOTS_DISTANCES_DIR, CUSTOMER_DISTANCES_DIR, route_id=2946091, MODE_VEHICLE="mean", vehicle_nb=None)
 
-print(vrptw_test)
+#print(vrptw_test)
 
 
 

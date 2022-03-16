@@ -20,7 +20,10 @@ class Customer:
         self.time_service = time_service
         
     def __str__(self):
-        return f'This customer\'s id is {self.id}.'
+        return f'This customer\'s id is {self.id}, its code_customer is {self.code_customer}, ' \
+               f'its latitude is {self.latitude}, its longitude is {self.longitude}, ' \
+               f'its time window is {self.time_window}, its volume requested is {self.request_volume},' \
+               f'its weight requested is {self.request_weight}, its time service is {self.time_service}.'
 
 
 class VRPTW:

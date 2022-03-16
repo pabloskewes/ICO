@@ -1,6 +1,6 @@
 def sol_to_list_routes(sol):
-    indexes = [i for i,x in enumerate(liste) if x == 0]
-    liste_divided = [liste[indexes[i]:indexes[i+1]]+[0] for i in range(len(indexes)-1)]
+    indexes = [i for i,x in enumerate(sol) if x == 0]
+    liste_divided = [sol[indexes[i]:indexes[i+1]]+[0] for i in range(len(indexes)-1)]
     return liste_divided
 
 
