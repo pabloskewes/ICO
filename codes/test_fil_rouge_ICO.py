@@ -15,7 +15,7 @@ print(nb_cust)
 print(set(sol)!= set(range(nb_cust)))
 print(set(sol))
 print(set(range(nb_cust)))
-print(vrptw_test.customers[-1])
+print(vrptw_test.customers)
 print(solution_checker(vrptw_test,sol))
 '''
 
@@ -34,8 +34,9 @@ print(customers[customers["CUSTOMER_CODE"]==138157]["CUSTOMER_LATITUDE"].iloc[0]
 #vrptw_solomon = load_solomon("R101.csv")
 '''
 
+'''
 customers_test = load_customers(customers, depots, route_id=2946091)
 print(customers_test[0])
 print(customers_test[13])
 
-
+'''
