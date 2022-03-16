@@ -1,3 +1,3 @@
 import Test_GVNS_SAV as voisinage
 
-def set_neighborhood(vrptw):
+# def set_neighborhood(vrptw):

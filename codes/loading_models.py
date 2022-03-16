@@ -121,7 +121,7 @@ def create_vrptw(CUSTOMER_DIR, DEPOTS_DIR, VEHICLES_DIR, DEPOTS_DISTANCES_DIR, C
 
 
 
-def load_solomon(filename, nb_cust=None):
+def load_solomon(filename, nb_cust=None, vehicle_speed=30):
     ROOT_DIR = os.path.abspath('..')
     DATA_DIR = os.path.join(ROOT_DIR, 'data_solomon')
     DIR = os.path.join(DATA_DIR, filename)
@@ -153,16 +153,15 @@ def load_solomon(filename, nb_cust=None):
             x1, y1 = df.at[i, 'XCOORD'], df.at[i, 'YCOORD']
             x2, y2 = df.at[j, 'XCOORD'], df.at[j, 'YCOORD']
             distances[i,j] = sqrt( (x2 - x1)**2 + (y2 - y1)**2 )
+    time_matrix = (distances / vehicle_speed) * 60
     vrptw = VRPTW(customers=customers,
                   distances=distances,
-                  time_matrix=distances,
+                  time_matrix=time_matrix,
                   vehicle=vehicle,
                   cust_codes=cust_codes)
     return vrptw
 
-v1 = load_solomon('R101.csv', nb_cust=25)
-print()
-v2 = load_solomon('R101.csv')
+
 
 #if __name__ == '__main__':
     

@@ -1,2 +1,4 @@
-.ipynb_checkpoints
-__pycache__
+codes/.ipynb_checkpoints
+codes/__pycache__
+codes/*.ipynb
+!codes/laboratory.ipynb
