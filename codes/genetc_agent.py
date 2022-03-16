@@ -116,7 +116,12 @@ def fitnessVRP(chromosome):
         
 #   prise en main des contraintes 1,2,3,5:
     def contraintes_1235(chromosome):
-        
+
+        taux_penalité_1=0.2
+        taux_penalité_2=0.2
+        taux_penalité_3=0.2
+        taux_penalité_5=0.2
+
         for i in range(len(chromosome)):
             # contrainte 5
             # on a besion d'un chromosome qui satisfait tout les contrainte en même temps. Alors concernat la contrainte de capacité, il faut fixer le camion utilisé dans une route d'abord
@@ -132,7 +137,8 @@ def fitnessVRP(chromosome):
                 return -1
 
         if len(camion_partagé)==1: #cas idéal
-            
+            camion_choisi=camion_partagé[0]
+
         else:
             return 0
 
@@ -145,6 +151,8 @@ def fitnessVRP(chromosome):
 #       if capacité.kg<0 or capacité.m3:
 #           kill chromosome
 
+
+#我们对于crossover的chromosome 作出限定：车辆使用数量 
 
     contrainte_4(chromosome)
     contraintes_1235(chromosome)
@@ -161,6 +169,14 @@ def fitnessVRP(chromosome):
     fitness=cost_per_car*(chromosome.count(0)-1)+TripDistance(chromosome)
     return fitness
 
+def verification(chromosome):
+    if chromosome :
+        return True
+    else:
+        return False
+
+
+
 cost_per_car=100
 customer=[]
 map_client=[]
@@ -176,4 +192,4 @@ def genetic_algorithm_t(Problem_Genetic,k,opt,ngen,size,rate_cross,rate_mutate):
             random.shuffle(chromosome)
             return chromosome
         return [generate_chromosome() for _ in range(size)]
-        
+
