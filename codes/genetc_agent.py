@@ -1,7 +1,3 @@
-import random
-from random import randrange, sample
-from statistics import median
-
 class client():
     def __init__(self,id,weight,volumn,time_window,vehicles,possition,service_time):
         self.id=id
@@ -21,10 +17,9 @@ class vehicle():
 
 class modele_genetic():
     
-    def __init__(self,genes,individuals_length,fitness):
-        self.genes=genes
-        self.individuals_length=individuals_length
-        self.fitness=fitness
+    def __init__(self,chromosome_modele,len_chromosome):
+        self.chromosome_modele=chromosome_modele
+        self.len_chromosome=len_chromosome
         
     def mutation(self,chromosome,prob):
 
@@ -71,11 +66,30 @@ class modele_genetic():
 
             return [child1,child2]
 
-        pos=random.randrange(1,self.individuals_length-1)
+        pos=random.randrange(1,self.len_chromosome-1)
         child1 = parent1[:pos] + parent2[pos:] 
         child2 = parent2[:pos] + parent1[pos:] 
         
         return  process_gen_repeated(child1, child2)
+
+    def distance(self,position1,position2): # Calculate the distance between two positions
+
+        return pow((pow((map_client(position1)[0]-map_client(position2)[0]),2)+pow((map_client(position1)[1]-map_client(position2)[1]),2)),0.5)
+
+    def TripDistance(self,chromosome): # Calculate the total distance of a solution indicated by a chromosome 
+
+        trip_distance =0
+        for i in range(len(chromosome)-1):
+            trip_distance+=self.distance(chromosome[i],chromosome[i+1])
+        return trip_distance
+
+    def fitness(self,chromosome):# Calculate the fitness of a chromosome, here the fitness is determined by the reciprocal of cost
+
+        cost_per_car=1000
+        cost_route=0.2
+        cost=cost_per_car*(chromosome.count(0)-1)+cost_route*self.TripDistance(chromosome)
+        fitness=1/cost
+        return fitness
 
 class VRP_GA():
 
@@ -112,11 +126,11 @@ class VRP_GA():
     
     def evolution(modele_genetic,num_parent,population,rate_mutation,num_pop): # Realize a generation, including the mating, the mutation, the elimination and the regeneration
 
-        def binary_tournement(self,population,num_parent):# Select certain individuals as parents by their fitness
+        def binary_tournement(modele_genetic,population,num_parent):# Select certain individuals as parents by their fitness
             parents=[]            
             for i in range(num_parent):
                 candidate=sample(population,2)
-                if self.fitness(candidate[0])> self.fitness(candidate[1]):
+                if modele_genetic.fitness(candidate[0])> modele_genetic.fitness(candidate[1]):
                     parents.append(candidate[0])
                 else:
                     parents.append(candidate[1])
@@ -133,13 +147,13 @@ class VRP_GA():
                 i=modele_genetic.mutation(i,rate_mutation)
             return population
         
-        def eliminate(self,population): # Eliminate the less strong half of the population
+        def eliminate(modele_genetic,population): # Eliminate the less strong half of the population
             list_fitness=[]
             for chromosome in population:
-                list_fitness.append(self.fitness(chromosome))
+                list_fitness.append(modele_genetic.fitness(chromosome))
             critere=median(list_fitness)
             for i in population:
-                if self.fitness(i)<critere:
+                if modele_genetic.fitness(i)<critere:
                     population.remove(i)
             return population
 
@@ -155,23 +169,7 @@ class VRP_GA():
         population=eliminate(population)
         population=regeneration(population,num_pop)
 
-    def distance(self,position1,position2): # Calculate the distance between two positions
-        return pow((pow((map_client(position1)[0]-map_client(position2)[0]),2)+pow((map_client(position1)[1]-map_client(position2)[1]),2)),0.5)
 
-    def TripDistance(self,chromosome): # Calculate the total distance of a solution indicated by a chromosome 
-
-        trip_distance =0
-        for i in range(len(chromosome)-1):
-            trip_distance+=self.distance(chromosome[i],chromosome[i+1])
-        return trip_distance
-
-    def fitness(self,chromosome):# Calculate the fitness of a chromosome, here the fitness is determined by the reciprocal of cost
-
-        cost_per_car=1000
-        cost_route=0.2
-        cost=cost_per_car*(chromosome.count(0)-1)+cost_route*self.TripDistance(chromosome)
-        fitness=1/cost
-        return fitness
 
 
     
