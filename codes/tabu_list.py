@@ -45,7 +45,7 @@ def tabu_method(vrptw, sol, lower_bound=100, max_iter=100, max_tabu=10, verbose=
 
         n_iter += 1
         # TODO: No sé qué solución se supone que va acá pero tú vay a cachar Nico
-        neighborhood = [N(best_candidate, function_name=k) for k in range(0, 9)]
+        neighborhood = [N.shuffle(best_candidate) for _ in range(0, 9)]
         # << generated a neighborhood using every neighborhood function
 
         # we look for the best candidate in the neighborhood
