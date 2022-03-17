@@ -18,7 +18,7 @@ def random_solution(nb_cust, force_check_vrptw=None, verbose=0):
     zero_positions = []
     zero_pos_candidates = list(range(1, nb_cust-1))
     for _ in range(n_0):
-        if verbose >= 1:
+        if verbose >= 2:
             print('candidates:', zero_pos_candidates)
         try:
             zero_pos = random.choice(zero_pos_candidates)
@@ -26,7 +26,7 @@ def random_solution(nb_cust, force_check_vrptw=None, verbose=0):
             if verbose >= 1:
                 print('A problem ocurred, generating new random solution')
             return random_solution(nb_cust=nb_cust, force_check_vrptw=force_check_vrptw)
-        if verbose >= 1:
+        if verbose >= 2:
             print('zero_pos chosen:', zero_pos)
         zero_pos_candidates = list(set(zero_pos_candidates) - {zero_pos, zero_pos+1, zero_pos-1})
         zero_positions.append(zero_pos)
@@ -35,6 +35,15 @@ def random_solution(nb_cust, force_check_vrptw=None, verbose=0):
     solution = [0] + numbers + [0]
     string = str(solution).replace('0, 0, 0', '0').replace('0, 0', '0')
     solution = list(map(int, string.strip('][').split(',')))
+    if force_check_vrptw:
+        check = solution_checker(vrptw=force_check_vrptw, solution=solution)
+        if not check:
+            if verbose >= 1:
+                print('Solution generated is not legitimate, a new one will be created.')
+            return random_solution(nb_cust=nb_cust, force_check_vrptw=force_check_vrptw)
+        else:
+            if verbose >= 1:
+                print(f'A legitimate solution was successfully generated:\n{solution}')
     return solution
 
     # def numbers_close(number_list):
@@ -64,20 +73,28 @@ def list_routes_to_sol(sol_list):
     return final_sol + [0]
     
 
-def solution_checker(vrptw, sol, verbose=0):
+def solution_checker(vrptw, solution, verbose=0):
+    """
+    Checks whether a solution is legitimate (i.e. meets all necessary constraints) under the context determined
+    by a VRPTW instance.
+    :param vrptw: VRPTW instance determining the context and rescrictions
+    :param solution: Solution to be verified
+    :param verbose: Level of verbosity desired
+    :return: bool that indicates whether the input 'solution' is a solution or not.
+    """
     nb_cust = len(vrptw.customers) # Number of customers (depot included)
     # If all customers are not visited, return False
-    if set(sol)!= set(range(nb_cust)):
+    if set(solution)!= set(range(nb_cust)):
         print("All customers are not visited.")
         return False
     # If some nodes (customers) are visited more than once (except for the depot), return False
-    nb_depot = sol.count(0)
-    if len(sol) != nb_depot+nb_cust-1:
+    nb_depot = solution.count(0)
+    if len(solution) != nb_depot+nb_cust-1:
         print("There are customers visited more than once.")
         return False
     vehicle = vrptw.vehicle
     volume, weight, cost_km = vehicle.volume, vehicle.weight, vehicle.cost_km 
-    sol_routes = sol_to_list_routes(sol)
+    sol_routes = sol_to_list_routes(solution)
     time_matrix = vrptw.time_matrix
     customers = vrptw.customers
     for route in sol_routes:
