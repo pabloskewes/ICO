@@ -46,27 +46,20 @@ def random_solution(nb_cust, force_check_vrptw=None, verbose=0):
                 print(f'A legitimate solution was successfully generated:\n{solution}')
     return solution
 
-    # def numbers_close(number_list):
-    #     diff = set()
-    #     n = len(number_list)
-    #     for i in range(n):
-    #         for j in range(i+1, n):
-    #             difference = abs(number_list[i] - number_list[j])
-    #             diff = diff.union(difference)
-    #     return {1, 0, -1}.issubset(diff)
-    #
-    # while True:
-    #     zero_positions = random.sample(range(2, nb_cust-1))
-    #     if not numbers_close()
-
 
 def sol_to_list_routes(sol):
+    """
+    Transforms [0, x1, x2, 0, x3, 0, x4, x5, x6, 0] into [[0, x1, x2, 0], [0, x3, 0], [0, x4, x5, x6, 0]].
+    """
     indexes = [i for i, x in enumerate(sol) if x == 0]
     liste_divided = [sol[indexes[i]:indexes[i+1]]+[0] for i in range(len(indexes)-1)]
     return liste_divided
 
 
 def list_routes_to_sol(sol_list):
+    """
+    Transforms [[0, x1, x2, 0], [0, x3, 0], [0, x4, x5, x6, 0]] into [0, x1, x2, 0, x3, 0, x4, x5, x6, 0].
+    """
     final_sol = []
     for sol in sol_list:
         final_sol += sol[:-1]
@@ -85,12 +78,14 @@ def solution_checker(vrptw, solution, verbose=0):
     nb_cust = len(vrptw.customers) # Number of customers (depot included)
     # If all customers are not visited, return False
     if set(solution) != set(range(nb_cust)):
-        print("All customers are not visited.")
+        if verbose >= 1:
+            print("All customers are not visited.")
         return False
     # If some nodes (customers) are visited more than once (except for the depot), return False
     nb_depot = solution.count(0)
     if len(solution) != nb_depot+nb_cust-1:
-        print("There are customers visited more than once.")
+        if verbose >= 1:
+            print("There are customers visited more than once.")
         return False
     vehicle = vrptw.vehicle
     volume, weight, cost_km = vehicle.volume, vehicle.weight, vehicle.cost_km 
@@ -98,26 +93,27 @@ def solution_checker(vrptw, solution, verbose=0):
     time_matrix = vrptw.time_matrix
     customers = vrptw.customers
     for route in sol_routes:
-        if verbose >= 1:
+        if verbose >= 2:
             print(f'Working on route: {route}')
         weight_cust, volume_cust = 0, 0
         for identifier in route:
             cust = customers[identifier]
-            if verbose >= 2:
+            if verbose >= 3:
                 print(cust)
             weight_cust += cust.request_weight
             volume_cust += cust.request_volume
-            if verbose >= 1:
+            if verbose >= 2:
                 print(f'weight_cust is {weight_cust} and volume_cust is {volume_cust}')
         # If the weight (or volume) capacity of the vehicle is < to the total weight asked by customers, return False
-        if verbose >= 1:
+        if verbose >= 2:
             print(weight, volume, weight_cust, volume_cust)
         if weight < weight_cust or volume < volume_cust :
-            print(f"The weight (or volume) capacity of the vehicle ({weight}) is < to the total weight asked by customers ({identifier}) on the road ({weight_cust}):")
+            if verbose >= 1:
+                print(f"The weight (or volume) capacity of the vehicle ({weight}) is < to the total weight asked by customers ({identifier}) on the road ({weight_cust}):")
             return False
         time_delivery = 0
         for index, identifier in enumerate(route[:-1]):
-            if verbose >= 1:
+            if verbose >= 2:
                 print(f'index={index}, id={identifier}')
             cust = customers[identifier]
             cust_plus_1 = customers[route[index+1]]
@@ -125,7 +121,8 @@ def solution_checker(vrptw, solution, verbose=0):
             time_delivery += time_matrix[cust.id, cust_plus_1.id]
             # If the vehicle gets there befor the beginning of the customer's time window, return False
             if time_delivery > cust_plus_1.time_window[1]:
-                print(f"The vehicle is getting to late ({time_delivery}): customers' ({cust_plus_1.id}) time window's closed {cust_plus_1.time_window[1]}")
+                if verbose >= 1:
+                    print(f"The vehicle is getting to late ({time_delivery}): customers' ({cust_plus_1.id}) time window's closed {cust_plus_1.time_window[1]}")
                 return False
             if time_delivery < cust_plus_1.time_window[0]:
                 # waiting for time window to open
@@ -133,7 +130,8 @@ def solution_checker(vrptw, solution, verbose=0):
             time_delivery += cust_plus_1.time_service
             # If the end of the delivery is after the end of the customer's time window, return False
             if time_delivery > cust_plus_1.time_window[1]:
-                print(f"The vehicle gets there after the end of the time window ({time_delivery} > {cust_plus_1.time_window[1]})")
+                if verbose >= 1:
+                    print(f"The vehicle gets there after the end of the time window ({time_delivery} > {cust_plus_1.time_window[1]})")
                 return False
     return True
     
@@ -168,7 +166,7 @@ def cost(vrptw, solution, omega=1000, verbose=0):
 
 def generate_cost_function(vrptw, omega=1000, verbose=0):
     """
-    Alternative for creating a cost function that only has to receive a solution (already set with vrptw context.
+    Alternative for creating a cost function that only has to receive a solution (already set with vrptw context).
     returns the set cost function, can be used as follows:
     cost = general_cost_function(vrptw, omega, verbose)
     cost(solution)
