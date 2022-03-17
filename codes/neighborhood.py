@@ -1,5 +1,6 @@
 from Test_GVNS_SAV import shaking
 from random import randint
+from solution import sol_to_list_routes, list_routes_to_sol
 
 
 class Neighborhood:
@@ -15,6 +16,7 @@ class Neighborhood:
         self.nb_functions = 11
 
     def get_neighbor(self, solution, function_name=None, verbose=0):
+        solution = sol_to_list_routes(solution)
         if function_name is None:
             function_name = randint(0, self.nb_functions - 1)
         if type(function_name) == str:
@@ -33,12 +35,13 @@ class Neighborhood:
         travel_time, service_time, ready_time, due_time, demand, capacity \
             = self.travel_time, self.service_time, self.ready_time, self.due_time, self.demand, self.capacity
         if k == 0:
-            return shaking(solution, travel_time, service_time, ready_time, due_time, demand, capacity, Neighbor_Str=0)
+            new_sol = shaking(solution, travel_time, service_time, ready_time, due_time, demand, capacity, Neighbor_Str=0)
         elif k == 1:
-            return shaking(solution, travel_time, service_time, ready_time, due_time, demand, capacity, Neighbor_Str=1)
+            new_sol = shaking(solution, travel_time, service_time, ready_time, due_time, demand, capacity, Neighbor_Str=1)
         elif k <= 8:
-            return shaking(solution, travel_time, service_time, ready_time, due_time, demand, capacity, Neighbor_Str=k+2)
-
+            new_sol = shaking(solution, travel_time, service_time, ready_time, due_time, demand, capacity, Neighbor_Str=k+2)
+        return list_routes_to_sol(new_sol)
+    
     def __call__(self, solution, function_name=None, verbose=0):
         new_solution = self.get_neighbor(solution, function_name, verbose)
         return new_solution
