@@ -1,3 +1,56 @@
+import random
+
+
+def random_solution(nb_cust, force_check_vrptw=None, verbose=0):
+    """
+    Generates a random pattern of numbers between 0 and nb_cust, in the form of a solution.
+    :param nb_cust: Number of customers wanted in the solution to be generated
+    :param force_check_vrptw: The default is None and does nothing. When delivering a VRPTW instance in this parameter,
+    the legitimacy of the generated solution will be checked (using 'check_solution') based on the context of
+    that particular VRPTW instance.
+    :param verbose: Level of verbosity desired
+    :return: Solution (or nothing)
+    """
+    numbers = list(range(1, nb_cust+1))
+    random.shuffle(numbers)
+    proportion = random.choice([0.2, 0.3, 0.4])
+    n_0 = int(nb_cust*proportion)
+    zero_positions = []
+    zero_pos_candidates = list(range(1, nb_cust-1))
+    for _ in range(n_0):
+        if verbose >= 1:
+            print('candidates:', zero_pos_candidates)
+        try:
+            zero_pos = random.choice(zero_pos_candidates)
+        except IndexError:
+            if verbose >= 1:
+                print('A problem ocurred, generating new random solution')
+            return random_solution(nb_cust=nb_cust, force_check_vrptw=force_check_vrptw)
+        if verbose >= 1:
+            print('zero_pos chosen:', zero_pos)
+        zero_pos_candidates = list(set(zero_pos_candidates) - {zero_pos, zero_pos+1, zero_pos-1})
+        zero_positions.append(zero_pos)
+    for pos in zero_positions:
+        numbers.insert(pos, 0)
+    solution = [0] + numbers + [0]
+    string = str(solution).replace('0, 0, 0', '0').replace('0, 0', '0')
+    solution = list(map(int, string.strip('][').split(',')))
+    return solution
+
+    # def numbers_close(number_list):
+    #     diff = set()
+    #     n = len(number_list)
+    #     for i in range(n):
+    #         for j in range(i+1, n):
+    #             difference = abs(number_list[i] - number_list[j])
+    #             diff = diff.union(difference)
+    #     return {1, 0, -1}.issubset(diff)
+    #
+    # while True:
+    #     zero_positions = random.sample(range(2, nb_cust-1))
+    #     if not numbers_close()
+
+
 def sol_to_list_routes(sol):
     indexes = [i for i, x in enumerate(sol) if x == 0]
     liste_divided = [sol[indexes[i]:indexes[i+1]]+[0] for i in range(len(indexes)-1)]

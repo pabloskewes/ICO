@@ -1,4 +1,4 @@
-from solution import cost
+from solution import generate_cost_function
 from neighborhood import Neighborhood
 
 
@@ -18,8 +18,8 @@ class TabuList:
     def contains(self, e):
         return e in self.tabu_list
 
-
-def tabu_method(vrptw, sol, lower_bound=100, max_iter=100, max_tabu=10):
+# TODO: ADD VERBOSITY LEVELS FOR DEBUGGING
+def tabu_method(vrptw, sol, lower_bound=100, max_iter=100, max_tabu=10, verbose=0):
     # initial setup
     best_sol = sol
     best_candidate = sol
@@ -27,6 +27,7 @@ def tabu_method(vrptw, sol, lower_bound=100, max_iter=100, max_tabu=10):
     T = TabuList()
     T.push(sol)
     best_iter = 0
+    cost = generate_cost_function(vrptw, omega=1000, verbose=0)
     N = Neighborhood(vrptw)
 
     def aspiration(sol, neighborhood, A):
@@ -43,8 +44,8 @@ def tabu_method(vrptw, sol, lower_bound=100, max_iter=100, max_tabu=10):
     while (cost(best_sol) > lower_bound) and ((n_iter - best_iter) < max_iter):
 
         n_iter += 1
-        #TODO: No sé qué solución se supone que va acá pero tú vay a cachar Nico
-        neighborhood = [N(sol, function_name=k) for k in range(0, 9)]
+        # TODO: No sé qué solución se supone que va acá pero tú vay a cachar Nico
+        neighborhood = [N(best_candidate, function_name=k) for k in range(0, 9)]
         # << generated a neighborhood using every neighborhood function
 
         # we look for the best candidate in the neighborhood
