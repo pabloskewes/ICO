@@ -1,5 +1,5 @@
 def sol_to_list_routes(sol):
-    indexes = [i for i,x in enumerate(sol) if x == 0]
+    indexes = [i for i, x in enumerate(sol) if x == 0]
     liste_divided = [sol[indexes[i]:indexes[i+1]]+[0] for i in range(len(indexes)-1)]
     return liste_divided
 
@@ -49,7 +49,7 @@ def solution_checker(vrptw, sol, verbose=0):
             print(f'index={index}, id={identifier}')
             cust = customers[identifier]
             cust_plus_1 = customers[route[index+1]]
-            #time_delivery += time_matrix[cust.code_customer,cust_plus_1.code_customer]
+            # time_delivery += time_matrix[cust.code_customer,cust_plus_1.code_customer]
             time_delivery += time_matrix[cust.id, cust_plus_1.id]
             # If the vehicle gets there befor the beginning of the customer's time window, return False
             if time_delivery > cust_plus_1.time_window[1]:
@@ -94,29 +94,13 @@ def cost(vrptw, solution, omega=1000, verbose=0):
     return total_cost
 
 
-'''
-A JETER PLUS TARD :
-    for route in sol_routes:
-        weight_cust, volume_cust, time_delivery = 0, 0, 0
-        for cust in vrptw.customers:
-            weight_cust += cust.request_weight
-            volume_cust += cust.request_volume
-        # If the weight (or volume) capacity of the vehicle is < to the total weight asked by customers, return False
-        if weight < weight_cust or volume < volume_cust :
-            return False
-        for i in range(len(vrptw.customers)):
-            time_delivery += time_matrix[vrptw.customers[i].code_customer,vrptw.customers[i+1].code_customer]
-            # If the vehicle gets there befor the beginning of the customer's time window, return False
-            if time_delivery<vrptw.customers[i+1].time_window[0]:
-                return False
-            time_delivery += vrptw.customers[i+1].time_service
-            # If the end of the delivery is after the end of the customer's time window, return False
-            if time_delivery>vrptw.customers[i+1].time_window[1]:
-                return False
-    return True
-'''
-    
-
-        
-    
-    
+def generate_cost_function(vrptw, omega=1000, verbose=0):
+    """
+    Alternative for creating a cost function that only has to receive a solution (already set with vrptw context.
+    returns the set cost function, can be used as follows:
+    cost = general_cost_function(vrptw, omega, verbose)
+    cost(solution)
+    """
+    def cost_function(solution):
+        return cost(vrptw, solution, omega, verbose)
+    return cost_function
