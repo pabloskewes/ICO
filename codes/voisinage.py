@@ -8,7 +8,7 @@ def vois_two_opt_move(vrptw,sol):
     service_time = [customer.time_service for customer in vrptw.customers]
     ready_time = [customer.time_window[0] for customer in vrptw.customers] # ????? je ne sais pas ce que c'est
     due_time = [customer.time_window[1] for customer in vrptw.customers]
-    _,_,_,best_imp = two_opt_move(tour, distance, travel_time, service_time, ready_time, due_time):
+    _,_,_,best_imp = two_opt_move(tour, distance, travel_time, service_time, ready_time, due_time)
     return best_imp
 
 
