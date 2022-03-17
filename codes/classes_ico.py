@@ -35,7 +35,7 @@ class VRPTW:
         self.distances = distances
         self.time_matrix = time_matrix
         self.vehicle = vehicle
-        self.cust_codes = cust_codes
+
         
     def __str__(self):
         return f'Here are the customers : {self.customers}'
