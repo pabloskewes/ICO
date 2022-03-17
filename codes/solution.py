@@ -36,7 +36,7 @@ def random_solution(nb_cust, force_check_vrptw=None, verbose=0):
     string = str(solution).replace('0, 0, 0', '0').replace('0, 0', '0')
     solution = list(map(int, string.strip('][').split(',')))
     if force_check_vrptw:
-        check = solution_checker(vrptw=force_check_vrptw, solution=solution)
+        check = solution_checker(vrptw=force_check_vrptw, solution=solution, verbose=0)
         if not check:
             if verbose >= 1:
                 print('Solution generated is not legitimate, a new one will be created.')
@@ -84,7 +84,7 @@ def solution_checker(vrptw, solution, verbose=0):
     """
     nb_cust = len(vrptw.customers) # Number of customers (depot included)
     # If all customers are not visited, return False
-    if set(solution)!= set(range(nb_cust)):
+    if set(solution) != set(range(nb_cust)):
         print("All customers are not visited.")
         return False
     # If some nodes (customers) are visited more than once (except for the depot), return False
@@ -107,7 +107,8 @@ def solution_checker(vrptw, solution, verbose=0):
                 print(cust)
             weight_cust += cust.request_weight
             volume_cust += cust.request_volume
-            print(f'weight_cust is {weight_cust} and volume_cust is {volume_cust}')
+            if verbose >= 1:
+                print(f'weight_cust is {weight_cust} and volume_cust is {volume_cust}')
         # If the weight (or volume) capacity of the vehicle is < to the total weight asked by customers, return False
         if verbose >= 1:
             print(weight, volume, weight_cust, volume_cust)
@@ -116,7 +117,8 @@ def solution_checker(vrptw, solution, verbose=0):
             return False
         time_delivery = 0
         for index, identifier in enumerate(route[:-1]):
-            print(f'index={index}, id={identifier}')
+            if verbose >= 1:
+                print(f'index={index}, id={identifier}')
             cust = customers[identifier]
             cust_plus_1 = customers[route[index+1]]
             # time_delivery += time_matrix[cust.code_customer,cust_plus_1.code_customer]

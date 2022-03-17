@@ -1,7 +1,7 @@
 from Test_GVNS_SAV import shaking
 from random import randint
 import random
-from solution import sol_to_list_routes, list_routes_to_sol, solution_checker
+from solution import sol_to_list_routes, list_routes_to_sol, solution_checker, random_solution
 
 
 class Neighborhood:
@@ -109,6 +109,16 @@ class Neighborhood:
                                          verbose=verbose)
         return new_solution
 
+    def shuffle(self, solution=None, verbose=0):
+        """
+        Apply the random_solution function to obtain a valid random solution (you can't even say it's really in the
+         neighborhood of the solution, but it can be very useful).
+        :param solution: Nothing, only for aesthetic purposes.
+        :param verbose: Level of verbosity desired.
+        :return:
+        """
+        r_sol = random_solution(nb_cust=len(self.vrptw.customers)-1, force_check_vrptw=self.vrptw, verbose=verbose)
+        return r_sol
 
 
 
