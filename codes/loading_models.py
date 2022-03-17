@@ -74,10 +74,11 @@ def data_from_route(path, route_id):
     df = pd.read_excel(path)
     return df[df['ROUTE_ID'] == route_id].drop(['ROUTE_ID'], axis=1)
 
+
 # matrix_generator
 # Creates the time and distances matrix, and also returns the list with the customer codes used
 def matrix_generator(depot_data, customer_data, route_id):
-    
+
     # data filtering and reordering
     depot_data = depot_data[depot_data['ROUTE_ID'] == route_id].drop(['ROUTE_ID'], axis=1)
     customer_data = customer_data[customer_data['ROUTE_ID'] == route_id].drop(['ROUTE_ID'], axis=1)
@@ -118,7 +119,6 @@ def create_vrptw(CUSTOMER_DIR, DEPOTS_DIR, VEHICLES_DIR, DEPOTS_DISTANCES_DIR, C
     vehicle = load_vehicle(vehicles, MODE_VEHICLE="mean", vehicle_nb=None)
     vrptw = VRPTW(customers, distances, time_matrix, vehicle, cust_codes)
     return vrptw
-
 
 
 def load_solomon(filename, nb_cust=None, vehicle_speed=30):
@@ -162,6 +162,4 @@ def load_solomon(filename, nb_cust=None, vehicle_speed=30):
     return vrptw
 
 
-
-#if __name__ == '__main__':
     

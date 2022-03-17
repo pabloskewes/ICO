@@ -91,7 +91,7 @@ class Neighborhood:
         if force_check:
             if verbose >= 1:
                 print(f'force-checking if solution found ({new_sol}) is legitime in this context')
-            check = solution_checker(vrptw=self.vrptw, sol=new_sol, verbose=verbose)
+            check = solution_checker(vrptw=self.vrptw, solution=new_sol, verbose=verbose)
             if check:
                 if verbose >= 1:
                     print(f'solution {new_sol} is legitime !')
@@ -112,7 +112,7 @@ class Neighborhood:
     def shuffle(self, solution=None, verbose=0):
         """
         Apply the random_solution function to obtain a valid random solution (you can't even say it's really in the
-         neighborhood of the solution, but it can be very useful).
+        neighborhood of the solution, but it can be very useful).
         :param solution: Nothing, only for aesthetic purposes.
         :param verbose: Level of verbosity desired.
         :return:

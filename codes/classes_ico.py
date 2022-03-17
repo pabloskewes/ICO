@@ -36,7 +36,6 @@ class VRPTW:
         self.time_matrix = time_matrix
         self.vehicle = vehicle
 
-        
     def __str__(self):
         return f'Here are the customers : {self.customers}'
         
