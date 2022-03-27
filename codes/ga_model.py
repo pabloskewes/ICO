@@ -1,3 +1,4 @@
+from pickletools import read_uint1
 from pyexpat import version_info
 import random
 import statistics
@@ -243,6 +244,7 @@ class VRP_GA():
         self.num_pop=num_pop
         self.chromosome_modele = chromosome_modele
         self.vrp = vrp
+        self.best_solution=[]
 
     def verification(self,chromosome):
         if chromosome :
@@ -266,15 +268,15 @@ class VRP_GA():
 
     def initialize_population(self,num_pop,chromosome_modele):
 
-        return [self.generate_chromosome(chromosome_modele) for _ in range(num_pop)]
+        self.population =[self.generate_chromosome(chromosome_modele) for _ in range(num_pop)]
     
-    def evolution(self,modele_genetic,num_parent,population,rate_mutation,num_pop,chromosome_modele): # Realize a generation, including the mating, the mutation, the elimination and the regeneration
+    def evolution(self): # Realize a generation, including the mating, the mutation, the elimination and the regeneration
 
         def binary_tournement(modele_genetic,population,num_parent):# Select certain individuals as parents by their fitness
             parents=[]            
             for i in range(num_parent):
                 candidate=random.sample(population,2)
-                # print(len(candidate),len(candidate[0]),len(candidate[1]))
+
                 if modele_genetic.fitness(candidate[0])> modele_genetic.fitness(candidate[1]):
                     parents.append(candidate[0])
                 else:
@@ -291,7 +293,6 @@ class VRP_GA():
         def pop_mutation(modele_genetic,population,rate_mutation):# Realize mutation for all members in the population
             for i in population:
                 i=modele_genetic.mutation(i,rate_mutation)
-            # print('mutated')
             return population
         
         def eliminate(modele_genetic,population): # Eliminate the less strong half of the population
@@ -299,32 +300,35 @@ class VRP_GA():
             for chromosome in population:
                 list_fitness.append(modele_genetic.fitness(chromosome))
             critere=statistics.median(list_fitness)
+            best_performance=max(list_fitness)
+            for i in population:
+                if modele_genetic.fitness(i)==best_performance:
+                    best_solution=i
             for i in population:
                 if modele_genetic.fitness(i)<critere:
                     population.remove(i)
-            return population
+            return population, best_solution
 
-        def regeneration(self,population,num_pop,chromosome_modele): # Generate new-borns to maintain the number of population remains stable
-            curr_population=len(population)
-            if num_pop>curr_population:
-                for i in range(num_pop-curr_population):
-                    population.append(self.generate_chromosome(chromosome_modele))
+        def regeneration(self): # Generate new-borns to maintain the number of population remains stable
+            curr_population=len(self.population)
+            if self.num_pop>curr_population:
+                for i in range(self.num_pop-curr_population):
+                    self.population.append(self.generate_chromosome(self.chromosome_modele))
             else:
                 list_fitness=[]
-                for chromosome in population:
-                    list_fitness.append(modele_genetic.fitness(chromosome))
+                for chromosome in self.population:
+                    list_fitness.append(self.modele_genetic.fitness(chromosome))
                 critere=sorted(list_fitness,reverse=True)[9]
-                for i in population:
-                    if modele_genetic.fitness(i)<critere:
-                        population.remove(i)
-            return population
+                for i in self.population:
+                    if self.modele_genetic.fitness(i)<critere:
+                        self.population.remove(i)
+            return self.population
 
-        parents=binary_tournement(modele_genetic,population,num_parent)
-        population=pop_crossover(modele_genetic,parents,population)
-        population=pop_mutation(modele_genetic,population,rate_mutation)
-        population=eliminate(modele_genetic,population)
-        population=regeneration(self,population,num_pop,chromosome_modele)
-        return population
+        parents=binary_tournement(self.modele_genetic,self.population,self.num_parent)
+        self.population=pop_crossover(self.modele_genetic,parents,self.population)
+        self.population=pop_mutation(self.modele_genetic,self.population,self.rate_mutation)
+        self.population,self.best_solution=eliminate(self.modele_genetic,self.population)
+        self.population=regeneration(self)
 
 
 

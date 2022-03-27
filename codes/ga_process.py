@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-ROOT_DIR = os.path.abspath('')
+ROOT_DIR = os.path.abspath('../')
 DATA_DIR = os.path.join(ROOT_DIR, 'data')
 
 CUSTOMER_DIR = os.path.join(DATA_DIR, '2_detail_table_customers.xls')

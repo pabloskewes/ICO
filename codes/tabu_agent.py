@@ -1,6 +1,7 @@
 from mesa import Agent, Model
-from tabu import tabu_method
+from tabou import tabu_method
 from recuit_simule import simulated_annealing
+from ga import *
 
 # Agent ordonnanceur Tabou
 class TabuAgent(Agent):
@@ -28,7 +29,19 @@ class AgentRS(Agent):
     def step(self, vrptw, sol, T0):
         simulated_annealing(vrptw, sol, T0, cooling_factor=0.9, max_cycle_iter=100)
 
+class Genetic(Agent):
 
+    def __init__(self,id,model):
+        super().__init__(self,id,model)
+        self.name = "Agent"+str(self.id)
+        self.vrp_ga=init_vrpga()
+        self.solution=self.vrp_ga.best_solution
+
+    def __str__(self):
+        return "GA agent : "+self.name
+
+    def step(self):
+        self.solution=self.vrp_ga.evolution()
 
 # proposition de modèle
 class SMA(Model):
