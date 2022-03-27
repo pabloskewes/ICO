@@ -1,9 +1,6 @@
 import pandas as pd
 import os
 
-# We don't take the different routes into account here!!!! No fucking route code,
-# NO FUCKING ROUTE CODE HERE MDFK!!
-
 ROOT_DIR = os.path.abspath('')
 DATA_DIR = os.path.join(ROOT_DIR, 'data')
 
