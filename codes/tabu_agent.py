@@ -32,8 +32,8 @@ class AgentRS(Agent):
 class Genetic(Agent):
 
     def __init__(self,id,model):
-        super().__init__(self,id,model)
-        self.name = "Agent"+str(self.id)
+        super().__init__(id,model)
+        self.name = "Agent"+str(id)
         self.vrp_ga=init_vrpga()
         self.solution=self.vrp_ga.best_solution
 
@@ -41,7 +41,7 @@ class Genetic(Agent):
         return "GA agent : "+self.name
 
     def step(self):
-        self.solution=self.vrp_ga.evolution()
+        self.vrp_ga.evolution()
 
 # proposition de modèle
 class SMA(Model):
