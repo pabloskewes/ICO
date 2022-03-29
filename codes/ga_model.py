@@ -408,35 +408,3 @@ def cost(vrp,sol,omega=1000):
     print('Solution:', sol_list)
     print('Total cost of solution:', total_cost)
     return total_cost
-                    
-
-
-
-                    
-
-                    
-
-                    
-
-
-                    
-
-
-                    
-
-
-
-
-                                
-
-
-                    
-                    
-                    
-
-                    
-
-
-
-
-
