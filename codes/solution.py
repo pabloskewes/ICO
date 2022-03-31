@@ -1,5 +1,6 @@
 import random
 
+# class Solution:
 
 def random_solution(nb_cust, force_check_vrptw=None, verbose=0):
     """
@@ -174,3 +175,4 @@ def generate_cost_function(vrptw, omega=1000, verbose=0):
     def cost_function(solution):
         return cost(vrptw, solution, omega, verbose)
     return cost_function
+
