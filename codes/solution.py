@@ -165,8 +165,7 @@ def customers_checker(vrptw, solution, verbose=0):
 
 def route_checker(vrptw, route, verbose=0):
     """
-    Checks whether a solution is legitimate (i.e. meets all necessary constraints) under the context determined
-    by a VRPTW instance.
+    Checks whether a route is legitimate under the context determined by a VRPTW instance.
     :param vrptw: VRPTW instance determining the context and rescrictions
     :param solution: Solution to be verified
     :param verbose: Level of verbosity desired
