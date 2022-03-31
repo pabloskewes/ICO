@@ -99,24 +99,23 @@ class Modele_genetic():
         self.penalty_weight= penalty_weight
         self.cost_per_car=cost_per_car
         self.cost_per_km=cost_per_km
-
+        self.dict_fitness={}
         
     def mutation(self,chromosome,prob):
 
-        def inversion_mutation(chromosome_aux):#inversion globle
-            chromosome=chromosome_aux
+        if random.random()<prob:
             head=random.randrange(0,len(chromosome))
             end=random.randrange(head,len(chromosome))
             tmp=chromosome[head:end]
             tmp.reverse()
-            return chromosome[:head]+tmp+chromosome[end:] 
 
-        aux=[]
-        for _ in range(len(chromosome)):
-            if random.random()<prob:
-                aux=inversion_mutation(chromosome)
-        return aux
-    
+            result=chromosome[:head]+tmp+chromosome[end:]
+            if result!= chromosome:
+                print('really helped')
+            return result
+        else:
+            return chromosome
+
     def crossover(self,parent1, parent2):
 
         def process_gen_repeated(copy_child1,copy_child2):
@@ -164,8 +163,10 @@ class Modele_genetic():
         return trip_distance
 
     def fitness(self,chromosome):# Calculate the fitness of a chromosome, here the fitness is determined by the reciprocal of cost
+        if tuple(chromosome) in self.dict_fitness:
+            return self.dict_fitness[tuple(chromosome)]
+
         penalty_wrong_chromosome=self.penalty_wrong_chromosome
-        penalty_car_road=self.penalty_car_road
         penalty_late=self.penalty_late
         penalty_volumn=self.penalty_volumn
         penalty_weight=self.penalty_weight
@@ -176,61 +177,35 @@ class Modele_genetic():
             return -penalty_wrong_chromosome 
 
         penalty=0
-        #ROUTE ONE, CAR ONE
-        vehicle_dispo=['J92-T-826','A69-O-649','875-M-523','O76-T-703','O76-T-702','A08-J-522','O78-K-074','T14-E-264','E81-M-661']
-        vehicle_employe=[]
+
+        car='875-M-523'
         for i in range(len(chromosome)):
-            if chromosome[i]!=0 :
-                if chromosome[i-1]==0:
-                    vehicle_common=constraints[constraints['SDVRP_CONSTRAINT_CUSTOMER_CODE']==chromosome[1+i]]['SDVRP_CONSTRAINT_VEHICLE_CODE'].to_list()
+            if chromosome[i]!=0:
+                if chromosome[i-1]==0: 
+                    cap_volumn=vehicles[vehicles['VEHICLE_CODE']==car]['VEHICLE_TOTAL_VOLUME_M3'].to_list()[0]
+                    cap_weight=vehicles[vehicles['VEHICLE_CODE']==car]['VEHICLE_TOTAL_WEIGHT_KG'].to_list()[0]
+                    time_now=max(vehicles[vehicles['VEHICLE_CODE']==car]['VEHICLE_AVAILABLE_TIME_FROM_MIN'].to_list()[0]+u_find2(chromosome[i-1],chromosome[i])[1],customers[customers['CUSTOMER_CODE']==chromosome[i]]['CUSTOMER_TIME_WINDOW_FROM_MIN'].to_list()[0])-u_find2(chromosome[i-1],chromosome[i])[1]
                 else:
-                    for vehicle in vehicle_common:
-                        if vehicle not in constraints[constraints['SDVRP_CONSTRAINT_CUSTOMER_CODE']==chromosome[i]]['SDVRP_CONSTRAINT_VEHICLE_CODE'].to_list():
-                            vehicle_common.remove(vehicle)
-                    # vehicle_common=[i for i in vehicle_common if i in constraints[constraints['SDVRP_CONSTRAINT_CUSTOMER_CODE']==chromosome[i]]['SDVRP_CONSTRAINT_VEHICLE_CODE'].tolist()]
-                    if len(vehicle_common)<1:
-                        penalty+=penalty_car_road
-                        
-            else:
-                try:
-                    vehicle_employe.append(vehicle_common[0])            
-                    vehicle_dispo.remove(vehicle_common[0])
-                except:
-                    penalty+=penalty_car_road
+                    cap_volumn-=customers[customers['CUSTOMER_CODE']==chromosome[i]]['TOTAL_VOLUME_M3'].to_list()[0]
+                    cap_weight-=customers[customers['CUSTOMER_CODE']==chromosome[i]]['TOTAL_WEIGHT_KG'].to_list()[0]
+                    time_now+=u_find2(chromosome[i],chromosome[i-1])[1]
 
-        #TIME WINDOWS:penalty 
-        i=1
-        for car in vehicle_employe:
-            time_now=max(vehicles[vehicles['VEHICLE_CODE']==car]['VEHICLE_AVAILABLE_TIME_FROM_MIN'].to_list()[0]+u_find2(chromosome[i],chromosome[i-1])[1],customers[customers['CUSTOMER_CODE']==chromosome[i]]['CUSTOMER_TIME_WINDOW_FROM_MIN'].to_list()[0])-u_find2(chromosome[i],chromosome[i-1])[1]
-            while(chromosome[i]!=0):
-                time_now+=u_find2(chromosome[i],chromosome[i-1])[1]
-                if time_now>customers[customers['CUSTOMER_CODE']==chromosome[i]]['CUSTOMER_TIME_WINDOW_FROM_MIN'].to_list()[0] and time_now+customers[customers['CUSTOMER_CODE']==chromosome[i]]['CUSTOMER_DELIVERY_SERVICE_TIME_MIN'].to_list()[0]<customers[customers['CUSTOMER_CODE']==chromosome[i]]['CUSTOMER_TIME_WINDOW_TO_MIN'].to_list()[0]:
-                    pass
-                else:
-                    penalty+=penalty_late
-                time_now+=customers[customers['CUSTOMER_CODE']==chromosome[i]]['CUSTOMER_DELIVERY_SERVICE_TIME_MIN'].to_list()[0]
-                i+=1
-            i+=1
+                    if time_now>customers[customers['CUSTOMER_CODE']==chromosome[i]]['CUSTOMER_TIME_WINDOW_FROM_MIN'].to_list()[0] and time_now+customers[customers['CUSTOMER_CODE']==chromosome[i]]['CUSTOMER_DELIVERY_SERVICE_TIME_MIN'].to_list()[0]<customers[customers['CUSTOMER_CODE']==chromosome[i]]['CUSTOMER_TIME_WINDOW_TO_MIN'].to_list()[0]:
+                        pass
+                    else:
+                        penalty+=penalty_late
+                    if cap_weight<0:
+                        penalty+=penalty_weight
+                    if cap_volumn<0:
+                        penalty+=penalty_volumn
 
-        #VOLUME AND WEIGHT:PENALTY
-        i=1
-        for car in vehicle_employe:
-            cap_volumn=vehicles[vehicles['VEHICLE_CODE']==car]['VEHICLE_TOTAL_VOLUME_M3'].to_list()[0]
-            cap_weight=vehicles[vehicles['VEHICLE_CODE']==car]['VEHICLE_TOTAL_WEIGHT_KG'].to_list()[0]
-            while(chromosome[i]!=0):
-                cap_volumn-=customers[customers['CUSTOMER_CODE']==chromosome[i]]['TOTAL_VOLUME_M3'].to_list()[0]
-                cap_weight-=customers[customers['CUSTOMER_CODE']==chromosome[i]]['TOTAL_WEIGHT_KG'].to_list()[0]
+                    time_now+=customers[customers['CUSTOMER_CODE']==chromosome[i]]['CUSTOMER_DELIVERY_SERVICE_TIME_MIN'].to_list()[0]
 
-                if cap_volumn<0:
-                    penalty+=penalty_volumn
-                if cap_weight<0:
-                    penalty+=penalty_weight
-               
-                i+=1
-            i+=1
 
         cost_trip=cost_per_car*(chromosome.count(0)-1)+cost_per_km*self.TripDistance(chromosome)
         fitness=-cost_trip-penalty
+        self.dict_fitness[tuple(chromosome)] = fitness
+
         return fitness
 
 class VRP_GA():
@@ -284,7 +259,7 @@ class VRP_GA():
             return parents
 
         def pop_crossover(modele_genetic,parents,population):# Realize mating between parents 
-            for i in range(len(parents)//2-1): 
+            for i in range(len(parents)//2): 
                 parent=random.sample(parents,2)
                 population.append(modele_genetic.crossover(parent[0],parent[1])[0])
                 population.append(modele_genetic.crossover(parent[0],parent[1])[1])
@@ -318,17 +293,25 @@ class VRP_GA():
                 list_fitness=[]
                 for chromosome in self.population:
                     list_fitness.append(self.modele_genetic.fitness(chromosome))
-                critere=sorted(list_fitness,reverse=True)[9]
+                critere=sorted(list_fitness,reverse=True)[self.num_pop-1]
                 for i in self.population:
-                    if self.modele_genetic.fitness(i)<critere:
+                    if self.modele_genetic.fitness(i)<=critere:
                         self.population.remove(i)
-            return self.population
+                for i in range(self.num_pop-curr_population):
+                    self.population.append(self.generate_chromosome(self.chromosome_modele))
 
+            return self.population
+        print("binary_tournement,num_pop:",len(self.population))
         parents=binary_tournement(self.modele_genetic,self.population,self.num_parent)
+        print("pop_crossover,num_pop:",len(self.population))
         self.population=pop_crossover(self.modele_genetic,parents,self.population)
+        print("pop_mutation,num_pop:",len(self.population))
         self.population=pop_mutation(self.modele_genetic,self.population,self.rate_mutation)
+        print("elimination,num_pop:",len(self.population))
         self.population,self.best_solution=eliminate(self.modele_genetic,self.population)
+        print("regeneration,num_pop:",len(self.population))
         self.population=regeneration(self)
+        print("End of evolution, fitness best solution:",self.modele_genetic.fitness(self.best_solution),'\n')
 
 
 
