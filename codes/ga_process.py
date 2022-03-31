@@ -50,14 +50,6 @@ constraints.drop(constraints[constraints['SDVRP_CONSTRAINT_CUSTOMER_CODE']=='139
 constraints.drop_duplicates(subset=['SDVRP_CONSTRAINT_CUSTOMER_CODE','SDVRP_CONSTRAINT_VEHICLE_CODE'],keep='first',inplace=True)
 constraints['SDVRP_CONSTRAINT_CUSTOMER_CODE']=constraints['SDVRP_CONSTRAINT_CUSTOMER_CODE'].astype(int)
 
-
-def u_find(cust_from,cust_to):
-    target=all_dist.loc[all_dist['CUSTOMER_CODE_FROM']==cust_from].loc[all_dist.loc[all_dist['CUSTOMER_CODE_FROM']==cust_from]['CUSTOMER_CODE_TO']==cust_to]
-    if len(target)>0:
-        return target['DISTANCE_KM'].iloc[0],target['TIME_DISTANCE_MIN'].iloc[0]
-    else: 
-        return -1,-1
-
 def u_find2(cust_from,cust_to):
     if cust_from==0 and cust_to==0:
         return 0,0
