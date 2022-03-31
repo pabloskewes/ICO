@@ -1,51 +1,5 @@
-from pickletools import read_uint1
-from pyexpat import version_info
-import random
-import statistics
-from turtle import pen
+
 from ga_process import*
-
-
-class solution():
-    def __init__(self):
-        self.obj=None
-        self.node_id_list = []
-        self.cost_of_distance=None
-        self.cost_of_time=None
-        self.fitness=None
-        self.route_list=[]
-        self.timetable_list=[]
-
-class Node():
-    def __init__(self):
-        self.id=0
-        self.x_coord=0
-        self.y_cooord=0
-        self.demand=0
-        self.depot_capacity=0
-        self.start_time=0
-        self.end_time=1440
-        self.service_time=0
-
-
-class Model():
-    def __init__(self):
-        self.best_solution=None
-        self.demand_dict={}
-        self.depot_dict={}
-        self.depot_id_list=[]
-        self.demand_id_list=[]
-        self.sol_list=[]
-        self.distance_matrix={}
-        self.time_matrix={}
-        self.number_of_demands=0
-        self.vehicle_cap=0
-        self.vehicle_speed=1
-        self.pc=0.5
-        self.pm=0.1
-        self.popsize=100
-        self.n_select=80
-        self.opt_type=1
 
 class Vehicle:
     def __init__(self,id,volume, weight, cost_km):
