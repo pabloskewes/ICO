@@ -5,3 +5,5 @@ codes/*.ipynb
 *.iml
 *.xml
 *checkpoint.csv
+*checkpoint.py
+*checkpoint.txt
