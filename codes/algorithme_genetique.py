@@ -1,15 +1,10 @@
-from selectors import EpollSelector
-from statistics import median
-from pickletools import read_uint1
-from pyexpat import version_info
 import random
 import statistics
-from turtle import pen
 import pandas as pd
 import os
 import sys 
 from math import sqrt
-
+import copy
 import numpy as np
 
 def sol_to_list_routes(sol):
@@ -21,7 +16,7 @@ def sol_to_list_routes(sol):
     return liste_divided
 
 
-def solution_checker(vrptw, solution, verbose=0):
+def solution_checker_ga(vrptw, solution, verbose=0):
     """
     Checks whether a solution is legitimate (i.e. meets all necessary constraints) under the context determined
     by a VRPTW instance.
@@ -100,10 +95,10 @@ def solution_checker(vrptw, solution, verbose=0):
             time_delivery += cust_plus_1.time_service
             # If the end of the delivery is after the end of the customer's time window, return False
             ##???
-            # if time_delivery > cust_plus_1.time_window[1]:
-            #     if verbose >= 1:
-            #         print(f"The vehicle gets there after the end of the time window ({time_delivery} > {cust_plus_1.time_window[1]})")
-            #     penalty+=penalty_time
+            if time_delivery > cust_plus_1.time_window[1]:
+                if verbose >= 1:
+                    print(f"The vehicle gets there after the end of the time window ({time_delivery} > {cust_plus_1.time_window[1]})")
+                penalty+=penalty_time
     return penalty
 
 
@@ -216,13 +211,17 @@ class Modele_genetic():
                 end=random.randrange(head,len(chromosome))
                 tmp=chromosome[head:end]
                 tmp.reverse()
-
                 result=chromosome[:head]+tmp+chromosome[end:]
+
                 return result
             elif dice>=0.5:
                 head=random.randrange(1,len(chromosome))
                 end=random.randrange(head,len(chromosome))
+                tmp=chromosome[head]
+                chromosome[head]=chromosome[end]
+                chromosome[end]=tmp
 
+                return chromosome
         else:
             return chromosome
 
@@ -325,9 +324,8 @@ class Modele_genetic():
 
 class VRP_GA():
 
-    def __init__(self,modele_genetic,num_generation,population,rate_mutation,num_parent,num_pop,chromosome_modele,vrptw):
+    def __init__(self,modele_genetic,population,rate_mutation,num_parent,num_pop,chromosome_modele,vrptw):
         self.modele_genetic = modele_genetic
-        self.num_generation = num_generation
         self.population = population
         self.rate_mutation = rate_mutation
         self.num_parent = num_parent
@@ -363,51 +361,11 @@ class VRP_GA():
             print('Solution:', sol_list)
             print('Total cost of solution:', total_cost)
 
-        if solution_checker(self.vrptw,solution)<0:
+        if solution_checker_ga(self.vrptw,solution)<0:
             total_cost += self.modele_genetic.penalty_wrong_chromosome
         else:
-            total_cost +=solution_checker(self.vrptw,solution)
+            total_cost +=solution_checker_ga(self.vrptw,solution)
         return -total_cost
-
-
-
-    def fitness2(self,solution, omega=1000, verbose=0):
-        """
-        returns the total cost of the solution given for the problem given omega is the weight of each vehicle,
-        1000 by default.
-        """
-        # data retrieval
-        nb_vehicle = solution.count(0)-1
-        distance_matrix = self.vrptw.distances
-        cost_km = self.vrptw.vehicle.cost_km
-        customers = self.vrptw.customers
-        
-        # solution given -> list of routes
-        sol_list = sol_to_list_routes(solution)
-        
-        # sum of the distance of each route
-        route_length = 0
-        for route in sol_list:
-            for i in range(len(route)-1):
-                route_length += distance_matrix[route[i]][route[i+1]]
-        
-        # total cost calculation
-        total_cost = omega*nb_vehicle + cost_km*route_length
-        if verbose >= 1:
-            print('Solution:', sol_list)
-            print('Total cost of solution:', total_cost)
-        
-        if solution_checker(self.vrptw,solution,1)<0:
-            total_cost += self.modele_genetic.penalty_wrong_chromosome
-        else:
-            total_cost +=solution_checker(self.vrptw,solution)
-        return -total_cost
-
-    def verification(self,chromosome):
-        if chromosome :
-            return True
-        else:
-            return False
 
     def generate_chromosome(self,chromosome_modele):
         chromosome=[]
@@ -419,7 +377,8 @@ class VRP_GA():
         random.shuffle(chromosome)
         chromosome.append(0)
         chromosome.insert(0,0)
-
+        chromosome = str(chromosome).replace('0, 0, 0', '0').replace('0, 0', '0')
+        chromosome = list(map(int, chromosome.strip('][').split(',')))
         return chromosome
 
     def initialize_population(self,num_pop,chromosome_modele):
@@ -446,14 +405,31 @@ class VRP_GA():
             return parents
 
         def pop_crossover(self,parents):# Realize mating between parents 
-            for i in range(len(parents)//2): 
+            for i in range(len(parents)//2-1): 
                 parent=random.sample(parents,2)
-                self.population.append(self.modele_genetic.crossover(parent[0],parent[1])[0])
-                self.population.append(self.modele_genetic.crossover(parent[0],parent[1])[1])
+                child1,child2=self.modele_genetic.crossover(parent[0],parent[1])
+                self.population.append(child1)
+                self.population.append(child2)
+                
+            parent=random.sample(parents,2)[0]
+            child1,child2=self.modele_genetic.crossover(parent,self.best_solution)
+            self.population.append(child1)
+            self.population.append(child2)
+
         
         def pop_mutation(self):# Realize mutation for all members in the population
-            for i in self.population:
-                i=self.modele_genetic.mutation(i,self.rate_mutation)
+            population_new = copy.deepcopy(self.population)
+            self.population=[]
+            for i in population_new:
+                self.population.append(self.modele_genetic.mutation(i,self.rate_mutation))
+
+        def polish(self):
+            population_new = copy.deepcopy(self.population)
+            self.population=[]
+            for i in population_new:
+                string = str(i).replace('0, 0, 0', '0').replace('0, 0', '0')
+                i = list(map(int, string.strip('][').split(',')))
+                self.population.append(i)
 
         def eliminate(self): # Eliminate the less strong half of the population
             list_fitness=[]
@@ -466,12 +442,9 @@ class VRP_GA():
                     self.best_solution=i
             while(len(self.population)>self.num_pop):
                 for i in self.population:
-                    if self.fitness(i)<critere:
-                        if random.random()<0.9:
-                            self.population.remove(i)
-                    else:
-                        if random.random()<0.2:
-                            self.population.remove(i)
+                    if self.fitness(i)<=critere:
+                        self.population.remove(i)
+
         def regeneration(self): # Generate new-borns to maintain the number of population remains stable
             curr_population=len(self.population)
             if self.num_pop>curr_population:
@@ -484,24 +457,15 @@ class VRP_GA():
                 critere=sorted(list_fitness,reverse=True)[self.num_pop-1]
                 for i in self.population:
                     if self.fitness(i)<=critere:
-                        
                         self.population.remove(i)
                 for i in range(self.num_pop-curr_population):
                     self.population.append(self.generate_chromosome(self.chromosome_modele))
         parents=binary_tournement(self)
         pop_crossover(self,parents)
         pop_mutation(self)
+        polish(self)
         eliminate(self)
         regeneration(self)
-
-        # eliminate(self)
-        # regeneration(self)
-        # pop_mutation(self)
-        # parents=binary_tournement(self)
-        # pop_crossover(self,parents)
-
-
-
  
 
 '''
@@ -659,9 +623,8 @@ def init_vrpga(vrptw):
     chromosome_modele=[i for i in range(1,11)]#à modifier
     len_chromosome=len(chromosome_modele)
 
-    num_generation=2
     population=[]
-    rate_mutation=0.3
+    rate_mutation=0.05
     num_parent=4
     num_pop=20
 
@@ -676,7 +639,7 @@ def init_vrpga(vrptw):
     # vrptw=VRPTW(load_customers(customers),load_vehicle(vehicles,vehicles['VEHICLE_CODE'].unique()))
 
     modele_genetic=Modele_genetic(chromosome_modele,len_chromosome,penalty_wrong_chromosome,penalty_car_road,penalty_late,penalty_volumn,penalty_weight,cost_per_car,cost_per_km)
-    vrp_ga=VRP_GA(modele_genetic,num_generation,population,rate_mutation,num_parent,num_pop,chromosome_modele,vrptw)
+    vrp_ga=VRP_GA(modele_genetic,population,rate_mutation,num_parent,num_pop,chromosome_modele,vrptw)
     vrp_ga.initialize_population(num_pop,chromosome_modele)
 
     return vrp_ga
