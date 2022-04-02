@@ -18,6 +18,7 @@ class TabuList:
     def contains(self, e):
         return e in self.tabu_list
 
+
 # TODO: ADD VERBOSITY LEVELS FOR DEBUGGING
 def tabu_method(vrptw, sol, lower_bound=100, max_iter=100, max_tabu=10, verbose=0):
     # initial setup

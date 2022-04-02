@@ -1,10 +1,12 @@
 from Test_GVNS_SAV import shaking
 from random import randint
 import random
+
 from solution import sol_to_list_routes, list_routes_to_sol, solution_checker, random_solution
+from metaheuristics.problem import Neighborhood, Solution
 
 
-class Neighborhood:
+class VRPTW_Neighborhood(Neighborhood):
     def __init__(self, vrptw):
         """
         Initializes a solution neighborhood manager of a VRPTW.
@@ -21,6 +23,10 @@ class Neighborhood:
         self.due_time = [customer.time_window[1] for customer in vrptw.customers]
         self.nb_functions = 11
         self.working_functions = [0, 1]
+
+    def initial_solution(self) -> Solution:
+        r_sol = VRPTW_Neighborhood.random_solution(nb_cust=len(self.vrptw.customers) - 1, force_check_vrptw=self.vrptw)
+        return r_sol
 
     def get_neighbor(self, solution, function_name=None, force_check=False, force_working_functions=True, verbose=0):
         """
@@ -101,13 +107,59 @@ class Neighborhood:
                 new_sol = []
         return new_sol
     
-    def __call__(self, solution, function_name=None, force_check=False, force_working_functions=True, verbose=0):
-        new_solution = self.get_neighbor(solution=solution,
-                                         function_name=function_name,
-                                         force_check=force_check,
-                                         force_working_functions=force_working_functions,
-                                         verbose=verbose)
-        return new_solution
+    # def __call__(self, solution, function_name=None, force_check=False, force_working_functions=True, verbose=0):
+    #     new_solution = self.get_neighbor(solution=solution,
+    #                                      function_name=function_name,
+    #                                      force_check=force_check,
+    #                                      force_working_functions=force_working_functions,
+    #                                      verbose=verbose)
+    #     return new_solution
+
+    @staticmethod
+    def random_solution(nb_cust, force_check_vrptw=None, verbose=0) -> Solution:
+        """
+        Generates a random pattern of numbers between 0 and nb_cust, in the form of a solution.
+        :param nb_cust: Number of customers wanted in the solution to be generated
+        :param force_check_vrptw: The default is None and does nothing. When delivering a VRPTW instance in this parameter,
+        the legitimacy of the generated solution will be checked (using 'check_solution') based on the context of
+        that particular VRPTW instance.
+        :param verbose: Level of verbosity desired
+        :return: Solution (or nothing)
+        """
+        numbers = list(range(1, nb_cust + 1))
+        random.shuffle(numbers)
+        proportion = random.choice([0.2, 0.3, 0.4])
+        n_0 = int(nb_cust * proportion)
+        zero_positions = []
+        zero_pos_candidates = list(range(1, nb_cust - 1))
+        for _ in range(n_0):
+            if verbose >= 2:
+                print('candidates:', zero_pos_candidates)
+            try:
+                zero_pos = random.choice(zero_pos_candidates)
+            except IndexError:
+                if verbose >= 1:
+                    print('A problem ocurred, generating new random solution')
+                return random_solution(nb_cust=nb_cust, force_check_vrptw=force_check_vrptw)
+            if verbose >= 2:
+                print('zero_pos chosen:', zero_pos)
+            zero_pos_candidates = list(set(zero_pos_candidates) - {zero_pos, zero_pos + 1, zero_pos - 1})
+            zero_positions.append(zero_pos)
+        for pos in zero_positions:
+            numbers.insert(pos, 0)
+        solution = [0] + numbers + [0]
+        string = str(solution).replace('0, 0, 0', '0').replace('0, 0', '0')
+        solution = list(map(int, string.strip('][').split(',')))
+        if force_check_vrptw:
+            check = solution_checker(vrptw=force_check_vrptw, solution=solution, verbose=0)
+            if not check:
+                if verbose >= 1:
+                    print('Solution generated is not legitimate, a new one will be created.')
+                return random_solution(nb_cust=nb_cust, force_check_vrptw=force_check_vrptw)
+            else:
+                if verbose >= 1:
+                    print(f'A legitimate solution was successfully generated:\n{solution}')
+        return solution
 
     def shuffle(self, solution=None, verbose=0):
         """
