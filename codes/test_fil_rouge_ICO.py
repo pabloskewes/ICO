@@ -1,42 +1,21 @@
 import pandas as pd
-import numpy as pt
+import numpy as np
+from pprint import pprint
+import matplotlib.pyplot as plt
 
-from ICO.codes.loading_models import load_solomon
-from solution import *
-from loading_models import *
+from loading_models import load_solomon
+from vrptw import VRPTW
+from solution import VRPTWSolution as Sol
 
-'''
-vrptw_test = create_vrptw(CUSTOMER_DIR, DEPOTS_DIR, VEHICLES_DIR, DEPOTS_DISTANCES_DIR, CUSTOMER_DISTANCES_DIR,
-                          route_id=2946091, MODE_VEHICLE="mean", vehicle_nb=None)
-sol = [*range(len(vrptw_test.customers))]+[0]
-nb_cust = len(vrptw_test.customers)
-print(sol)
-print(nb_cust)
-print(set(sol)!= set(range(nb_cust)))
-print(set(sol))
-print(set(range(nb_cust)))
-print(vrptw_test.customers)
-print(solution_checker(vrptw_test,sol))
-'''
+from metaheuristics.simulated_annealing import SimulatedAnnealing
 
-'''
-#customers = pd.read_excel(CUSTOMER_DIR)
-print(customers.shape)
-customers = customers[customers["ROUTE_ID"]==2946091]
-print(customers.shape)
-customers = customers.drop_duplicates(subset=["CUSTOMER_CODE"], keep='first')
-print(customers.shape)
-#print(customers["CUSTOMER_CODE"].value_counts)
-print(type(customers[customers["CUSTOMER_CODE"]==138157]["CUSTOMER_LATITUDE"]))
-print(customers[customers["CUSTOMER_CODE"]==138157]["CUSTOMER_LATITUDE"].shape)
-#print(customers[customers["CUSTOMER_CODE"]==138157]["CUSTOMER_LATITUDE"][0])
-print(customers[customers["CUSTOMER_CODE"]==138157]["CUSTOMER_LATITUDE"].iloc[0])
-#vrptw_solomon = load_solomon("R101.csv")
-'''
-
-'''
-customers_test = load_customers(customers, depots, route_id=2946091)
-print(customers_test[0])
-print(customers_test[13])
-
-'''
+vrptw_context = load_solomon('simple.csv', nb_cust=10, vehicle_speed=100)
+vrptw = VRPTW(vrptw_context)
+# print(vrptw.solution)
+rs = SimulatedAnnealing(t0=30)
+# # pprint(vrptw.neighborhood.context.customers)
+pprint(vrptw.neighborhood().customers)
+# sol = rs.fit_search(vrptw)
+# print(sol)
+# sol = Sol([0,1,2,3,0,4,5,6,0,7,8,9,10,0])
+# print(sol.context)

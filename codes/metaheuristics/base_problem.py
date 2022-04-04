@@ -5,11 +5,14 @@ class Context:
     pass
 
 
-class Solution(ABC):
+class ProblemComponent:
     def __init__(self):
         self.params = None
-        self.context = None
+        # self.context = None
         self.valid_params = []
+
+    # def set_context(self, context: Context):
+    #     self.context = context
 
     def set_params(self, **kwargs):
         for varname, value in kwargs.items():
@@ -17,23 +20,14 @@ class Solution(ABC):
                 raise Exception(f'{varname} is not a valid keyword argument')
             setattr(self, varname, value)
 
+
+class Solution(ABC, ProblemComponent):
     @abstractmethod
     def cost(self) -> float:
         """ The cost of a solution is defined """
 
 
-class Neighborhood(ABC):
-    def __init__(self):
-        self.params = None
-        self.context = None
-        self.valid_params = []
-
-    def set_params(self, **kwargs):
-        for varname, value in kwargs.items():
-            if varname not in self.valid_params:
-                raise Exception(f'{varname} is not a valid keyword argument')
-            setattr(self, varname, value)
-
+class Neighborhood(ABC, ProblemComponent):
     @abstractmethod
     def initial_solution(self) -> Solution:
         """ Defines an initial solution for use in the metaheuristic process """
@@ -46,26 +40,18 @@ class Neighborhood(ABC):
         return self.get_neighbor(solution)
 
 
-class SolutionSpace(ABC):
-    def __init__(self):
-        self.params = None
-        self.context = None
-        self.valid_params = []
-
-    def set_params(self, **kwargs):
-        for varname, value in kwargs.items():
-            if varname not in self.valid_params:
-                raise Exception(f'{varname} is not a valid keyword argument')
-            setattr(self, varname, value)
+class SolutionSpace(ABC, ProblemComponent):
+    @abstractmethod
+    def distance(self, s1: Solution, s2: Solution) -> float:
+        """ Defines the distance between 2 solutions in the solution space. """
 
 
 class Problem:
-    def __init__(self, context: Context, solution: Solution, neighborhood: Neighborhood, solution_space: SolutionSpace):
-        self.context = context
-        self.solution = solution
-        self.neighborhood = neighborhood
-        self.solution_space = solution_space
-        # context is set for every attribute
-        self.solution.context = context
-        self.neighborhood.context = context
-        self.solution_space.context = context
+    context = Context
+    solution = Solution
+    neighborhood = Neighborhood
+    solution_space = SolutionSpace
+
+
+
+

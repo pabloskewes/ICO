@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from problem import Problem
+from .base_problem import Solution, Neighborhood, SolutionSpace, Problem
+from copy import deepcopy
 
 
 class BaseMetaheuristic(ABC):
@@ -11,15 +12,40 @@ class BaseMetaheuristic(ABC):
         self.best_solution = None
         self.solution = None
         self.neighborhood = None
+        self.solution_space = None
+        self.problem = None
         self.cost_list = []
-        self.params = None
+        self.params = {'solution': dict(), 'neighborhood': dict(), 'solution_space': dict()}
 
     def fit(self, problem: Problem):
         """ Fits a metaheuristic algorithm to a specific problem """
-        solution = problem.solution
-        solution.set_params(self.params['solution'])
-        self.solution = problem.solution
-        self.neighborhood = problem.neighborhood
+        # problem_copy = deepcopy(problem)
+        # TODO: Determine if it's a good idea to give empty solution instance to base metaheuristic
+        context = problem.context
+
+        # instantiation of problem components
+        solution = problem.solution()
+        neighborhood = problem.neighborhood()
+        # solution_space = problem.solution_space()
+
+        # setting context in every problem component
+        # solution.set_context(context)
+        # neighborhood.set_context(context)
+        # solution_space.set_context(context)
+
+        # setting custom params in every problem component
+        if self.params is not None:
+            if self.params['solution'] is not None:
+                solution.set_params(self.params['solution'])
+            if self.params['neighborhood'] is not None:
+                neighborhood.set_params(self.params['neighborhood'])
+            # if self.params['solution_space'] is not None:
+                # solution_space.set_params(self.params['solution_space'])
+
+        # assigning instances created on attributes of the metaheuristic class
+        self.solution = solution
+        self.neighborhood = neighborhood
+        # self.solution_space = solution_space
         return self
 
     @abstractmethod
@@ -31,4 +57,5 @@ class BaseMetaheuristic(ABC):
         return self.fit(problem).search()
 
     def plot_evolution(self):
-        raise NotImplementedError
+        # raise NotImplementedError
+        pass

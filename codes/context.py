@@ -2,6 +2,8 @@ from dataclasses import dataclass, field
 from typing import List, Tuple
 import numpy as np
 
+from metaheuristics.base_problem import Context
+
 
 @dataclass(frozen=True)
 class Vehicle:
@@ -24,8 +26,8 @@ class Customer:
     time_service: float
 
 
-@dataclass(frozen=True, repr=False)
-class VRPTW:
+@dataclass(repr=False)
+class VRPTWContext(Context):
     """
     Vehicle Routing Problem Time Windows
     """
@@ -34,6 +36,7 @@ class VRPTW:
     time_matrix: np.array
     vehicle: Vehicle
     cust_codes: int
+
 
 
 
