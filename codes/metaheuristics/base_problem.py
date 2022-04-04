@@ -6,19 +6,28 @@ class Context:
 
 
 class ProblemComponent:
+    valid_params = None
+
     def __init__(self):
         self.params = None
-        # self.context = None
         self.valid_params = []
-
-    # def set_context(self, context: Context):
-    #     self.context = context
 
     def set_params(self, **kwargs):
         for varname, value in kwargs.items():
             if varname not in self.valid_params:
                 raise Exception(f'{varname} is not a valid keyword argument')
             setattr(self, varname, value)
+
+    @classmethod
+    def set_class_context(cls, context):
+        setattr(cls, 'context', context)
+
+    @classmethod
+    def set_class_params(cls, **kwargs):
+        for varname, value in kwargs.items():
+            if varname not in cls.valid_params:
+                raise Exception(f'{varname} is not a valid keyword argument')
+            setattr(cls, varname, value)
 
 
 class Solution(ABC, ProblemComponent):

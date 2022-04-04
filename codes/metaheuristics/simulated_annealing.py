@@ -6,12 +6,15 @@ from .base_metaheuristic import BaseMetaheuristic
 
 
 class SimulatedAnnealing(BaseMetaheuristic):
-    def __init__(self, t0, cooling_factor=0.9, max_cycle_iter=100, problem_params=None):
+    def __init__(self, t0, cooling_factor=0.9, max_cycle_iter=100,
+                 solution_params=None, neighborhood_params=None, solution_space_params=None):
         super().__init__()
         self.t0 = t0
         self.cooling_factor = cooling_factor
         self.max_cycle_iter = max_cycle_iter
-        self.params = problem_params
+        self.params = {'solution': solution_params,
+                       'neighborhood': neighborhood_params,
+                       'solution_space': solution_space_params}
 
     def search(self) -> Solution:
         # initial setup

@@ -10,6 +10,7 @@ class VRPTW(Problem):
 
     def __init__(self, context):
         self.context = context
+        VRPTW.solution.set_class_context(context)
 
 
 

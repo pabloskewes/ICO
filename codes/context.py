@@ -35,7 +35,7 @@ class VRPTWContext(Context):
     distances: np.array
     time_matrix: np.array
     vehicle: Vehicle
-    cust_codes: int
+    cust_codes: dict[int, int]
 
 
 

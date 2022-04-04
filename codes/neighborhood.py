@@ -6,12 +6,13 @@ from solution import VRPTWSolution as Sol
 from metaheuristics.base_problem import Neighborhood, Solution
 
 
-class VRPTWNeighborhood(Neighborhood, VRPTWContext):
-    def __init__(self):
+class VRPTWNeighborhood(Neighborhood):
+    def __init__(self, context: VRPTWContext = None):
         """
         Initializes a solution neighborhood manager of a VRPTW.
         """
         super().__init__()
+        self.context = context
         self.verbose = 0
         self.init_sol = 'random'
         self.valid_params = ['init_sol', 'verbose']
@@ -67,8 +68,10 @@ class VRPTWNeighborhood(Neighborhood, VRPTWContext):
             numbers.insert(pos, 0)
         solution = [0] + numbers + [0]
         string = str(solution).replace('0, 0, 0', '0').replace('0, 0', '0')
-        print(list(map(int, string.strip('][').split(','))))
-        solution = Sol(list(map(int, string.strip('][').split(','))))
+        code_solution = list(map(int, string.strip('][').split(',')))
+        if code_solution[-1] != 0:
+            code_solution.append(0)
+        solution = Sol(code_solution)
         if force_check_vrptw:
             check = solution.checker()
             if not check:

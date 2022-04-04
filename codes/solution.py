@@ -1,4 +1,5 @@
 from typing import List, Set, Union
+from pprint import pformat
 from metaheuristics.base_problem import Solution
 from context import VRPTWContext
 
@@ -24,11 +25,13 @@ def list_routes_to_sol(sol_list):
     return final_sol + [0]
 
 
-class VRPTWSolution(Solution, VRPTWContext):
+class VRPTWSolution(Solution):
+    context: VRPTWContext = None
+    omega: int = 1000
+    verbose: int = 0
+
     def __init__(self, routes: Routes = None):
         super().__init__()
-        self.omega = 1000
-        self.verbose = 0
         if routes is None:
             self.routes = None
             self.sol_code = None
@@ -42,6 +45,9 @@ class VRPTWSolution(Solution, VRPTWContext):
             raise Exception('Not a valid form of solution')
         self.set_routes = set(tuple(i) for i in self.routes) if routes is not None else None
         self.valid_params = ['omega', 'verbose']
+
+    def __str__(self):
+        return pformat(self.sol_code)
 
     def cost(self) -> float:
         """
@@ -73,7 +79,7 @@ class VRPTWSolution(Solution, VRPTWContext):
         :return: bool that indicates whether the input 'solution' does visit all the customers, and if all customers are
         visited exactly once.
         """
-        nb_cust = len(self.customers)  # Number of customers (depot included)
+        nb_cust = len(self.context.customers)  # Number of customers (depot included)
         # If all customers are not visited, return False
         if set(self.sol_code) != set(range(nb_cust)):
             if self.verbose >= 1:
@@ -153,8 +159,11 @@ class VRPTWSolution(Solution, VRPTWContext):
         return customers_check and route_check
 
     def __eq__(self, other):
-        assert isinstance(other, VRPTWSolution), f"Cannot compare VRPTWSolution type with {other} of type {type(other)}"
-        return self.set_routes == other.set_routes
+        if isinstance(other, VRPTWSolution):
+            assert isinstance(other, VRPTWSolution), f"Cannot compare VRPTWSolution type with {other} of type {type(other)}"
+            return self.set_routes == other.set_routes
+        else:
+            return False
 
     def __le__(self, other):
         assert isinstance(other, VRPTWSolution), f"Cannot compare VRPTWSolution type with {other} of type {type(other)}"

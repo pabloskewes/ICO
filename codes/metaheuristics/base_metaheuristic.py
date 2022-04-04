@@ -10,7 +10,7 @@ class BaseMetaheuristic(ABC):
     """
     def __init__(self):
         self.best_solution = None
-        self.solution = None
+        self.Solution = None
         self.neighborhood = None
         self.solution_space = None
         self.problem = None
@@ -24,9 +24,10 @@ class BaseMetaheuristic(ABC):
         context = problem.context
 
         # instantiation of problem components
-        solution = problem.solution()
-        neighborhood = problem.neighborhood()
-        # solution_space = problem.solution_space()
+        solution_class = problem.solution
+        setattr(solution_class, 'context', context)
+        neighborhood = problem.neighborhood(context=context)
+        # solution_space = problem.solution_space(context=context)
 
         # setting context in every problem component
         # solution.set_context(context)
@@ -36,23 +37,24 @@ class BaseMetaheuristic(ABC):
         # setting custom params in every problem component
         if self.params is not None:
             if self.params['solution'] is not None:
-                solution.set_params(self.params['solution'])
+                # solution.set_params(self.params['solution'])
+                solution_class.set_class_params(self.params['solution'])
             if self.params['neighborhood'] is not None:
-                neighborhood.set_params(self.params['neighborhood'])
+                neighborhood.set_params(**self.params['neighborhood'])
             # if self.params['solution_space'] is not None:
                 # solution_space.set_params(self.params['solution_space'])
 
         # assigning instances created on attributes of the metaheuristic class
-        self.solution = solution
+        self.Solution = solution_class
         self.neighborhood = neighborhood
         # self.solution_space = solution_space
         return self
 
     @abstractmethod
-    def search(self):
+    def search(self) -> Solution:
         """ Performs metaheuristic search """
 
-    def fit_search(self, problem: Problem):
+    def fit_search(self, problem: Problem) -> Solution:
         """ Fits and search """
         return self.fit(problem).search()
 
