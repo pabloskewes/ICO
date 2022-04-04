@@ -508,11 +508,11 @@ def init_vrpga(vrptw):
 
     penalty_wrong_chromosome=float('inf')
     penalty_car_road=1000
-    penalty_late=100
-    penalty_volumn=10
-    penalty_weight=10
-    cost_per_car=500
-    cost_per_km=10
+    penalty_late=40000
+    penalty_volumn=20
+    penalty_weight=100
+    cost_per_car=1000
+    cost_per_km=1
 
     # vrptw=VRPTW(load_customers(customers),load_vehicle(vehicles,vehicles['VEHICLE_CODE'].unique()))
 
