@@ -7,3 +7,5 @@ codes/*.ipynb
 *checkpoint.csv
 *checkpoint.py
 *checkpoint.txt
+*.pyc
+codes/metaheuristics/__pycache__/
