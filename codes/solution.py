@@ -47,7 +47,7 @@ class VRPTWSolution(Solution):
             raise Exception('Not a valid form of solution')
         self.set_routes = set(tuple(i) for i in self.routes) if routes is not None else None
 
-        self.valid_params = ['omega', 'verbose']
+        self.valid_params = ['verbose']
         if params is not None:
             self.set_params(params)
 

@@ -3,6 +3,7 @@ import random
 
 from solution import VRPTWSolution as Sol
 from context import VRPTWContext
+from solution import sol_to_list_routes
 from metaheuristics.base_problem import Neighborhood, Solution
 
 
@@ -17,8 +18,10 @@ class VRPTWNeighborhood(Neighborhood):
 
         self.verbose = 0
         self.init_sol = 'random'
+        self.mode = 'random'
+        self.use_methods = ['shuffle','switch_two_consecutive_customers']
 
-        self.valid_params = ['init_sol', 'verbose']
+        self.valid_params = ['init_sol', 'verbose', 'mode', 'use_methods']
         if params is not None:
             self.set_params(params)
 
@@ -38,7 +41,7 @@ class VRPTWNeighborhood(Neighborhood):
     def get_neighbor(self, solution) -> Solution:
         new_sol = self.shuffle(solution)
         return new_sol
-    
+
     @staticmethod
     def random_solution(nb_cust, force_check_vrptw=None, verbose=0) -> Solution:
         """
@@ -99,7 +102,89 @@ class VRPTWNeighborhood(Neighborhood):
                                      force_check_vrptw=self.context, verbose=self.verbose)
         return r_sol
 
+    def switch_two_consecutive_customers(self, solution):
+        """
+        Switches two random consecutive customers in the solution_code (except the first,
+        second to last and last customers), then returns new solution
+        :param : solution
+        """
+        sol_code = solution.sol_code
+        is_sol = False
+        breaker = 0  # in case there are no possible neighbors that are solutions with this function
+        while (not is_sol) or (breaker < 100):
+            breaker += 1
+            i = random.randint(1, len(sol_code)-3)
+            sol_code[i], sol_code[i+1] = sol_code[i+1], sol_code[i]
+            solution_found = Sol(sol_code)
+            is_sol = all((solution_found.route_checker(route) for route in solution_found.routes))
+        if (not is_sol) and (self.verbose > 1):
+            print("No neighbor found that is a solution")
+            return solution
+        neighbor = Sol(sol_code)
+        return neighbor
 
+    def switch_two_random_customers(self, solution):
+        """
+        Switches two random random customers in the solution_code (except the first,
+        second to last and last customers), then returns new solution
+        :param : solution
+        """
+        sol_code = solution.sol_code
+        is_sol = False
+        breaker = 0  # in case there are no possible neighbors that are solutions with this function
+        while (not is_sol) or (breaker < 100):
+            breaker += 1
+            i = random.randint(1, len(sol_code)-3)
+            j = random.randint(1, len(sol_code) - 3)
+            sol_code[i], sol_code[j] = sol_code[j], sol_code[i]
+            solution_found = Sol(sol_code)
+            is_sol = all((solution_found.route_checker(route) for route in solution_found.routes))
+        if (not is_sol) and (self.verbose > 1):
+            print("No neighbor found that is a solution")
+            return solution
+        neighbor = Sol(sol_code)
+        return neighbor
 
+    def switch_three_consecutive_customers(self, solution):
+        """
+        Switches two random consecutive customers in the solution_code (except the first,
+        second to last and last customers), then returns new solution
+        :param : solution
+        """
+        sol_code = solution.sol_code
+        is_sol = False
+        breaker = 0  # in case there are no possible neighbors that are solutions with this function
+        while (not is_sol) or (breaker < 100):
+            breaker += 1
+            i = random.randint(1, len(sol_code)-4)
+            sol_code[i], sol_code[i+1], sol_code[i+2] = sol_code[i+2], sol_code[i], sol_code[i+1]
+            solution_found = Sol(sol_code)
+            is_sol = all((solution_found.route_checker(route) for route in solution_found.routes))
+        if (not is_sol) and (self.verbose > 1):
+            print("No neighbor found that is a solution")
+            return solution
+        neighbor = Sol(sol_code)
+        return neighbor
 
-
+    def switch_three_random_customers(self, solution):
+        """
+        Switches two random consecutive customers in the solution_code (except the first,
+        second to last and last customers), then returns new solution
+        :param : solution
+        """
+        sol_code = solution.sol_code
+        is_sol = False
+        breaker = 0  # in case there are no possible neighbors that are solutions with this function
+        while (not is_sol) or (breaker < 100):
+            breaker += 1
+            i = random.randint(1, len(sol_code)-4)
+            j = random.randint(1, len(sol_code) - 4)
+            k = random.randint(1, len(sol_code) - 4)
+            sol_code[i], sol_code[j], sol_code[k] = sol_code[k], sol_code[i], sol_code[j]
+            solution_found = Sol(sol_code)
+            is_sol = all((solution_found.route_checker(route) for route in solution_found.routes))
+        if (not is_sol) and (self.verbose > 1):
+            print("No neighbor found that is a solution")
+            return solution
+        neighbor = Sol(sol_code)
+        return neighbor
