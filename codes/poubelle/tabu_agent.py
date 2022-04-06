@@ -1,5 +1,5 @@
 from mesa import Agent, Model
-from tabou import tabu_method
+from FilRouge.ICO.codes.poubelle.tabou import tabu_method
 from recuit_simule import simulated_annealing
 from ga import *
 

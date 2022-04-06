@@ -4,7 +4,7 @@ import os
 import sys
 from math import sqrt
 
-from vrptw import Vehicle, Customer, VRPTW
+from context import Vehicle, Customer, VRPTWContext
 
 ROOT_DIR = os.path.abspath('..')
 DATA_DIR = os.path.join(ROOT_DIR, 'data')
@@ -118,7 +118,7 @@ def create_vrptw(CUSTOMER_DIR, DEPOTS_DIR, VEHICLES_DIR, DEPOTS_DISTANCES_DIR, C
     time_matrix, distances, cust_codes = matrix_generator(depots_dist, customers_dist, route_id)
     vehicle = load_vehicle(vehicles, MODE_VEHICLE="mean", vehicle_nb=None)
     # vrptw = VRPTW(customers, distances, time_matrix, vehicle, cust_codes)
-    vrptw = VRPTW(customers, distances, time_matrix, vehicle)
+    vrptw = VRPTWContext(customers, distances, time_matrix, vehicle)
     return vrptw
 
 
@@ -155,7 +155,7 @@ def load_solomon(filename, nb_cust=None, vehicle_speed=30):
             x2, y2 = df.at[j, 'XCOORD'], df.at[j, 'YCOORD']
             distances[i,j] = sqrt( (x2 - x1)**2 + (y2 - y1)**2 )
     time_matrix = (distances / vehicle_speed) * 60
-    vrptw = VRPTW(customers=customers,
+    vrptw = VRPTWContext(customers=customers,
                   distances=distances,
                   time_matrix=time_matrix,
                   vehicle=vehicle,
