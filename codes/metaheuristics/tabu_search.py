@@ -34,7 +34,7 @@ class TabuSearch(BaseMetaheuristic):
         self.max_iter = max_iter
         self.max_tabu = max_tabu
         
-        self.params = {'solution' : solution_params, 'neighborhood' : neighborhood, 
+        self.params = {'solution' : solution_params, 'neighborhood' : neighborhood_params, 
                        'solution_space' : solution_space_params}
         
     def search(self) -> Solution:
