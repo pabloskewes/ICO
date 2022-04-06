@@ -7,7 +7,7 @@ from math import sqrt
 import copy
 import numpy as np
 from .base_metaheuristic import BaseMetaheuristic
-from .base_problem import Problem
+from .base_problem import Problem, Context
 
 # from solution import sol_to_list_routes
 '''
@@ -31,106 +31,21 @@ DD              code bloques for the simple.ccv
 '''
 
 
-# DD
-def load_solomon(filename, nb_cust=None, vehicle_speed=30):
-    ROOT_DIR = os.path.abspath('../')
-    DATA_DIR = os.path.join(ROOT_DIR, 'data_solomon')
-    DIR = os.path.join(DATA_DIR, filename)
-    df = pd.read_csv("D:\Git\dir\ICO_COPY\data_solomon\simple.csv")
-
-    vehicle = Vehicle(volume=sys.maxsize,
-                      weight=df.at[0, 'CAPACITY'],
-                      cost_km=1)
-    df = df.drop('CAPACITY', axis=1)
-    if nb_cust is None:
-        nb_cust = len(df)
-    else:
-        df.drop(range(nb_cust + 1, len(df)), axis=0, inplace=True)
-    n = len(df)
-    customers = []
-    for k in range(n):
-        cust = Customer(identifier=k,
-                        code_customer=k,
-                        latitude=df.at[k, 'XCOORD'],
-                        longitude=df.at[k, 'YCOORD'],
-                        time_window=(df.at[k, 'READYTIME'], df.at[k, 'DUETIME']),
-                        request_volume=0,
-                        request_weight=df.at[k, 'DEMAND'],
-                        time_service=df.at[k, 'SERVICETIME'])
-        customers.append(cust)
-    cust_codes = {i: i for i in range(n)}
-    distances = np.zeros((n, n))
-    for i in range(n):
-        for j in range(n):
-            x1, y1 = df.at[i, 'XCOORD'], df.at[i, 'YCOORD']
-            x2, y2 = df.at[j, 'XCOORD'], df.at[j, 'YCOORD']
-            distances[i, j] = sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
-    time_matrix = (distances / vehicle_speed) * 60
-    vrptw = VRPTW(customers=customers,
-                  distances=distances,
-                  time_matrix=time_matrix,
-                  vehicle=vehicle,
-                  cust_codes=cust_codes)
-    return vrptw
-
-
-# CC
-class Vehicle:
-    def __init__(self, volume, weight, cost_km):
-        self.volume = volume
-        self.weight = weight
-        self.cost_km = cost_km
-
-    def __str__(self):
-        return f'Vehicle of volume {self.volume}, weight {self.weight}'
-
-
-class Customer:
-    def __init__(self, identifier, code_customer, latitude, longitude, time_window, request_volume, request_weight,
-                 time_service):
-        self.id = identifier
-        self.code_customer = code_customer
-        self.latitude = latitude
-        self.longitude = longitude
-        self.time_window = time_window
-        self.request_volume = request_volume
-        self.request_weight = request_weight
-        self.time_service = time_service
-
-    def __str__(self):
-        return f'This customer\'s id is {self.id}, its code_customer is {self.code_customer}, ' \
-               f'its latitude is {self.latitude}, its longitude is {self.longitude}, ' \
-               f'its time window is {self.time_window}, its volume requested is {self.request_volume},' \
-               f'its weight requested is {self.request_weight}, its time service is {self.time_service}.'
-
-
-class VRPTW:
-    """
-    Vehicle Routing Problem Time Windows
-    """
-
-    def __init__(self, customers, distances, time_matrix, vehicle, cust_codes):
-        self.customers = customers
-        self.distances = distances
-        self.time_matrix = time_matrix
-        self.vehicle = vehicle
-
-    def __str__(self):
-        return f'Here are the customers : {self.customers}'
-
-
 # MM
 class GeneticAlgorithm(BaseMetaheuristic):
-    def __init__(self, modele_chromosome=[i for i in range(1, 11)], num_parent=4, num_population=20, rate_mutation=0.2,
-                 population=[]):
+    context: Context = None
+
+    def __init__(self, modele_chromosome=None, num_parent=4, num_population=20, rate_mutation=0.2, population=None,
+                 solution_params=None, neighborhood_params=None, solution_space_params=None):
         super().__init__()
+
         # self.best_solution=[0, 5, 3, 7, 8, 9, 6, 4, 10, 1, 2, 0]
         self.best_solution = None
-        self.population = population
+        self.population = [] if population is None else population
         self.rate_mutation = rate_mutation
         self.num_parent = num_parent
         self.num_population = num_population
-        self.modele_chromosome = modele_chromosome
+        self.modele_chromosome = [i for i in range(1, 11)] if modele_chromosome is None else modele_chromosome
         self.best_solutions = {}
         self.dict_fitness = {}
         # self.__fitness=__fitness#cost_general+penalty_ga
@@ -144,6 +59,10 @@ class GeneticAlgorithm(BaseMetaheuristic):
         self.cost_per_car = 1000
         self.cost_per_km = 1
         self.dict_fitness = {}
+
+        self.params = {'solution': solution_params,
+                       'neighborhood': neighborhood_params,
+                       'solution_space': solution_space_params}
 
     def __get_best_solution(self):
         if len(self.best_solutions) == 0:
@@ -227,8 +146,8 @@ class GeneticAlgorithm(BaseMetaheuristic):
         """
         # data retrieval
         nb_vehicle = solution.count(0) - 1
-        distance_matrix = self.problem.distances
-        cost_km = self.problem.vehicle.cost_km
+        distance_matrix = self.context.distances
+        cost_km = self.context.vehicle.cost_km
 
         # solution given -> list of routes
         sol_list = sol_to_list_routes(solution)
@@ -244,10 +163,10 @@ class GeneticAlgorithm(BaseMetaheuristic):
         if verbose >= 1:
             print('Solution:', sol_list)
             print('Total cost of solution:', total_cost)
-        if solution_checker_ga(self.problem, solution) < 0:
+        if solution_checker_ga(self.context, solution) < 0:
             total_cost += self.penalty_wrong_chromosome
         else:
-            total_cost += solution_checker_ga(self.problem, solution)
+            total_cost += solution_checker_ga(self.context, solution)
         return -total_cost
 
     def __generate_chromosome(self, modele_chromosome):
