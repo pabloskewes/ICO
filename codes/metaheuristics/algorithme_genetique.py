@@ -34,12 +34,10 @@ LOG              log of the modification of the main structure
 #TDL:
 ##sol_to_list_routes ,solution_checker_ga :__fitness and solution_check_ga
 #solution.cost(), solution_checker()
-# fitness() use cost
-
+# fitness() plays with cost
 
 # ga=GeneticAlgorithm()
 # ga.context=load_solomon()
-
 
 '''
 LOG
@@ -48,7 +46,6 @@ LOG
 2.      The __chromosome_crossover should be implemented in the outside, but i don't know where for now
 3.      Realize the solution_checker_GA in the cost() like cost_ga() or an override of cost(), or an override of the solution_check()
 '''
-
 
 class GeneticAlgorithm(BaseMetaheuristic):
     def __init__(self,solution_initial, num_parent=4, num_population=20, rate_mutation=0.2,
@@ -64,17 +61,8 @@ class GeneticAlgorithm(BaseMetaheuristic):
         self.rate_mutation = rate_mutation
         self.num_parent = num_parent
         self.num_population = num_population
-
         self.best_solutions = {}
-        self.dict_fitness = {}
 
-        # for i in population:
-            # list_fitness.append(i.cost())
-        # 
-        # #cost_general+penalty_ga
-        #       parameters below should be the attributes of a context instance
-        # parametres below are defined by a certain context so they should be passed from a context instance.
-        
 #KK
     def __get_best_solution(self):
         if self.best_solution:
@@ -112,7 +100,6 @@ class GeneticAlgorithm(BaseMetaheuristic):
 
 #AA
     def __chromosome_crossover(self, parent1, parent2): #what about cross-mute?
-        
 
         def process_gen_repeated(copy_child1, copy_child2):
             count1 = 0
@@ -150,43 +137,24 @@ class GeneticAlgorithm(BaseMetaheuristic):
         _, N, _ = self.get_problem_components()
         init_sol = N.initial_solution()
         self.best_solution=init_sol
-        self.evolution_best_solution.append(self.best_solution.cost())
+        self.evolution_best_solution.append(self.__fitness(self.best_solution))
 
         for i in range(200):
             self.__evolution()
 
-        self.evolution_best_solution.append(self.best_solution.cost())
+        self.evolution_best_solution.append(self.__fitness(self.best_solution))
         return self.best_solution
 
-    # def __fitness(self, solution, omega=1000, verbose=0):
-    #     """
-    #     returns the total cost of the solution given for the context given omega is the weight of each vehicle,
-    #     1000 by default.
-    #     """
-    #     # data retrieval
-    #     nb_vehicle = solution.count(0) - 1
-    #     distance_matrix = self.context.distances
-    #     cost_km = self.context.vehicle.cost_km
-
-    #     # solution given -> list of routes
-    #     sol_list = sol_to_list_routes(solution)
-
-    #     # sum of the distance of each route
-    #     route_length = 0
-    #     for route in sol_list:
-    #         for i in range(len(route) - 1):
-    #             route_length += distance_matrix[route[i]][route[i + 1]]
-
-    #     # total cost calculation
-    #     total_cost = omega * nb_vehicle + cost_km * route_length
-    #     if verbose >= 1:
-    #         print('Solution:', sol_list)
-    #         print('Total cost of solution:', total_cost)
-    #     if solution_checker_ga(self.context, solution) < 0:
-    #         total_cost += self.penalty_wrong_chromosome
-    #     else:
-    #         total_cost += solution_checker_ga(self.context, solution)
-    #     return -total_cost
+    def __fitness(self, solution):
+        """
+        is the fitness always has the same definition with the cost of the solution?
+        """
+        
+        if rout(self.context, solution) < 0:
+            total_cost += self.penalty_wrong_chromosome
+        else:
+            total_cost += solution_checker_ga(self.context, solution)
+        return -total_cost
 #AA
     def __generate_chromosome(self, modele_chromosome):
         chromosome = []
@@ -216,7 +184,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
             parents = []
             for i in range(self.num_parent):
                 candidate = random.sample(self.population, 2)
-                if candidate[0].cost() > candidate[1].cost():
+                if self.__fitness(candidate[0]) > self.__fitness(candidate[1]):
                     if random.random() < 0.95:
                         parents.append(candidate[0])
                     else:
@@ -269,25 +237,24 @@ class GeneticAlgorithm(BaseMetaheuristic):
         #         self.population.append(i)
 
 
-
 #KKCOMPLET
 #log: add best_solutions into the attributs of the GA class
 
         def __eliminate(self):  # Eliminate the less strong half of the population
             list_fitness = []
             for chromosome in self.population:
-                list_fitness.append(chromosome.cost())
+                list_fitness.append(self.__fitness(chromosome))
             critere = statistics.median(list_fitness)
             best_performance = max(list_fitness)
 
             for chromosome in self.population:
-                if chromosome.cost() == best_performance:
+                if self.__fitness(chromosome) == best_performance:
                     self.best_solution = chromosome
                     if str(chromosome) not in self.best_solutions:
-                        self.best_solutions[str(chromosome)] = chromosome.cost()
+                        self.best_solutions[str(chromosome)] = self.__fitness(chromosome)
             while (len(self.population) > self.num_population):
                 for chromosome in self.population:
-                    if chromosome.cost() <= critere:
+                    if self.__fitness(chromosome)<= critere:
                         self.population.remove(chromosome)
 
 #KKCOMPLET
@@ -301,13 +268,13 @@ class GeneticAlgorithm(BaseMetaheuristic):
             else:
                 list_fitness = []
                 for chromosome in self.population:
-                    list_fitness.append(chromosome.cost())
+                    list_fitness.append(self.__fitness(chromosome))
 
                 critere = sorted(list_fitness, reverse=True)[self.num_population - 1]
 
                 for chromosome in self.population:
-                    if chromosome.cost() <= critere:
-                        self.population.remove(i)
+                    if self.__fitness(chromosome) <= critere:
+                        self.population.remove(chromosome)
 
                 for _ in range(self.num_population - len(self.population)):
                     self.population.append(self.__generate_chromosome(self.modele_chromosome))
@@ -318,87 +285,3 @@ class GeneticAlgorithm(BaseMetaheuristic):
         # __optimize(self)
         __eliminate(self)
         __regeneration(self)
-
-
-# # solution checker belongs to the proble classes
-# def solution_checker_ga(vrptw, solution, verbose=0):
-#     """
-#     Checks whether a solution is legitimate (i.e. meets all necessary constraints) under the context determined
-#     by a VRPTW instance.
-#     :param vrptw: VRPTW instance determining the context and rescrictions
-#     :param solution: Solution to be verified
-#     :param verbose: Level of verbosity desired
-#     :return: bool that indicates whether the input 'solution' is a solution or not.
-#     """
-#     penalty = 0
-#     penalty_weight = 100
-#     penalty_volumn = 20
-#     penalty_time = 40000
-
-#     nb_cust = len(vrptw.customers)  # Number of customers (depot included)
-#     # If all customers are not visited, return False
-#     if set(solution) != set(range(nb_cust)):
-#         if verbose >= 1:
-#             print("All customers are not visited.")
-#         return -1
-#     # If some nodes (customers) are visited more than once (except for the depot), return False
-#     nb_depot = solution.count(0)
-#     if len(solution) != nb_depot + nb_cust - 1:
-#         if verbose >= 1:
-#             print("There are customers visited more than once.")
-#         return -1
-#     if solution[0] != 0 or solution[-1] != 0:
-#         if verbose >= 1:
-#             print("Starting and ending ilegal")
-#         return -1
-#     vehicle = vrptw.vehicle
-#     volume, weight, cost_km = vehicle.volume, vehicle.weight, vehicle.cost_km
-#     sol_routes = sol_to_list_routes(solution)
-#     time_matrix = vrptw.time_matrix
-#     customers = vrptw.customers
-#     for route in sol_routes:
-#         if verbose >= 2:
-#             print(f'Working on route: {route}')
-#         weight_cust, volume_cust = 0, 0
-#         for identifier in route:
-#             cust = customers[identifier]
-#             if verbose >= 3:
-#                 print(cust)
-#             weight_cust += cust.request_weight
-#             volume_cust += cust.request_volume
-#             if verbose >= 2:
-#                 print(f'weight_cust is {weight_cust} and volume_cust is {volume_cust}')
-#         if verbose >= 2:
-#             print(weight, volume, weight_cust, volume_cust)
-#         # If the weight (or volume) capacity of the vehicle is < to the total weight asked by customers, return False
-#         if weight < weight_cust or volume < volume_cust:
-#             if verbose >= 1:
-#                 print(
-#                     f"The weight (or volume) capacity of the vehicle ({weight}) is < to the total weight asked by customers ({identifier}) on the road ({weight_cust}):")
-#             penalty += penalty_weight
-#         time_delivery = 0
-#         for index, identifier in enumerate(route[:-1]):
-#             if verbose >= 2:
-#                 print(f'index={index}, id={identifier}')
-#             cust = customers[identifier]
-#             cust_plus_1 = customers[route[index + 1]]
-#             # time_delivery += time_matrix[cust.code_customer,cust_plus_1.code_customer]
-#             time_delivery += time_matrix[cust.id, cust_plus_1.id]
-#             # If the vehicle gets there befor the beginning of the customer's time window, return False
-#             if time_delivery > cust_plus_1.time_window[1]:
-#                 penalty += penalty_time
-#                 if verbose >= 1:
-#                     print(
-#                         f"The vehicle is getting to late ({time_delivery}): customers' ({cust_plus_1.id}) time window's closed {cust_plus_1.time_window[1]}")
-#             if time_delivery < cust_plus_1.time_window[0]:
-#                 # waiting for time window to open
-#                 time_delivery = cust_plus_1.time_window[0]
-#             time_delivery += cust_plus_1.time_service
-#             # If the end of the delivery is after the end of the customer's time window, return False
-#             ##???
-#             if time_delivery > cust_plus_1.time_window[1]:
-#                 if verbose >= 1:
-#                     print(
-#                         f"The vehicle gets there after the end of the time window ({time_delivery} > {cust_plus_1.time_window[1]})")
-#                 penalty += penalty_time
-#     return penalty
