@@ -1,21 +1,26 @@
-from random import randint
+from typing import Optional, Dict
 import random
 
-from context import VRPTWContext
 from solution import VRPTWSolution as Sol
+from context import VRPTWContext
 from metaheuristics.base_problem import Neighborhood, Solution
 
 
 class VRPTWNeighborhood(Neighborhood):
-    def __init__(self, context: VRPTWContext = None):
+    context: VRPTWContext = None
+
+    def __init__(self, params: Optional[Dict] = None):
         """
         Initializes a solution neighborhood manager of a VRPTW.
         """
         super().__init__()
-        self.context = context
+
         self.verbose = 0
         self.init_sol = 'random'
+
         self.valid_params = ['init_sol', 'verbose']
+        if params is not None:
+            self.set_params(params)
 
     def __str__(self):
         return f"Neighborhood of params: verbose={self.verbose}, init_sol={self.init_sol}"

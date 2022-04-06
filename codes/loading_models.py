@@ -5,7 +5,6 @@ import sys
 from math import sqrt
 
 from context import Vehicle, Customer, VRPTWContext
-from vrptw import VRPTW
 
 ROOT_DIR = os.path.abspath('..')
 DATA_DIR = os.path.join(ROOT_DIR, 'data')

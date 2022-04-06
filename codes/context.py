@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 import numpy as np
 
 from metaheuristics.base_problem import Context
@@ -35,7 +35,7 @@ class VRPTWContext(Context):
     distances: np.array
     time_matrix: np.array
     vehicle: Vehicle
-    cust_codes: dict[int, int]
+    cust_codes: Dict[int, int]
 
 
 

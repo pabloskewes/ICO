@@ -1,4 +1,4 @@
-from typing import List, Set, Union
+from typing import List, Set, Union, Optional, Dict
 from pprint import pformat
 from metaheuristics.base_problem import Solution
 from context import VRPTWContext
@@ -28,10 +28,12 @@ def list_routes_to_sol(sol_list):
 class VRPTWSolution(Solution):
     context: VRPTWContext = None
     omega: int = 1000
-    verbose: int = 0
+    static_valid_params = ['omega']
 
-    def __init__(self, routes: Routes = None):
+    def __init__(self, routes: Routes = None, params: Optional[Dict] = None):
         super().__init__()
+
+        self.verbose = 0
         if routes is None:
             self.routes = None
             self.sol_code = None
@@ -44,9 +46,12 @@ class VRPTWSolution(Solution):
         else:
             raise Exception('Not a valid form of solution')
         self.set_routes = set(tuple(i) for i in self.routes) if routes is not None else None
-        self.valid_params = ['omega', 'verbose']
 
-    def __str__(self):
+        self.valid_params = ['omega', 'verbose']
+        if params is not None:
+            self.set_params(params)
+
+    def __repr__(self):
         return pformat(self.sol_code)
 
     def cost(self) -> float:
