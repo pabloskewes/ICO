@@ -17,4 +17,3 @@ class VRPTWSolutionSpace(SolutionSpace):
     def distance(self, s1: Solution, s2: Solution):
         A, B = set(s1.graph), set(s2.graph)
         return len(A.symmetric_difference(B))
-    

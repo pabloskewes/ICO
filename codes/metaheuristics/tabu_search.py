@@ -25,14 +25,18 @@ class TabuSearch(BaseMetaheuristic):
         def contains(self, e):
             return e in self.tabu_list
 
-    def __init__(self, lower_bound=100, max_iter=100, max_tabu=10):
+    def __init__(self, lower_bound=100, max_iter=100, max_tabu=10, solution_params=None,
+                 neighborhood_params=None, solution_space_params=None):
         super().__init__()
 
         self.actual_solution = None
         self.lower_bound = lower_bound
         self.max_iter = max_iter
         self.max_tabu = max_tabu
-
+        
+        self.params = {'solution' : solution_params, 'neighborhood' : neighborhood, 
+                       'solution_space' : solution_space_params}
+        
     def search(self) -> Solution:
         """
         Returns the best solution applying the Tabu Search algorithm

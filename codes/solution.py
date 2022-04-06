@@ -46,6 +46,9 @@ class VRPTWSolution(Solution):
         else:
             raise Exception('Not a valid form of solution')
         self.set_routes = set(tuple(i) for i in self.routes) if routes is not None else None
+        self.graph = []
+        for i in range(1, len(self.sol_code)):
+            self.graph.append((self.sol_code[i-1], self.sol_code[i]))
 
         self.valid_params = ['verbose']
         if params is not None:
@@ -179,3 +182,10 @@ class VRPTWSolution(Solution):
         assert isinstance(other, VRPTWSolution), f"Cannot compare VRPTWSolution type with {other} of type {type(other)}"
         return len(self.routes) > len(other.routes) or \
                (len(self.routes) == len(other.routes) and self.cost() >= other.cost())
+    
+    def print_graph(self):
+        output = ''
+        output += str(graph[0][0])
+        for edge in graph:
+            output += ' -> ' + str(edge[1])
+        print(output)
