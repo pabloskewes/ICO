@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 
 def _is_abstract(cls):
-    """ Delivers true if it is an abstract class """
+    """ Returns true if it is an abstract class """
     return bool(getattr(cls, "__abstractmethods__", False))
 
 
