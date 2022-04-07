@@ -1,7 +1,9 @@
 from typing import List, Set, Union, Optional, Dict
 from pprint import pformat
-from metaheuristics.base_problem import Solution
+
+from metaheuristics.base_problem import SolutionSpace, Solution
 from context import VRPTWContext
+from solution import VRPTWSolution
 
 
 class VRPTWSolutionSpace(SolutionSpace):
@@ -14,6 +16,8 @@ class VRPTWSolutionSpace(SolutionSpace):
         if params is not None:
             self.set_params(params)
 
-    def distance(self, s1: Solution, s2: Solution):
+    def distance(self, s1: VRPTWSolution, s2: VRPTWSolution):
         A, B = set(s1.graph), set(s2.graph)
         return len(A.symmetric_difference(B))
+
+

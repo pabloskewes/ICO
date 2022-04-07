@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 import inspect
 
 
@@ -90,9 +90,55 @@ class Neighborhood(ABC, ProblemComponent):
 class SolutionSpace(ABC, ProblemComponent):
     """ Class where the solution space is modeled: the relationships between solutions and where tools such as "Pools"
     can be designed to store solutions."""
+    def __init__(self):
+        super().__init__()
+        self.diverse_pool = None
+
     @abstractmethod
     def distance(self, s1: Solution, s2: Solution) -> float:
         """ Defines the distance between 2 solutions in the solution space. """
+
+    def set_diverse_pool(out_self, size: int = 10):
+        """
+        It generates the space of a pool of solutions of a given maximum size, so that solutions can be added and if it
+        is full, then it adds the solution if it has an average distance greater than the rest of the solutions in the
+        pool. In order to maintain a pool of solutions as diverse as possible.
+        :param size: maximum pool size
+        :return: None
+        """
+        class DiversePool:
+            def __init__(self, max_size=size):
+                self.max_size: int = max_size
+                self.solution_pool: List[Solution] = []
+                self.average_distances: List[float] = []
+
+            def push(self, solution: Solution):
+                if len(self.solution_pool) < self.max_size - 1:
+                    self.solution_pool.append(solution)
+                elif len(self.solution_pool) == self.max_size - 1:
+                    self.solution_pool.append(solution)
+                    for sol_i in self.solution_pool:
+                        average_dist = sum((out_self.distance(sol_i, sol_j) for sol_j in self.solution_pool
+                                            if sol_i != sol_j)) / (self.max_size - 1)
+                        self.average_distances.append(average_dist)
+                else:
+                    new_average_dist = sum((out_self.distance(solution, sol_i) for sol_i in self.solution_pool))\
+                                       / self.max_size
+                    max_average_dist = max(self.average_distances)
+                    if new_average_dist > max_average_dist:
+                        index = self.average_distances.index(max_average_dist)
+                        self.solution_pool[index] = solution
+                        self.average_distances[index] = new_average_dist
+
+            def __repr__(self):
+                display = ''
+                display += f'pool max size = {self.max_size}'
+                for sol, dist in zip(self.solution_pool, self.average_distances):
+                    display += f'Solution = {sol}'
+                    display += f'Averga distance to pool = {dist}'
+                return display
+
+        out_self.diverse_pool = DiversePool(size)
 
 
 class Problem:

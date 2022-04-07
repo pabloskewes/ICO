@@ -15,6 +15,7 @@ class BaseMetaheuristic(ABC):
     It is used to create different algorithm classes.
     """
     def __init__(self):
+        self.problem = None
         self.SOLUTION = None
         self.NEIGHBORHOOD = None
         self.SOLUTION_SPACE = None
@@ -28,15 +29,10 @@ class BaseMetaheuristic(ABC):
 
     def fit(self, problem: Problem):
         """ Fits a metaheuristic algorithm to a specific problem """
-        # getting classes of problem components
-        SOLUTION = problem.solution
-        NEIGHBORHOOD = problem.neighborhood
-        SOLUTION_SPACE = problem.solution_space
-
-        # assigning references of classes on attributes of the metaheuristic class
-        self.SOLUTION = SOLUTION
-        self.NEIGHBORHOOD = NEIGHBORHOOD
-        self.SOLUTION_SPACE = SOLUTION_SPACE
+        self.problem = problem
+        self.SOLUTION = problem.solution
+        self.NEIGHBORHOOD = problem.neighborhood
+        self.SOLUTION_SPACE = problem.solution_space
         return self
 
     @abstractmethod

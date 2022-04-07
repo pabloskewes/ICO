@@ -5,7 +5,7 @@ from .base_metaheuristic import BaseMetaheuristic
 
 
 class SimulatedAnnealing(BaseMetaheuristic):
-    def __init__(self, t0, cooling_factor=0.9, max_cycle_iter=100,
+    def __init__(self, t0: int = 30, cooling_factor: float = 0.9, max_cycle_iter: int = 100,
                  solution_params=None, neighborhood_params=None, solution_space_params=None):
         super().__init__()
 
