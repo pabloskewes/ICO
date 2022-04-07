@@ -37,7 +37,7 @@ class TabuSearch(BaseMetaheuristic):
         self.params = {'solution': solution_params,
                        'neighborhood': neighborhood_params,
                        'solution_space': solution_space_params}
-        
+
     def search(self) -> Solution:
         """
         Returns the best solution applying the Tabu Search algorithm
