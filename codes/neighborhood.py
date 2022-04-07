@@ -42,7 +42,6 @@ class VRPTWNeighborhood(Neighborhood):
     def get_neighbor(self, solution) -> Solution:
         if self.choose_mode == 'random':
             method_name = random.choice(self.use_methods)
-            print(method_name)
             new_sol = getattr(self, method_name)(solution)
         elif self.choose_mode == 'best':
             solutions_found = [getattr(self, method_name)(solution) for method_name in self.use_methods]
