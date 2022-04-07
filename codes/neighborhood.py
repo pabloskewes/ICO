@@ -84,6 +84,36 @@ class VRPTWNeighborhood(Neighborhood):
         neighbor = Sol(sol_code)
         return neighbor
 
+    def switch_two_consecutive_intra_route(self, solution):
+        """
+        Switches two random consecutive customers in the solution_code (except the first,
+        second to last and last customers), then returns new solution
+        :param : solution
+        """
+        is_sol = False
+        routes = solution.routes
+        breaker = 0  # in case there are no possible neighbors that are solutions with this function
+        route = random.choice(routes)
+        index_route = route.index()
+        # Verification que la route choisie est assez longue (au moins 4 élements)
+        while len(route) < 4 and breaker < 30:
+            breaker += 1
+            route = random.choice(routes)
+        # Etape de swap + vérification que la solution trouvée est bien une solution du problème
+        while (not is_sol) and (breaker < 30):
+            breaker += 1
+            i = random.randint(1, len(route)-2)
+            route[i], route[i+1] = route[i+1], route[i]
+            routes_copy = routes.copy()
+            routes_copy[index_route] = route
+            sol_found = Sol(routes_copy)
+            is_sol = sol_found.route_checker(route)
+        if (not is_sol) and (self.verbose > 1):
+            print("No neighbor found that is a solution")
+            return route
+        neighbor = Sol(routes_copy)
+        return neighbor
+
     def switch_two_random(self, solution):
         """
         Switches two random random customers in the solution_code (except the first,
