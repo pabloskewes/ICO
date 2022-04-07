@@ -11,12 +11,12 @@ from .base_problem import Problem, Solution
 
 class SimpleAgent(Agent):
     def __init__(self, unique_id, model, metaheuristic: Type[BaseMetaheuristic],
-                 solution_pool, in_solution: Solution = None):
+                 in_solution: Solution = None):
         super().__init__(unique_id, model)
 
         self.metaheuristic = metaheuristic()
         self.problem = self.model.problem
-        self.solution_pool = solution_pool
+        self.solution_pool = self.model.solution_pool
         self.metaheuristic.fit(self.problem)
         self.in_solution = in_solution
         self.out_solution = None
@@ -46,8 +46,7 @@ class CollaborativeSpace(MesaModel):
             agent_metaheuristic = SimulatedAnnealing if agent_metaheuristic == 'simulated_annealing' else agent_metaheuristic
             agent_metaheuristic = TabuSearch if agent_metaheuristic == 'tabu_search' else agent_metaheuristic
             for i in range(agent_num):
-                agent = agent_type(unique_id=unique_id, model=self, metaheuristic=agent_metaheuristic,
-                                   solution_pool=solution_pool)
+                agent = agent_type(unique_id=unique_id, model=self, metaheuristic=agent_metaheuristic)
                 self.schedule.add(agent)
                 unique_id += 1
 
