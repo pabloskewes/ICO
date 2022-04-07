@@ -42,6 +42,7 @@ class VRPTWNeighborhood(Neighborhood):
     def get_neighbor(self, solution) -> Solution:
         if self.choose_mode == 'random':
             method_name = random.choice(self.use_methods)
+            print(method_name)
             new_sol = getattr(self, method_name)(solution)
         elif self.choose_mode == 'best':
             solutions_found = [getattr(self, method_name)(solution) for method_name in self.use_methods]
@@ -72,7 +73,7 @@ class VRPTWNeighborhood(Neighborhood):
         sol_code = solution.sol_code
         is_sol = False
         breaker = 0  # in case there are no possible neighbors that are solutions with this function
-        while (not is_sol) or (breaker < 100):
+        while (not is_sol) and (breaker < 100):
             breaker += 1
             i = random.randint(1, len(sol_code)-3)
             sol_code[i], sol_code[i+1] = sol_code[i+1], sol_code[i]
@@ -93,7 +94,7 @@ class VRPTWNeighborhood(Neighborhood):
         sol_code = solution.sol_code
         is_sol = False
         breaker = 0  # in case there are no possible neighbors that are solutions with this function
-        while (not is_sol) or (breaker < 100):
+        while (not is_sol) and (breaker < 100):
             breaker += 1
             i = random.randint(1, len(sol_code)-3)
             j = random.randint(1, len(sol_code) - 3)
@@ -108,14 +109,14 @@ class VRPTWNeighborhood(Neighborhood):
 
     def switch_three_consecutive(self, solution):
         """
-        Switches two random consecutive customers in the solution_code (except the first,
+        Switches three random consecutive customers in the solution_code (except the first,
         second to last and last customers), then returns new solution
         :param : solution
         """
         sol_code = solution.sol_code
         is_sol = False
         breaker = 0  # in case there are no possible neighbors that are solutions with this function
-        while (not is_sol) or (breaker < 100):
+        while (not is_sol) and (breaker < 100):
             breaker += 1
             i = random.randint(1, len(sol_code)-4)
             sol_code[i], sol_code[i+1], sol_code[i+2] = sol_code[i+2], sol_code[i], sol_code[i+1]
@@ -129,14 +130,14 @@ class VRPTWNeighborhood(Neighborhood):
 
     def switch_three_random(self, solution):
         """
-        Switches two random consecutive customers in the solution_code (except the first,
+        Switches three random consecutive customers in the solution_code (except the first,
         second to last and last customers), then returns new solution
         :param : solution
         """
         sol_code = solution.sol_code
         is_sol = False
         breaker = 0  # in case there are no possible neighbors that are solutions with this function
-        while (not is_sol) or (breaker < 100):
+        while (not is_sol) and (breaker < 100):
             breaker += 1
             i = random.randint(1, len(sol_code)-4)
             j = random.randint(1, len(sol_code) - 4)
