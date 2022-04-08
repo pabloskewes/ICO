@@ -21,8 +21,8 @@ class BaseMetaheuristic(ABC):
         self.SOLUTION_SPACE = None
 
         self.best_solution = None
-        self.evolution_explored_solutions = []  # Liste des solutions explorés étudiées
-        self.evolution_best_solution = []  # Liste des meilleures solutions (cout décroissante)
+        self.evolution_explored_solutions = []  # Liste des solutions explorées étudiées
+        self.evolution_best_solution = []  # Liste des meilleures solutions (cout décroissant)
 
         self.params = {'solution': dict(), 'neighborhood': dict(), 'solution_space': dict()}
         self.static_params = {'solution': dict(), 'neighborhood': dict(), 'solution_space': dict()}
