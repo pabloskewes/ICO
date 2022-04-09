@@ -1,5 +1,7 @@
-from typing import List, Set, Union, Optional, Dict
+from typing import List, Set, Union, Optional, Dict, Any
 from pprint import pformat
+import matplotlib.pyplot as plt
+
 from metaheuristics.base_problem import Solution
 from context import VRPTWContext
 
@@ -27,7 +29,7 @@ def list_routes_to_sol(sol_list):
 
 class VRPTWSolution(Solution):
     context: VRPTWContext = None
-    omega: int = 1000
+    omega: int = 500
     static_valid_params = ['omega']
 
     def __init__(self, routes: Routes = None, params: Optional[Dict] = None):
@@ -190,3 +192,28 @@ class VRPTWSolution(Solution):
         for edge in self.graph:
             output += ' -> ' + str(edge[1])
         print(output)
+
+    def plot_graph(self, name_delta=2, arrows=False):
+        customers_list = self.context.customers
+        depot = customers_list[0]
+        customers = customers_list[1:]
+        x_positions = [cust.latitude for cust in customers]
+        y_positions = [cust.longitude for cust in customers]
+
+        if arrows: # doesn't work well
+            for edge in self.graph:
+                cust1, cust2 = customers_list[edge[0]], customers_list[edge[1]]
+                x1, y1, x2, y2 = cust1.latitude, cust1.longitude, cust2.latitude, cust2.longitude
+                plt.arrow(x=x1, y=y1, dx=x2-x1, dy=y2-y1, width=0.1)
+        else:
+            for edge in self.graph:
+                cust1, cust2 = customers_list[edge[0]], customers_list[edge[1]]
+                plt.plot([cust1.latitude, cust2.latitude], [cust1.longitude, cust2.longitude], color='black')
+        plt.annotate(text="Depot", xy=(depot.latitude + name_delta, depot.longitude + name_delta), color='red')
+
+        plt.scatter(x=depot.latitude, y=depot.longitude, c='r')
+        plt.scatter(x=x_positions, y=y_positions, c='b')
+
+        for cust in customers:
+            plt.annotate(text=str(cust.id), xy=(cust.latitude + name_delta, cust.longitude))
+        plt.title('Graph representation of solution')
