@@ -7,10 +7,9 @@ import sys
 from math import sqrt
 import copy
 import numpy as np
+from .base_problem import Solution, Neighborhood, SolutionSpace
 from .base_metaheuristic import BaseMetaheuristic
-from .base_problem import Problem
 
-# from solution import sol_to_list_routes
 '''
 example:
 from vrptw import VRPTW
@@ -28,7 +27,7 @@ Identifier(Ctrl+F)      Content
 SS              code bloques reserved for the SMA,neiborhood params
 TDL              TO DO LIST
 KK               methode that should be kept here
-AA               Methode that should be rewrite in the 
+AA               Methode that should be rewrite in the outside vlasses
 LOG              log of the modification of the main structure
 '''
 # TDL:
@@ -38,6 +37,7 @@ LOG              log of the modification of the main structure
 
 # ga=GeneticAlgorithm()
 # ga.context=load_solomon()
+# from solution import sol_to_list_routes
 
 '''
 LOG
@@ -56,13 +56,13 @@ class GeneticAlgorithm(BaseMetaheuristic):
         self.params = {'solution': solution_params,
                        'neighborhood': neighborhood_params,
                        'solution_space': solution_space_params}
-        # self.best_solution=[0, 5, 3, 7, 8, 9, 6, 4, 10, 1, 2, 0]
         self.modele_chromosome = solution_initial
         self.population = population
         self.rate_mutation = rate_mutation
         self.num_parent = num_parent
         self.num_population = num_population
-        self.best_solutions = {}
+        self.best_solutions = []
+        self.penalty_wrong_chromosome=40000
 
     # KK
     def __get_best_solution(self):
@@ -72,66 +72,18 @@ class GeneticAlgorithm(BaseMetaheuristic):
             print("Empty solution. To get the best solution, use search() first")
             return False
 
-    # AA
+    # KK
     def __chromosome_mutation(self, chromosome, prob):
         if random.random() < prob:
+            #set neighbor to reverse_sequence
             return self.NEIGHBORHOOD.get_neighbor(chromosome)
         else:
             return chromosome
 
-        if random.random() < prob:
-            dice = random.random()
-            # SS
-            if dice < 0.5:
-                head = random.randrange(1, len(chromosome))
-                end = random.randrange(head, len(chromosome))
-                tmp = chromosome[head:end]
-                tmp.reverse()
-                result = chromosome[:head] + tmp + chromosome[end:]
-                return result
-            elif dice >= 0.5:
-                head = random.randrange(1, len(chromosome))
-                end = random.randrange(head, len(chromosome))
-                tmp = chromosome[head]
-                chromosome[head] = chromosome[end]
-                chromosome[end] = tmp
-                return chromosome
-        else:
-            return chromosome
-
-    # AA
+    # KK
     def __chromosome_crossover(self, parent1, parent2):  # what about cross-mute?
-
-        def process_gen_repeated(copy_child1, copy_child2):
-            count1 = 0
-            for gen1 in copy_child1[:pos]:
-                repeat = 0
-                repeat = copy_child1.count(gen1)
-                if repeat > 1:  # If need to fix repeated gen
-                    count2 = 0
-                    for gen2 in parent1[pos:]:  # Choose next available gen
-                        if gen2 not in copy_child1:
-                            child1[count1] = parent1[pos:][count2]
-                        count2 += 1
-                count1 += 1
-            count1 = 0
-            for gen1 in copy_child2[:pos]:
-                repeat = 0
-                repeat = copy_child2.count(gen1)
-                if repeat > 1:  # If need to fix repeated gen
-                    count2 = 0
-                    for gen2 in parent2[pos:]:  # Choose next available gen
-                        if gen2 not in copy_child2:
-                            child2[count1] = parent2[pos:][count2]
-                        count2 += 1
-                count1 += 1
-            return child1, child2
-
-        pos = random.randrange(1, len(self.modele_chromosome) - 1)
-        child1 = parent1[:pos] + parent2[pos:]
-        child2 = parent2[:pos] + parent1[pos:]
-
-        return process_gen_repeated(child1, child2)
+        #set neighbor to reverse_sequence
+        return self.NEIGHBORHOOD.get_neighbor_from_two(parent1, parent2)
 
     def search(self):
         """ Performs metaheuristic search """
@@ -150,41 +102,49 @@ class GeneticAlgorithm(BaseMetaheuristic):
         """
         is the fitness always has the same definition with the cost of the solution?
         """
+        total_cost =solution.cost()
 
-        if rout(self.context, solution) < 0:
+        is_sol = all((solution.route_checker(route) for route in solution.routes))
+        # we need something to evaluate the wrong solution at the same time
+        if not is_sol:
             total_cost += self.penalty_wrong_chromosome
-        else:
-            total_cost += solution_checker_ga(self.context, solution)
         return -total_cost
 
     # AA
-    def __generate_chromosome(self, modele_chromosome):
-        chromosome = []
-        for i in modele_chromosome:
-            chromosome.append(i)
-        number_car = 9
-        for i in range(random.randint(0, number_car)):
-            chromosome.append(0)
-        random.shuffle(chromosome)
-        chromosome.append(0)
-        chromosome.insert(0, 0)
-        chromosome = str(chromosome).replace('0, 0, 0', '0').replace('0, 0', '0')
-        chromosome = list(map(int, chromosome.strip('][').split(',')))
+    # def __generate_chromosome(self, modele_chromosome):
+    #     chromosome = []
+    #     for i in modele_chromosome:
+    #         chromosome.append(i)
+    #     number_car = 9
+    #     for i in range(random.randint(0, number_car)):
+    #         chromosome.append(0)
+    #     random.shuffle(chromosome)
+    #     chromosome.append(0)
+    #     chromosome.insert(0, 0)
+    #     chromosome = str(chromosome).replace('0, 0, 0', '0').replace('0, 0', '0')
+    #     chromosome = list(map(int, chromosome.strip('][').split(',')))
+    #     return chromosome
+
+    # KK
+    def __generate_chromosome(self):
+
+        _, N, _ = self.get_problem_components()
+        chromosome = N.initial_solution()
+
         return chromosome
 
     # KK
     def init(self):
 
-        self.population = [self.__generate_chromosome(self.modele_chromosome) for _ in range(self.num_population)]
+        self.population = [self.__generate_chromosome() for _ in range(self.num_population)]
         if self.best_solution and len(self.best_solution) > 0:
             self.population[-1] = self.best_solution
 
     # KK
-    def __evolution(
-            self):  # Realize a generation, including the mating, the mutation, the elimination and the regeneration
+    def __evolution(self): 
 
         # KKCOMPLET
-        def __binary_tournement(self):  # Select certain individuals as parents by their __fitness
+        def __binary_tournement(self):
             parents = []
             for i in range(self.num_parent):
                 candidate = random.sample(self.population, 2)
@@ -200,12 +160,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
                         parents.append(candidate[0])
             return parents
 
-        # KK
-        # parents:[solution,soltuon],
-        # child1:solution
-        # child2:solution
-
-        def __pop_crossover(self, parents):  # Realize mating between parents
+        def __pop_crossover(self, parents): 
             for i in range(len(parents) // 2 - 1):
                 parent = random.sample(parents, 2)
                 child1, child2 = self.__chromosome_crossover(parent[0], parent[1])
@@ -241,7 +196,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
         #         self.population.append(i)
 
         # KKCOMPLET
-        # log: add best_solutions into the attributs of the GA class
+        # log: save the best solution in which form?    
 
         def __eliminate(self):  # Eliminate the less strong half of the population
             list_fitness = []
@@ -253,8 +208,8 @@ class GeneticAlgorithm(BaseMetaheuristic):
             for chromosome in self.population:
                 if self.__fitness(chromosome) == best_performance:
                     self.best_solution = chromosome
-                    if str(chromosome) not in self.best_solutions:
-                        self.best_solutions[str(chromosome)] = self.__fitness(chromosome)
+                    if chromosome not in self.best_solutions:
+                        self.best_solutions.append(chromosome)
             while (len(self.population) > self.num_population):
                 for chromosome in self.population:
                     if self.__fitness(chromosome) <= critere:
@@ -266,7 +221,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
 
             if len(self.population) < self.num_population:
                 while (len(self.population) < self.num_population):
-                    self.population.append(self.__generate_chromosome(self.modele_chromosome))
+                    self.population.append(self.__generate_chromosome())
 
             else:
                 list_fitness = []
@@ -280,7 +235,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
                         self.population.remove(chromosome)
 
                 for _ in range(self.num_population - len(self.population)):
-                    self.population.append(self.__generate_chromosome(self.modele_chromosome))
+                    self.population.append(self.__generate_chromosome())
 
         # KK
         parents = __binary_tournement(self)
