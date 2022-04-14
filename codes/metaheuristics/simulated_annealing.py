@@ -38,7 +38,7 @@ class SimulatedAnnealing(BaseMetaheuristic):
                 n_iter += 1
                 neighbor = N(actual_sol)
                 dc = neighbor.cost() - actual_sol.cost()
-                # if the neighbor cool down the system (less enthropy)
+                # if the neighbor cool down the system (less entropy)
                 # we update the best_solution
                 if dc < 0:
                     actual_sol = neighbor

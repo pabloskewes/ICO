@@ -48,6 +48,8 @@ class VRPTWNeighborhood(Neighborhood):
             best_solutions = list(map(lambda sol: sol.cost(), solutions_found))
             index = best_solutions.index(min(best_solutions))
             new_sol = solutions_found[index]
+        elif hasattr(self, self.choose_mode):
+            new_sol = getattr(self, self.choose_mode)(solution)
         else:
             raise Exception(f'"{self.choose_mode}" is not a valid parameter for choose_mode')
         return new_sol
