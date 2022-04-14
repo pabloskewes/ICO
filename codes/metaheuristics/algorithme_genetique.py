@@ -76,13 +76,14 @@ class GeneticAlgorithm(BaseMetaheuristic):
     def __chromosome_mutation(self, chromosome, prob):
         if random.random() < prob:
             #set neighbor to reverse_sequence
+            self.problem.set_problem_params(None,{'choose_mode':'reverse_a_sequence'},None)
             return self.NEIGHBORHOOD.get_neighbor(chromosome)
         else:
             return chromosome
 
     # KK
     def __chromosome_crossover(self, parent1, parent2):  # what about cross-mute?
-        #set neighbor to reverse_sequence
+        self.problem.set_problem_params(None,{'choose_mode':'crossover'},None)
         return self.NEIGHBORHOOD.get_neighbor_from_two(parent1, parent2)
 
     def search(self):
