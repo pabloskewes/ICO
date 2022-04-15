@@ -1,5 +1,6 @@
 from typing import Optional, Dict
 import random
+import copy
 
 from solution import VRPTWSolution as Sol
 from context import VRPTWContext
@@ -20,7 +21,8 @@ class VRPTWNeighborhood(Neighborhood):
         self.init_sol = 'random'
         self.choose_mode = 'random'
         self.use_methods = ['switch_two_consecutive', 'switch_two_random',
-                            'switch_three_consecutive', 'switch_three_random']
+                            'switch_three_consecutive', 'switch_three_random',
+                            'reverse_a_sequence','crossover']
 
         self.valid_params = ['init_sol', 'verbose', 'choose_mode', 'use_methods']
         if params is not None:
@@ -53,6 +55,14 @@ class VRPTWNeighborhood(Neighborhood):
         else:
             raise Exception(f'"{self.choose_mode}" is not a valid parameter for choose_mode')
         return new_sol
+
+    def get_neighbor_from_two(self, solution1,solution2) -> Solution:
+
+        if hasattr(self, self.choose_mode):
+            new_sol1,new_sol2 = getattr(self, self.choose_mode)(solution1,solution2)
+        else:
+            raise Exception(f'"{self.choose_mode}" is not a valid parameter for choose_mode')
+        return new_sol1, new_sol2
 
     def shuffle(self, solution=None):
         """
@@ -135,6 +145,86 @@ class VRPTWNeighborhood(Neighborhood):
             return solution
         neighbor = Sol(routes_copy)
         return neighbor
+
+    def reverse_a_sequence(self,solution):
+        '''
+        Reverse a sequence of code by randomly chooing the start position and the end position in the solution_code (except the first,
+        second to last and last customers), then returns new solution
+        :param : solution
+        '''
+        sol_code = solution.sol_code
+        is_sol = False
+        breaker = 0  
+        while(not is_sol) or (breaker<100):
+            breaker += 1
+            head = random.randrange(1, len(sol_code)-1)
+            end = random.randrange(head, len(sol_code)-1)
+            tmp = sol_code[head:end]
+            tmp.reverse()
+            sol_code = sol_code[:head] + tmp + sol_code[end:]
+            solution_found= Sol(sol_code)
+            is_sol = all((solution_found.route_checker(route) for route in solution_found.routes))
+        if (not is_sol) and (self.verbose > 1):
+            print("No neighbor found that is a solution")
+            return solution
+        neighbor = Sol(sol_code)
+        return neighbor
+
+    def crossover(self,solution1,solution2):
+        '''
+        Generate two solutions by combining sections from two different solutions (except the first,
+        second to last and last customers), then returns new solutions
+        :param : solution
+        '''
+        sol_code1=solution1.sol_code
+        sol_code2=solution2.sol_code
+        
+        is_sol = False
+        breaker = 0  
+        sol_code=sol_code1
+        while(not is_sol) or (breaker<100):
+            
+            pos = random.randrange(1, min(len(sol_code1),len(sol_code2)) - 1)
+            child1 = sol_code1[:pos] + sol_code2[pos:]
+            child2 = sol_code2[:pos] + sol_code1[pos:]
+            
+            copy_child1=copy.deepcopy(child1)
+            copy_child2=copy.deepcopy(child2)
+
+            count1 = 0
+            for gen1 in copy_child1[:pos]:
+                repeat = 0
+                repeat = copy_child1.count(gen1)
+                if repeat > 1:  # If need to fix repeated gen
+                    count2 = 0
+                    for gen2 in sol_code1[pos:]:  # Choose next available gen
+                        if gen2 not in copy_child1:
+                            child1[count1] = sol_code1[pos:][count2]
+                        count2 += 1
+                count1 += 1
+            count1 = 0
+            for gen1 in copy_child2[:pos]:
+                repeat = 0
+                repeat = copy_child2.count(gen1)
+                if repeat > 1:  # If need to fix repeated gen
+                    count2 = 0
+                    for gen2 in sol_code2[pos:]:  # Choose next available gen
+                        if gen2 not in copy_child2:
+                            child2[count1] = sol_code2[pos:][count2]
+                        count2 += 1
+                count1 += 1
+
+            solution_found1= Sol(child1)
+            solution_found2= Sol(child2)
+            is_sol = all((solution_found1.route_checker(route) for route in solution_found1.routes)) and  all((solution_found2.route_checker(route) for route in solution_found2.routes))
+
+        if (not is_sol) and (self.verbose > 1):
+            print("No neighbor found that is a solution")
+            return solution1,solution2
+
+        neighbor1 = Sol(child1)
+        neighbor2 = Sol(child2)
+        return neighbor1,neighbor2
 
     @staticmethod
     def random_solution(nb_cust, force_check_vrptw=None, verbose=0) -> Solution:
