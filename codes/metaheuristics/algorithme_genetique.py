@@ -105,7 +105,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
         """
         total_cost =solution.cost()
 
-        is_sol = all((solution.route_checker(route) for route in solution.routes))
+        is_sol = all((solution.checker(route) for route in solution.routes))
         # we need something to evaluate the wrong solution at the same time
         if not is_sol:
             total_cost += self.penalty_wrong_chromosome
