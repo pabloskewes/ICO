@@ -86,100 +86,54 @@ class VRPTWNeighborhood(Neighborhood):
         neighbor = Sol(sol_code)
         return neighbor
 
-    def switch_two_consecutive_intra_route(self, solution):
+    def switch_two_consecutive_intra_route(self, solution) -> Solution:
         """
         Switches two random consecutive customers in the solution_code (except the first,
         second to last and last customers), then returns new solution
         :param : solution
         """
         is_sol = False
-        routes = solution.routes
+        routes = solution.routes.copy()
+        print(f"Voici les routes {routes}")
         breaker = 0  # in case there are no possible neighbors that are solutions with this function
         route = random.choice(routes)
-        index_route = route.index()
+        index_route = solution.routes.index(route)
         # Verification que la route choisie est assez longue (au moins 4 élements)
-        while len(route) < 4 and breaker < 30:
-            breaker += 1
+        print(f"Route premièrement choisie est {route} dont l'index est {index_route}")
+        while len(route) < 4 and len(routes) > 0:
+            print("changement de route")
+            routes.remove(route)
             route = random.choice(routes)
+            index_route = solution.routes.index(route)
+            if len(routes) == 1:
+                print("No possibility to apply this neighborhood fonction")
+                return solution
+        print(f"Route sur laquelle on travaille est {route} et son index est {index_route}\n")
+
         # Etape de swap + vérification que la solution trouvée est bien une solution du problème
-        while (not is_sol) and (breaker < 30):
+        while (not is_sol) and (breaker < 10):
             breaker += 1
-            i = random.randint(1, len(route)-2)
-            route[i], route[i+1] = route[i+1], route[i]
-            routes_copy = routes.copy()
-            routes_copy[index_route] = route
+            route_test = route.copy()
+            print(f"Route est {route} et route_test est {route_test}")
+            print(f"route avant est {route_test}")
+            i = random.randint(1, len(route_test)-2)  # on prend un élément au hasard, extrémités exclues
+            j = random.randint(1, len(route_test) - 2)  # idem
+            # On vérifie que i et j sont différents
+            while j == i:
+                j = random.randint(1, len(route_test) - 2)
+            print(f"l'index1 changé est {i} et le deuxième est {j}")
+            route_test[i], route_test[j] = route_test[j], route_test[i]
+            print(f"route après est {route_test}")
+            routes_copy = solution.routes
+            routes_copy[index_route] = route_test
             sol_found = Sol(routes_copy)
-            is_sol = sol_found.route_checker(route)
+            is_sol = sol_found.route_checker(route_test)
+            if not is_sol:
+                print("Solution trouvée non conforme\n")
         if (not is_sol) and (self.verbose > 1):
             print("No neighbor found that is a solution")
-            return route
+            return solution
         neighbor = Sol(routes_copy)
-        return neighbor
-
-    def switch_two_random(self, solution):
-        """
-        Switches two random random customers in the solution_code (except the first,
-        second to last and last customers), then returns new solution
-        :param : solution
-        """
-        sol_code = solution.sol_code
-        is_sol = False
-        breaker = 0  # in case there are no possible neighbors that are solutions with this function
-        while (not is_sol) and (breaker < 100):
-            breaker += 1
-            i = random.randint(1, len(sol_code)-3)
-            j = random.randint(1, len(sol_code) - 3)
-            sol_code[i], sol_code[j] = sol_code[j], sol_code[i]
-            solution_found = Sol(sol_code)
-            is_sol = all((solution_found.route_checker(route) for route in solution_found.routes))
-        if (not is_sol) and (self.verbose > 1):
-            print("No neighbor found that is a solution")
-            return solution
-        neighbor = Sol(sol_code)
-        return neighbor
-
-    def switch_three_consecutive(self, solution):
-        """
-        Switches three random consecutive customers in the solution_code (except the first,
-        second to last and last customers), then returns new solution
-        :param : solution
-        """
-        sol_code = solution.sol_code
-        is_sol = False
-        breaker = 0  # in case there are no possible neighbors that are solutions with this function
-        while (not is_sol) and (breaker < 100):
-            breaker += 1
-            i = random.randint(1, len(sol_code)-4)
-            sol_code[i], sol_code[i+1], sol_code[i+2] = sol_code[i+2], sol_code[i], sol_code[i+1]
-            solution_found = Sol(sol_code)
-            is_sol = all((solution_found.route_checker(route) for route in solution_found.routes))
-        if (not is_sol) and (self.verbose > 1):
-            print("No neighbor found that is a solution")
-            return solution
-        neighbor = Sol(sol_code)
-        return neighbor
-
-    def switch_three_random(self, solution):
-        """
-        Switches three random consecutive customers in the solution_code (except the first,
-        second to last and last customers), then returns new solution
-        :param : solution
-        """
-        sol_code = solution.sol_code
-        is_sol = False
-        breaker = 0  # in case there are no possible neighbors that are solutions with this function
-        while (not is_sol) and (breaker < 100):
-            breaker += 1
-            i = random.randint(1, len(sol_code)-4)
-            j = random.randint(1, len(sol_code) - 4)
-            k = random.randint(1, len(sol_code) - 4)
-            sol_code[i], sol_code[j], sol_code[k] = sol_code[k], sol_code[i], sol_code[j]
-            solution_found = Sol(sol_code)
-            is_sol = all((solution_found.route_checker(route) for route in solution_found.routes))
-        if (not is_sol) and (self.verbose > 1):
-            print("No neighbor found that is a solution")
-            return solution
-        neighbor = Sol(sol_code)
         return neighbor
 
     @staticmethod
