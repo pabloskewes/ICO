@@ -76,76 +76,115 @@ class VRPTWNeighborhood(Neighborhood):
                                      force_check_vrptw=self.context, verbose=self.verbose)
         return r_sol
 
-    def switch_two_consecutive(self, solution):
+    def switch_two_customers_intra_route(self, solution) -> Solution:
         """
-        Switches two random consecutive customers in the solution_code (except the first,
-        second to last and last customers), then returns new solution
-        :param : solution
-        """
-        sol_code = solution.sol_code
-        is_sol = False
-        breaker = 0  # in case there are no possible neighbors that are solutions with this function
-        while (not is_sol) and (breaker < 100):
-            breaker += 1
-            i = random.randint(1, len(sol_code) - 3)
-            sol_code[i], sol_code[i + 1] = sol_code[i + 1], sol_code[i]
-            solution_found = Sol(sol_code)
-            is_sol = all((solution_found.route_checker(route) for route in solution_found.routes))
-        if (not is_sol) and (self.verbose > 1):
-            print("No neighbor found that is a solution")
-            return solution
-        neighbor = Sol(sol_code)
-        return neighbor
-
-    def switch_two_consecutive_intra_route(self, solution) -> Solution:
-        """
-        Switches two random consecutive customers in the solution_code (except the first,
-        second to last and last customers), then returns new solution
+        Switches two random customers in one random route (except the first and last customers who are the depot),
+        then returns new solution
         :param : solution
         """
         is_sol = False
         routes = solution.routes.copy()
-        print(f"Voici les routes {routes}")
+        if self.verbose > 1:
+            print(f"Voici les routes {routes}")
         breaker = 0  # in case there are no possible neighbors that are solutions with this function
         route = random.choice(routes)
         index_route = solution.routes.index(route)
         # Verification que la route choisie est assez longue (au moins 4 élements)
-        print(f"Route premièrement choisie est {route} dont l'index est {index_route}")
+        if self.verbose > 1:
+            print(f"Route premièrement choisie est {route} dont l'index est {index_route}")
         while len(route) < 4 and len(routes) > 0:
-            print("changement de route")
+            if self.verbose > 1:
+                print("changement de route")
             routes.remove(route)
             route = random.choice(routes)
             index_route = solution.routes.index(route)
-            if len(routes) == 1:
-                print("No possibility to apply this neighborhood function")
+            if len(routes) == 0:
+                if self.verbose > 0:
+                    print("No possibility to apply this neighborhood function")
                 return solution
-        print(f"Route sur laquelle on travaille est {route} et son index est {index_route}\n")
+        if self.verbose > 1:
+            print(f"Route sur laquelle on travaille est {route} et son index est {index_route}\n")
 
         # Etape de swap + vérification que la solution trouvée est bien une solution du problème
         while (not is_sol) and (breaker < 10):
             breaker += 1
             route_test = route.copy()
-            print(f"Route est {route} et route_test est {route_test}")
-            print(f"route avant est {route_test}")
             i = random.randint(1, len(route_test) - 2)  # on prend un élément au hasard, extrémités exclues
             j = random.randint(1, len(route_test) - 2)  # idem
             # On vérifie que i et j sont différents
             while j == i:
                 j = random.randint(1, len(route_test) - 2)
-            print(f"l'index1 changé est {i} et le deuxième est {j}")
             route_test[i], route_test[j] = route_test[j], route_test[i]
-            print(f"route après est {route_test}")
             routes_copy = solution.routes
             routes_copy[index_route] = route_test
             sol_found = Sol(routes_copy)
             is_sol = sol_found.route_checker(route_test)
-            if not is_sol:
+            if (not is_sol) and (self.verbose > 1):
                 print("Solution trouvée non conforme\n")
-        if (not is_sol) and (self.verbose > 1):
-            print("No neighbor found that is a solution")
+
+        if not is_sol:
+            if self.verbose > 0:
+                print("No neighbor found that is a solution")
             return solution
         neighbor = Sol(routes_copy)
         return neighbor
+
+
+    def switch_three_customers_intra_route(self, solution) -> Solution:
+        """
+        Switches three random customers in one random route (except the first and last customers who are the depot),
+        then returns new solution
+        :param : solution
+        """
+        is_sol = False
+        routes = solution.routes.copy()
+        if self.verbose > 1:
+            print(f"Voici les routes {routes}")
+        breaker = 0  # in case there are no possible neighbors that are solutions with this function
+        route = random.choice(routes)
+        index_route = solution.routes.index(route)
+        # Verification que la route choisie est assez longue (au moins 4 élements)
+        if self.verbose > 1:
+            print(f"Route premièrement choisie est {route} dont l'index est {index_route}")
+        while len(route) < 5 and len(routes) > 0:
+            if self.verbose > 1:
+                print("changement de route")
+            routes.remove(route)
+            route = random.choice(routes)
+            index_route = solution.routes.index(route)
+            if len(routes) == 0:
+                if self.verbose > 0:
+                    print("No possibility to apply this neighborhood function")
+                return solution
+        if self.verbose > 1:
+            print(f"Route sur laquelle on travaille est {route} et son index est {index_route}\n")
+
+        # Etape de swap + vérification que la solution trouvée est bien une solution du problème
+        while (not is_sol) and (breaker < 10):
+            breaker += 1
+            route_test = route.copy()
+            i = random.randint(1, len(route_test) - 2)  # on prend un élément au hasard, extrémités exclues
+            j = random.randint(1, len(route_test) - 2)  # idem
+            k = random.randint(1, len(route_test) - 2)  # idem
+            # On vérifie que i et j sont différents
+            while j == i or j == k or i == k:
+                j = random.randint(1, len(route_test) - 2)
+                k = random.randint(1, len(route_test) - 2)
+            route_test[i], route_test[j], route_test[k] = route_test[k], route_test[i], route_test[j]
+            routes_copy = solution.routes
+            routes_copy[index_route] = route_test
+            sol_found = Sol(routes_copy)
+            is_sol = sol_found.route_checker(route_test)
+            if (not is_sol) and (self.verbose > 1):
+                print("Solution trouvée non conforme\n")
+
+        if not is_sol:
+            if self.verbose > 0:
+                print("No neighbor found that is a solution")
+            return solution
+        neighbor = Sol(routes_copy)
+        return neighbor
+
 
     def reverse_a_sequence(self, solution: VRPTWSolution):
         """
