@@ -38,7 +38,7 @@ class FlexVRPTWSolution(VRPTWSolution):
 
 
 class FlexVRPTWNeighborhood(VRPTWNeighborhood):
-    def random_solution(self, nb_cust) -> Solution:
+    def random_solution(self, nb_cust) -> FlexVRPTWSolution:
         """
         Generates a random pattern of numbers between 0 and nb_cust, in the form of a solution.
         :param nb_cust: Number of customers wanted in the solution to be generated
@@ -55,8 +55,7 @@ class FlexVRPTWNeighborhood(VRPTWNeighborhood):
                     return simplify(L, simpleL+[L[i]], i+1, True)
             else:
                 return simplify(L, simpleL+[L[i]], i+1, False)
-                    
-                
+
         numbers = list(range(1, nb_cust + 1))
         is_sol = False
         n_iter = 0
@@ -69,7 +68,7 @@ class FlexVRPTWNeighborhood(VRPTWNeighborhood):
                 numbers.remove(numbers[r])
             
             random.shuffle(numbers)
-            proportion = random.choice([0.2, 0.3, 0.4])
+            proportion = random.choice([0.05, 0.1, 0.15, 0.2])
             n_0 = int(nb_cust * proportion)
             zero_positions = []
             zero_pos_candidates = list(range(1, nb_cust - 1))
@@ -94,7 +93,7 @@ class FlexVRPTWNeighborhood(VRPTWNeighborhood):
             code_solution = simplify(solution)
             if code_solution[-1] != 0:
                 code_solution.append(0)
-            solution = Sol(code_solution)
+            solution = FlexVRPTWSolution(code_solution)
        
             check = solution.checker()
             if not check:

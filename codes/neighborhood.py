@@ -24,10 +24,11 @@ class VRPTWNeighborhood(Neighborhood):
         self.init_sol = 'random'
         self.choose_mode = 'random'
         self.max_iter = 10
+        self.force_new_sol = False
         self.use_methods = ['switch_two_customers_intra_route', 'inter_route_swap'
                             'switch_three_consecutive', 'reverse_a_sequence', 'crossover']
 
-        self.valid_params = ['init_sol', 'verbose', 'choose_mode', 'use_methods', 'max_iter']
+        self.valid_params = ['init_sol', 'verbose', 'choose_mode', 'use_methods', 'max_iter', 'force_new_sol']
         if params is not None:
             self.set_params(params)
 
@@ -164,7 +165,10 @@ class VRPTWNeighborhood(Neighborhood):
                 new_routes[index_r2][index_c2] = cust1
                 is_sol = S.route_checker(route1) and S.route_checker(route2)
                 if is_sol:
-                    return VRPTWSolution(new_routes)
+                    new_sol = VRPTWSolution(new_routes)
+                    if not self.force_new_sol or new_sol != solution:
+                        return new_sol
+                    is_sol = False
                 used_cust_pairs.append({index_c1, index_c2})
                 cust_iter += 1
                 new_routes = deepcopy(routes)
@@ -337,7 +341,7 @@ class VRPTWNeighborhood(Neighborhood):
         solution = None
         while not is_sol:
             random.shuffle(numbers)
-            proportion = random.choice([0.2, 0.3, 0.4])
+            proportion = random.choice([0.05, 0.1, 0.15])
             n_0 = int(nb_cust * proportion)
             zero_positions = []
             zero_pos_candidates = list(range(1, nb_cust - 1))

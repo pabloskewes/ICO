@@ -177,6 +177,13 @@ class VRPTWSolution(Solution):
         else:
             return False
 
+    def __ne__(self, other):
+        if isinstance(other, VRPTWSolution):
+            assert isinstance(other, VRPTWSolution), f"Cannot compare VRPTWSolution type with {other} of type {type(other)}"
+            return self.set_routes != other.set_routes
+        else:
+            return False
+
     def __le__(self, other):
         assert isinstance(other, VRPTWSolution), f"Cannot compare VRPTWSolution type with {other} of type {type(other)}"
         return len(self.routes) < len(other.routes) or \
