@@ -1,6 +1,7 @@
 from typing import Optional, Dict, Tuple
 import random
 import copy
+from gc import collect
 
 from solution import VRPTWSolution as Sol
 from solution import VRPTWSolution
@@ -21,7 +22,7 @@ class VRPTWNeighborhood(Neighborhood):
         self.verbose = 0
         self.init_sol = 'random'
         self.choose_mode = 'random'
-        self.use_methods = ['switch_two_consecutive', 'switch_two_random',
+        self.use_methods = ['switch_two_customers_intra_route', 'switch_two_random',
                             'switch_three_consecutive', 'switch_three_random',
                             'reverse_a_sequence', 'crossover']
 
@@ -34,8 +35,9 @@ class VRPTWNeighborhood(Neighborhood):
 
     def initial_solution(self) -> Solution:
         if self.init_sol == 'random':
-            init_sol = VRPTWNeighborhood.random_solution(nb_cust=len(self.context.customers) - 1,
-                                                         force_check_vrptw=self.context)
+            init_sol = self.random_solution(nb_cust=len(self.context.customers) - 1,
+                                            force_check_vrptw=self.context,
+                                            verbose=self.verbose)
         elif isinstance(self.init_sol, Sol):
             init_sol = self.init_sol
         else:
@@ -73,9 +75,11 @@ class VRPTWNeighborhood(Neighborhood):
         :return:
         """
         r_sol = self.random_solution(nb_cust=len(self.context.customers) - 1,
-                                     force_check_vrptw=self.context, verbose=self.verbose)
+                                     force_check_vrptw=self.context,
+                                     verbose=self.verbose)
         return r_sol
 
+    # NEIGHBORHOOD FUNCTION
     def switch_two_customers_intra_route(self, solution) -> Solution:
         """
         Switches two random customers in one random route (except the first and last customers who are the depot),
@@ -129,7 +133,7 @@ class VRPTWNeighborhood(Neighborhood):
         neighbor = Sol(routes_copy)
         return neighbor
 
-
+    # NEIGHBORHOOD FUNCTION
     def switch_three_customers_intra_route(self, solution) -> Solution:
         """
         Switches three random customers in one random route (except the first and last customers who are the depot),
@@ -185,10 +189,10 @@ class VRPTWNeighborhood(Neighborhood):
         neighbor = Sol(routes_copy)
         return neighbor
 
-
+    # NEIGHBORHOOD FUNCTION
     def reverse_a_sequence(self, solution: VRPTWSolution):
         """
-        Reverse a sequence of code by randomly chooing the start position and the end position in the solution_code (except the first,
+        Reverse a sequence of code by randomly choosing the start position and the end position in the solution_code (except the first,
         second to last and last customers), then returns new solution
         :param : solution
         """
@@ -210,6 +214,7 @@ class VRPTWNeighborhood(Neighborhood):
         neighbor = Sol(sol_code)
         return neighbor
 
+    # GA NEIGHBORHOOD FUNCTION
     def crossover(self, solution1: VRPTWSolution, solution2: VRPTWSolution) -> Tuple[VRPTWSolution, VRPTWSolution]:
         """
         Generate two solutions by combining sections from two different solutions (except the first,
@@ -292,7 +297,9 @@ class VRPTWNeighborhood(Neighborhood):
             except IndexError:
                 if verbose >= 1:
                     print('A problem ocurred, generating new random solution')
-                return VRPTWNeighborhood.random_solution(nb_cust=nb_cust, force_check_vrptw=force_check_vrptw)
+                return VRPTWNeighborhood.random_solution(nb_cust=nb_cust,
+                                                         force_check_vrptw=force_check_vrptw,
+                                                         verbose=verbose)
             if verbose >= 2:
                 print('zero_pos chosen:', zero_pos)
             zero_pos_candidates = list(set(zero_pos_candidates) - {zero_pos, zero_pos + 1, zero_pos - 1})
@@ -310,7 +317,12 @@ class VRPTWNeighborhood(Neighborhood):
             if not check:
                 if verbose >= 1:
                     print('Solution generated is not legitimate, a new one will be created.')
-                return VRPTWNeighborhood.random_solution(nb_cust=nb_cust, force_check_vrptw=force_check_vrptw)
+                del numbers, proportion, n_0, zero_positions, zero_pos, zero_pos_candidates
+                del solution, string, code_solution
+                collect()
+                return VRPTWNeighborhood.random_solution(nb_cust=nb_cust,
+                                                         force_check_vrptw=force_check_vrptw,
+                                                         verbose=verbose)
             else:
                 if verbose >= 1:
                     print(f'A legitimate solution was successfully generated:\n{solution}')

@@ -34,13 +34,14 @@ MetaheuristicDict = Dict[Union[str, BaseMetaheuristic], int]
 
 
 class CollaborativeSpace(MesaModel):
-    def __init__(self, problem: Problem, agent_type: Type[AgentType], agent_heuristics: MetaheuristicDict,
-                 solution_pool):
+    def __init__(self, problem: Problem, agent_type: Type[AgentType],
+                 agent_heuristics: MetaheuristicDict, solution_pool):
         super().__init__()
         self.schedule = RandomActivation(self)
         self.problem = problem
         self.agent_type = agent_type
         self.agent_heuristics = agent_heuristics
+        self.solution_pool = solution_pool
         unique_id = 0
         for agent_metaheuristic, agent_num in self.agent_heuristics.items():
             agent_metaheuristic = SimulatedAnnealing if agent_metaheuristic == 'simulated_annealing' else agent_metaheuristic

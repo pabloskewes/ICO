@@ -25,8 +25,8 @@ class TabuSearch(BaseMetaheuristic):
         def contains(self, e):
             return e in self.tabu_list
 
-    def __init__(self, lower_bound=100, max_iter=100, max_tabu=10, solution_params=None,
-                 neighborhood_params=None, solution_space_params=None):
+    def __init__(self, lower_bound=100, max_iter=100, max_tabu=10,
+                 solution_params=None, neighborhood_params=None, solution_space_params=None):
         super().__init__()
 
         self.actual_solution = None

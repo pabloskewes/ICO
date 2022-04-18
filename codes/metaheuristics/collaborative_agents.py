@@ -46,7 +46,7 @@ class CollaborativeAgents(BaseMetaheuristic):
 
         final_candidates = []
         cost_candidates = []
-        for solution in solution_pool.solution_pool:
+        for solution in solution_pool.solutions:
             final_candidate = final_heuristic(neighborhood_params={'init_sol': solution}).fit_search(self.problem)
             final_candidates.append(final_candidate)
             cost_candidates.append(final_candidate.cost())
