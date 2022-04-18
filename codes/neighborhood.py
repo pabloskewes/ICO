@@ -72,13 +72,11 @@ class VRPTWNeighborhood(Neighborhood):
         :param solution: Nothing, only for aesthetic purposes.
         :return:
         """
-        r_sol = self.random_solution(nb_cust=len(self.context.customers) - 1,
-                                     force_check_vrptw=self.context,
-                                     verbose=self.verbose)
+        r_sol = self.random_solution(nb_cust=len(self.context.customers) - 1)
         return r_sol
 
     # NEIGHBORHOOD FUNCTION
-    def switch_two_customers_intra_route(self, solution) -> Solution:
+    def switch_two_customers_intra_route(self, solution: VRPTWSolution) -> VRPTWSolution:
         """
         Switches two random customers in one random route (except the first and last customers who are the depot),
         then returns new solution
@@ -270,13 +268,10 @@ class VRPTWNeighborhood(Neighborhood):
         neighbor2 = Sol(child2)
         return neighbor1, neighbor2
 
-    def random_solution(self, nb_cust) -> Solution:
+    def random_solution(self, nb_cust) -> VRPTWSolution:
         """
         Generates a random pattern of numbers between 0 and nb_cust, in the form of a solution.
         :param nb_cust: Number of customers wanted in the solution to be generated
-        :param force_check_vrptw: The default is None and does nothing. When delivering a VRPTW instance in this parameter,
-        the legitimacy of the generated solution will be checked (using 'check_solution') based on the context of
-        that particular VRPTW instance.
         :return: Solution (or nothing)
         """
         
@@ -290,11 +285,10 @@ class VRPTWNeighborhood(Neighborhood):
                     return simplify(L, simpleL+[L[i]], i+1, True)
             else:
                 return simplify(L, simpleL+[L[i]], i+1, False)
-                    
-                
+
         numbers = list(range(1, nb_cust + 1))
         is_sol = False
-        
+        solution = None
         while not is_sol:
             random.shuffle(numbers)
             proportion = random.choice([0.2, 0.3, 0.4])
