@@ -86,7 +86,7 @@ class FlexVRPTWNeighborhood(VRPTWNeighborhood):
             code_solution.append(0)
         solution = FlexVRPTWSolution(code_solution)
         if force_check_vrptw:
-            check = solution.route_checker()
+            check = all((solution.route_checker(route) for route in solution.routes))
             if not check:
                 if verbose >= 1:
                     print('Solution generated is not legitimate, a new one will be created.')
