@@ -83,12 +83,11 @@ class VRPTWSolution(Solution):
             print('Total cost of solution:', total_cost)
         return total_cost
 
-    def customers_checker(self) -> bool:
+    def all_customers_checker(self) -> bool:
         """
         Checks whether a solution is legitimate regarding the number of visits of customers under the context determined
         by a vrptw context instance.
-        :return: bool that indicates whether the input 'solution' does visit all the customers, and if all customers are
-        visited exactly once.
+        :return: bool that indicates whether the input 'solution' does visit all the customers
         """
         nb_cust = len(self.context.customers)  # Number of customers (depot included)
         # If all customers are not visited, return False
@@ -96,6 +95,14 @@ class VRPTWSolution(Solution):
             if self.verbose >= 1:
                 print("All customers are not visited.")
             return False
+        return True
+    
+    def not_repeted_customers_checker(self) -> bool:
+        """
+        Checks whether a solution is legitimate regarding the number of visits of customers under the context determined
+        by a vrptw context instance.
+        :return: bool that indicates if the customers are visited exactly once.
+        """
         # If some nodes (customers) are visited more than once (except for the depot), return False
         nb_depot = self.sol_code.count(0)
         if len(self.sol_code) != nb_depot + nb_cust - 1:
@@ -165,9 +172,10 @@ class VRPTWSolution(Solution):
         return True
 
     def checker(self):
-        customers_check = self.customers_checker()
+        all_customers_check = self.all_customers_checker()
+        not_repeated_customers_check = self.not_repeated_customers_checker()
         route_check = all((self.route_checker(route) for route in self.routes))
-        return customers_check and route_check
+        return all_customers_check and not_repeated_customers_check and route_check
 
     def __eq__(self, other):
         if isinstance(other, VRPTWSolution):
