@@ -84,11 +84,7 @@ class VRPTWSolution(Solution):
         return total_cost
 
     def all_customers_checker(self) -> bool:
-        """
-        Checks whether a solution is legitimate regarding the number of visits of customers under the context determined
-        by a vrptw context instance.
-        :return: bool that indicates whether the input 'solution' does visit all the customers
-        """
+        """ Checks whether the input 'solution' does visit all the customers """
         nb_cust = len(self.context.customers)  # Number of customers (depot included)
         # If all customers are not visited, return False
         if set(self.sol_code) != set(range(nb_cust)):
@@ -97,13 +93,10 @@ class VRPTWSolution(Solution):
             return False
         return True
     
-    def not_repeted_customers_checker(self) -> bool:
-        """
-        Checks whether a solution is legitimate regarding the number of visits of customers under the context determined
-        by a vrptw context instance.
-        :return: bool that indicates if the customers are visited exactly once.
-        """
+    def not_repeated_customers_checker(self) -> bool:
+        """ Checks if the customers are visited exactly once. """
         # If some nodes (customers) are visited more than once (except for the depot), return False
+        nb_cust = len(self.context.customers)
         nb_depot = self.sol_code.count(0)
         if len(self.sol_code) != nb_depot + nb_cust - 1:
             if self.verbose >= 1:
@@ -115,7 +108,7 @@ class VRPTWSolution(Solution):
         """
         Checks whether a route is legitimate under the context determined by a vrptw context instance.
         :param route: Route to check
-        :return: bool that indicates whether the input 'solution' is a solution or not.
+        :return: bool that indicates whether the input route id valid.
         """
         vehicle = self.context.vehicle
         volume_capacity, weight_capacity, cost_km = vehicle.volume, vehicle.weight, vehicle.cost_km
