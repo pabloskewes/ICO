@@ -272,15 +272,13 @@ class VRPTWNeighborhood(Neighborhood):
         neighbor2 = Sol(child2)
         return neighbor1, neighbor2
 
-    @staticmethod
-    def random_solution(nb_cust, force_check_vrptw=None, verbose=0) -> Solution:
+    def random_solution(self, nb_cust) -> Solution:
         """
         Generates a random pattern of numbers between 0 and nb_cust, in the form of a solution.
         :param nb_cust: Number of customers wanted in the solution to be generated
         :param force_check_vrptw: The default is None and does nothing. When delivering a VRPTW instance in this parameter,
         the legitimacy of the generated solution will be checked (using 'check_solution') based on the context of
         that particular VRPTW instance.
-        :param verbose: Level of verbosity desired
         :return: Solution (or nothing)
         """
         numbers = list(range(1, nb_cust + 1))
@@ -290,17 +288,16 @@ class VRPTWNeighborhood(Neighborhood):
         zero_positions = []
         zero_pos_candidates = list(range(1, nb_cust - 1))
         for _ in range(n_0):
-            if verbose >= 2:
+            if self.verbose >= 2:
                 print('candidates:', zero_pos_candidates)
             try:
                 zero_pos = random.choice(zero_pos_candidates)
             except IndexError:
-                if verbose >= 1:
+                if self.verbose >= 1:
                     print('A problem ocurred, generating new random solution')
-                return VRPTWNeighborhood.random_solution(nb_cust=nb_cust,
-                                                         force_check_vrptw=force_check_vrptw,
-                                                         verbose=verbose)
-            if verbose >= 2:
+                return self.random_solution(self, nb_cust=nb_cust,
+                                                         force_check_vrptw=force_check_vrptw)
+            if self.verbose >= 2:
                 print('zero_pos chosen:', zero_pos)
             zero_pos_candidates = list(set(zero_pos_candidates) - {zero_pos, zero_pos + 1, zero_pos - 1})
             zero_positions.append(zero_pos)
@@ -312,18 +309,18 @@ class VRPTWNeighborhood(Neighborhood):
         if code_solution[-1] != 0:
             code_solution.append(0)
         solution = Sol(code_solution)
-        if force_check_vrptw:
-            check = solution.checker()
-            if not check:
-                if verbose >= 1:
-                    print('Solution generated is not legitimate, a new one will be created.')
-                del numbers, proportion, n_0, zero_positions, zero_pos, zero_pos_candidates
-                del solution, string, code_solution
-                collect()
-                return VRPTWNeighborhood.random_solution(nb_cust=nb_cust,
-                                                         force_check_vrptw=force_check_vrptw,
-                                                         verbose=verbose)
-            else:
-                if verbose >= 1:
-                    print(f'A legitimate solution was successfully generated:\n{solution}')
+       
+        check = solution.checker()
+        if not check:
+            if self.verbose >= 1:
+                print('Solution generated is not legitimate, a new one will be created.')
+            del numbers, proportion, n_0, zero_positions, zero_pos, zero_pos_candidates
+            del solution, string, code_solution
+            collect()
+            return self.random_solution(self, nb_cust=nb_cust,
+                                                     force_check_vrptw=force_check_vrptw)
+        else:
+            if self.verbose >= 1:
+                print(f'A legitimate solution was successfully generated:\n{solution}')
+                
         return solution
