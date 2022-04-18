@@ -1,7 +1,8 @@
-from typing import Optional, Dict, Tuple
+from typing import Optional, Dict, Tuple, List
 import random
-import copy
-from gc import collect
+from copy import deepcopy
+from itertools import combinations
+from math import factorial
 
 from solution import VRPTWSolution as Sol
 from solution import VRPTWSolution
@@ -22,11 +23,12 @@ class VRPTWNeighborhood(Neighborhood):
         self.verbose = 0
         self.init_sol = 'random'
         self.choose_mode = 'random'
+        self.max_iter = 10
         self.use_methods = ['switch_two_customers_intra_route', 'switch_two_random',
                             'switch_three_consecutive', 'switch_three_random',
                             'reverse_a_sequence', 'crossover']
 
-        self.valid_params = ['init_sol', 'verbose', 'choose_mode', 'use_methods']
+        self.valid_params = ['init_sol', 'verbose', 'choose_mode', 'use_methods', 'max_iter']
         if params is not None:
             self.set_params(params)
 
@@ -129,6 +131,52 @@ class VRPTWNeighborhood(Neighborhood):
         neighbor = Sol(routes_copy)
         return neighbor
 
+    # NEIGHBORHOOD FUNCTION 2 - INTER ROUTE SWAP
+    def inter_route_swap(self, solution: VRPTWSolution) -> VRPTWSolution:
+        routes = solution.routes
+        new_routes = deepcopy(routes)
+        S = VRPTWSolution()
+        is_sol = False
+        used_route_pairs = []
+        routes_iter = 0
+        max_routes_iter = int(factorial(len(routes)) / (factorial(len(routes) - 2) * 2))
+        while not is_sol and routes_iter < min(self.max_iter, max_routes_iter):
+            random_routes = tuple(random.sample(list(enumerate(routes)), 2))
+            index_r1, index_r2 = random_routes[0][0], random_routes[1][0]
+            # noinspection PyTypeChecker
+            route1: List[List[int]] = random_routes[0][1]
+            # noinspection PyTypeChecker
+            route2: List[List[int]] = random_routes[1][1]
+            if {index_r1, index_r2} in used_route_pairs:
+                routes_iter += 1
+                continue
+
+            used_cust_pairs = []
+            cust_iter = 0
+            max_cust_iter = (len(route1) - 2) * (len(route2) - 2)
+            while not is_sol and cust_iter < min(self.max_iter, max_cust_iter):
+                index_c1, cust1 = tuple(random.choice(list(enumerate(route1[1:-1]))))
+                index_c2, cust2 = tuple(random.choice(list(enumerate(route2[1:-1]))))
+                index_c1, index_c2 = index_c1 + 1, index_c2 + 1     # because of first 0 at route
+                if {index_c1, index_c2} in used_cust_pairs:
+                    cust_iter += 1
+                    continue
+                new_routes[index_r1][index_c1] = cust2
+                new_routes[index_r2][index_c2] = cust1
+                is_sol = S.route_checker(route1) and S.route_checker(route2)
+                if is_sol:
+                    return VRPTWSolution(new_routes)
+                used_cust_pairs.append({index_c1, index_c2})
+                cust_iter += 1
+                new_routes = deepcopy(routes)
+
+            used_route_pairs.append({index_r1, index_r2})
+            routes_iter += 1
+        if self.verbose >= 1:
+            print("inter_route_swap wasn't able to find a neighbor for this solution")
+        return solution
+
+
     # NEIGHBORHOOD FUNCTION
     def switch_three_customers_intra_route(self, solution) -> Solution:
         """
@@ -229,8 +277,8 @@ class VRPTWNeighborhood(Neighborhood):
             child1 = sol_code1[:pos] + sol_code2[pos:]
             child2 = sol_code2[:pos] + sol_code1[pos:]
 
-            copy_child1 = copy.deepcopy(child1)
-            copy_child2 = copy.deepcopy(child2)
+            copy_child1 = deepcopy(child1)
+            copy_child2 = deepcopy(child2)
 
             count1 = 0
             for gen1 in copy_child1[:pos]:
