@@ -35,9 +35,7 @@ class VRPTWNeighborhood(Neighborhood):
 
     def initial_solution(self) -> Solution:
         if self.init_sol == 'random':
-            init_sol = self.random_solution(nb_cust=len(self.context.customers) - 1,
-                                            force_check_vrptw=self.context,
-                                            verbose=self.verbose)
+            init_sol = self.random_solution(nb_cust=len(self.context.customers) - 1)
         elif isinstance(self.init_sol, Sol):
             init_sol = self.init_sol
         else:
@@ -281,46 +279,59 @@ class VRPTWNeighborhood(Neighborhood):
         that particular VRPTW instance.
         :return: Solution (or nothing)
         """
+        
+        def simplify(L, simpleL=[], i=0, on_zero=False):
+            if i >= len(L):
+                return simpleL
+            if L[i] == 0:
+                if on_zero:
+                    return simplify(L, simpleL, i+1, True)
+                else:
+                    return simplify(L, simpleL+[L[i]], i+1, True)
+            else:
+                return simplify(L, simpleL+[L[i]], i+1, False)
+                    
+                
         numbers = list(range(1, nb_cust + 1))
-        random.shuffle(numbers)
-        proportion = random.choice([0.2, 0.3, 0.4])
-        n_0 = int(nb_cust * proportion)
-        zero_positions = []
-        zero_pos_candidates = list(range(1, nb_cust - 1))
-        for _ in range(n_0):
-            if self.verbose >= 2:
-                print('candidates:', zero_pos_candidates)
-            try:
-                zero_pos = random.choice(zero_pos_candidates)
-            except IndexError:
-                if self.verbose >= 1:
-                    print('A problem ocurred, generating new random solution')
-                return self.random_solution(self, nb_cust=nb_cust,
-                                                         force_check_vrptw=force_check_vrptw)
-            if self.verbose >= 2:
-                print('zero_pos chosen:', zero_pos)
-            zero_pos_candidates = list(set(zero_pos_candidates) - {zero_pos, zero_pos + 1, zero_pos - 1})
-            zero_positions.append(zero_pos)
-        for pos in zero_positions:
-            numbers.insert(pos, 0)
-        solution = [0] + numbers + [0]
-        string = str(solution).replace('0, 0, 0', '0').replace('0, 0', '0')
-        code_solution = list(map(int, string.strip('][').split(',')))
-        if code_solution[-1] != 0:
-            code_solution.append(0)
-        solution = Sol(code_solution)
+        is_sol = False
+        
+        while not is_sol:
+            random.shuffle(numbers)
+            proportion = random.choice([0.2, 0.3, 0.4])
+            n_0 = int(nb_cust * proportion)
+            zero_positions = []
+            zero_pos_candidates = list(range(1, nb_cust - 1))
+            
+            for _ in range(n_0):
+                if self.verbose >= 2:
+                    print('candidates:', zero_pos_candidates)
+                try:
+                    zero_pos = random.choice(zero_pos_candidates)
+                except IndexError:
+                    if self.verbose >= 1:
+                        print('A problem ocurred, generating new random solution')
+                    continue
+                if self.verbose >= 2:
+                    print('zero_pos chosen:', zero_pos)
+                zero_pos_candidates = list(set(zero_pos_candidates) - {zero_pos, zero_pos + 1, zero_pos - 1})
+                zero_positions.append(zero_pos)
+                
+            for pos in zero_positions:
+                numbers.insert(pos, 0)
+            solution = [0] + numbers + [0]
+            code_solution = simplify(solution)
+            if code_solution[-1] != 0:
+                code_solution.append(0)
+            solution = Sol(code_solution)
        
-        check = solution.checker()
-        if not check:
-            if self.verbose >= 1:
-                print('Solution generated is not legitimate, a new one will be created.')
-            del numbers, proportion, n_0, zero_positions, zero_pos, zero_pos_candidates
-            del solution, string, code_solution
-            collect()
-            return self.random_solution(self, nb_cust=nb_cust,
-                                                     force_check_vrptw=force_check_vrptw)
-        else:
-            if self.verbose >= 1:
-                print(f'A legitimate solution was successfully generated:\n{solution}')
+            check = solution.checker()
+            if not check:
+                if self.verbose >= 1:
+                    print('Solution generated is not legitimate, a new one will be created.')
+                continue
+            else:
+                is_sol = True
+                if self.verbose >= 1:
+                    print(f'A legitimate solution was successfully generated:\n{solution}')
                 
         return solution
