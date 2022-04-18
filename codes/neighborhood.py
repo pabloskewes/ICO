@@ -24,9 +24,8 @@ class VRPTWNeighborhood(Neighborhood):
         self.init_sol = 'random'
         self.choose_mode = 'random'
         self.max_iter = 10
-        self.use_methods = ['switch_two_customers_intra_route', 'switch_two_random',
-                            'switch_three_consecutive', 'switch_three_random',
-                            'reverse_a_sequence', 'crossover']
+        self.use_methods = ['switch_two_customers_intra_route', 'inter_route_swap'
+                            'switch_three_consecutive', 'reverse_a_sequence', 'crossover']
 
         self.valid_params = ['init_sol', 'verbose', 'choose_mode', 'use_methods', 'max_iter']
         if params is not None:
@@ -175,7 +174,6 @@ class VRPTWNeighborhood(Neighborhood):
         if self.verbose >= 1:
             print("inter_route_swap wasn't able to find a neighbor for this solution")
         return solution
-
 
     # NEIGHBORHOOD FUNCTION
     def switch_three_customers_intra_route(self, solution) -> Solution:

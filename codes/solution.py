@@ -58,7 +58,7 @@ class VRPTWSolution(Solution):
             self.set_params(params)
 
     def __repr__(self):
-        return pformat(self.sol_code)
+        return pformat(self.routes)
 
     def cost(self) -> float:
         """

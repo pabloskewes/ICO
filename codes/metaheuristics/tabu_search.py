@@ -10,9 +10,10 @@ class TabuSearch(BaseMetaheuristic):
         """
         FIFO list that represents the tabu list
         """
-        def __init__(self):
+        def __init__(self, mode: str = 'default'):
             self.tabu_list = []
             self.size = 0
+            self.mode = mode
 
         def push(self, e):
             self.tabu_list.append(e)
@@ -22,10 +23,21 @@ class TabuSearch(BaseMetaheuristic):
             self.tabu_list = self.tabu_list[1:]
             self.size -= 1
 
-        def contains(self, e):
+        def contains_default(self, e):
             return e in self.tabu_list
 
-    def __init__(self, lower_bound=100, max_iter=100, max_tabu=10,
+        def contains_customs(self, e):
+            return any(e == e2 for e2 in self.tabu_list)
+
+        def contains(self, e):
+            if self.mode == 'default':
+                return self.contains_default(e)
+            elif self.mode == 'custom':
+                return self.contains_customs(e)
+            else:
+                raise Exception(f'{self.mode} is not a valid mode for tabu list')
+
+    def __init__(self, lower_bound: int = 100, max_iter: int = 100, max_tabu: int = 10, tabu_mode: str ='default',
                  solution_params=None, neighborhood_params=None, solution_space_params=None):
         super().__init__()
 
@@ -33,6 +45,7 @@ class TabuSearch(BaseMetaheuristic):
         self.lower_bound = lower_bound
         self.max_iter = max_iter
         self.max_tabu = max_tabu
+        self.tabu_mode = tabu_mode
 
         self.params = {'solution': solution_params,
                        'neighborhood': neighborhood_params,
@@ -45,7 +58,7 @@ class TabuSearch(BaseMetaheuristic):
         """
         # Initialization of parameters
         n_iter = 0
-        T = TabuSearch._TabuList()
+        T = TabuSearch._TabuList(mode=self.tabu_mode)
         _, N, _ = self.get_problem_components()
         self.best_solution = N.initial_solution()
         self.actual_solution = self.best_solution
