@@ -203,13 +203,14 @@ class VRPTWNeighborhood(Neighborhood):
             n_cycle = 0
             while n_cycle < self.max_iter:
                 n_cycle += 1
-                used_positions = []
                 new_routes = deepcopy(routes)
+                available_positions = [(i, j) for i in range(len(new_routes)) for j in range(len(new_routes[i]))]
                 for i in range(1, len(deleted_route)-1):
-                    r_route = random.randint(0, len(new_routes)-1)
-                    r_pos = random.randint(1, len(new_routes[r_route])-2)
+                    r = random.choice(available_positions)
+                    r_route = r[0]
+                    r_pos = r[1]
                     new_routes[r_route].insert(r_pos, deleted_route[i])
-                    used_positions.append((r_route, r_pos))
+                    available_positions.remove(r)
                 new_solution = VRPTWSolution(new_routes)
                 is_sol = all((new_solution.route_checker(route) for route in new_solution.routes))
                 if is_sol:
