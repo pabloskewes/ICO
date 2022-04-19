@@ -27,13 +27,6 @@ class TabuSearch(BaseMetaheuristic):
             self.tabu_list = self.tabu_list[1:]
             self.size -= 1
 
-        def remove_random(self):
-            n = self.size//2
-            for _ in range(n):
-                r = randint(0, self.size-1)
-                self.tabu_list.pop(r)
-                self.size -= 1
-
         def contains_default(self, e):
             return e in self.tabu_list
 
