@@ -165,13 +165,56 @@ class VRPTWNeighborhood(Neighborhood):
         """
         routes = deepcopy(solution.routes)
         lengths_list = list(map(len, routes))
-        smallest_index = lengths_list.index(min(lengths_list))
-        deleted_route = routes.pop(smallest_index)
+        smallest_route = min(lengths_list)
         new_solution = None
         is_sol = False
         n_iter = 0
+        disponible_routes = [i for i, route in enumerate(routes) if len(route) == smallest_route]
+
         while not is_sol and n_iter < self.max_iter:
             n_iter += 1
+            if len(disponible_routes) == 0:
+                break
+            deleted_index = random.choice(disponible_routes)
+            deleted_route = routes.pop(deleted_index)
+            n_cycle = 0
+            while n_cycle < self.max_iter:
+                n_cycle += 1
+                used_positions = []
+                new_routes = deepcopy(routes)
+                for i in range(1, len(deleted_route)-1):
+                    r_route = random.randint(0, len(new_routes)-1)
+                    r_pos = random.randint(1, len(new_routes[r_route])-2)
+                    new_routes[r_route].insert(r_pos, deleted_route[i])
+                    used_positions.append((r_route, r_pos))
+                new_solution = VRPTWSolution(new_routes)
+                is_sol = all((new_solution.route_checker(route) for route in new_solution.routes))
+                if is_sol:
+                    return new_solution
+
+            routes.insert(deleted_index, deleted_route)
+            disponible_routes.remove(deleted_index)
+        return solution
+
+    # NEIGHBORHOOD FUNCTION 8 - DELETE RANDOM ROUTE
+    def delete_random_route(self, solution: VRPTWSolution) -> VRPTWSolution:
+        """
+        Deletes the random route and inserts its customers in the other routes
+        :param solution
+        :return: Solution (or nothing)
+        """
+        routes = deepcopy(solution.routes)
+        new_solution = None
+        is_sol = False
+        n_iter = 0
+        disponible_routes = list(range(len(routes)))
+
+        while not is_sol and n_iter < self.max_iter:
+            n_iter += 1
+            if len(disponible_routes) == 0:
+                break
+            deleted_index = random.choice(disponible_routes)
+            deleted_route = routes.pop(deleted_index)
             for i in range(1, len(deleted_route)-1):
                 r_route = random.randint(0, len(routes)-1)
                 r_pos = random.randint(1, len(routes[r_route])-2)
@@ -180,7 +223,10 @@ class VRPTWNeighborhood(Neighborhood):
             is_sol = all((new_solution.route_checker(route) for route in new_solution.routes))
             if is_sol:
                 return new_solution
+            routes.insert(deleted_index, deleted_route)
+            disponible_routes.remove(deleted_index)
         return solution
+
 
     # NEIGHBORHOOD FUNCTION
     def switch_three_customers_intra_route(self, solution) -> Solution:
