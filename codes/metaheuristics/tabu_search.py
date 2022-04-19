@@ -105,5 +105,5 @@ class TabuSearch(BaseMetaheuristic):
                 pbar.update()
         if self.progress_bar:
             pbar.close()
-            
+
         return self.best_solution

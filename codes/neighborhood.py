@@ -179,6 +179,32 @@ class VRPTWNeighborhood(Neighborhood):
             print("inter_route_swap wasn't able to find a neighbor for this solution")
         return solution
 
+    # NEIGHBORHOOD FUNCTION 7 - DELETE SMALLEST ROUTE
+    def delete_smallest_route(self, solution: VRPTWSolution) -> VRPTWSolution:
+        """
+        Deletes the smallest route and inserts its customers in the other routes
+        :param solution
+        :return: Solution (or nothing)
+        """
+        routes = deepcopy(solution.routes)
+        lengths_list = list(map(len, routes))
+        smallest_index = lengths_list.index(min(lengths_list))
+        deleted_route = routes.pop(smallest_index)
+        new_solution = None
+        is_sol = False
+        n_iter = 0
+        while not is_sol and n_iter < self.max_iter:
+            n_iter += 1
+            for i in range(1, len(deleted_route)-1):
+                r_route = random.randint(0, len(routes)-1)
+                r_pos = random.randint(1, len(routes[r_route])-2)
+                routes[r_route].insert(r_pos, deleted_route[i])
+            new_solution = VRPTWSolution(routes)
+            is_sol = all((new_solution.route_checker(route) for route in new_solution.routes))
+            if is_sol:
+                return new_solution
+        return solution
+
     # NEIGHBORHOOD FUNCTION
     def switch_three_customers_intra_route(self, solution) -> Solution:
         """
@@ -235,7 +261,7 @@ class VRPTWNeighborhood(Neighborhood):
         neighbor = Sol(routes_copy)
         return neighbor
 
-    # NEIGHBORHOOD FUNCTION
+    # GA - NEIGHBORHOOD FUNCTION
     def reverse_a_sequence(self, solution: VRPTWSolution):
         """
         Reverse a sequence of code by randomly choosing the start position and the end position in the solution_code (except the first,
@@ -378,30 +404,4 @@ class VRPTWNeighborhood(Neighborhood):
                 if self.verbose >= 1:
                     print(f'A legitimate solution was successfully generated:\n{solution}')
 
-        return solution
-
-    # NEIGHBORHOOD FUNCTION 7 - DELETE SMALLEST ROUTE
-    def delete_smallest_route(self, solution: VRPTWSolution) -> VRPTWSolution:
-        """
-        Deletes the smallest route and inserts its customers in the other routes
-        :param solution
-        :return: Solution (or nothing)
-        """
-        routes = deepcopy(solution.routes)
-        lengths_list = list(map(len, routes))
-        smallest_index = lengths_list.index(min(lengths_list))
-        deleted_route = routes.pop(smallest_index)
-        new_solution = None
-        is_sol = False
-        n_iter = 0
-        while not is_sol and n_iter < self.max_iter:
-            n_iter += 1
-            for i in range(1, len(deleted_route)-1):
-                r_route = random.randint(0, len(routes)-1)
-                r_pos = random.randint(1, len(routes[r_route])-2)
-                routes[r_route].insert(r_pos, deleted_route[i])
-            new_solution = VRPTWSolution(routes)
-            is_sol = all((new_solution.route_checker(route) for route in new_solution.routes))
-            if is_sol:
-                return new_solution
         return solution
