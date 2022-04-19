@@ -1,6 +1,8 @@
 from .base_metaheuristic import BaseMetaheuristic
 from .base_problem import Solution
 
+from tqdm import tqdm
+
 
 class TabuSearch(BaseMetaheuristic):
     """
@@ -37,7 +39,8 @@ class TabuSearch(BaseMetaheuristic):
             else:
                 raise Exception(f'{self.mode} is not a valid mode for tabu list')
 
-    def __init__(self, lower_bound: int = 100, max_iter: int = 100, max_tabu: int = 10, tabu_mode: str ='default',
+    def __init__(self, lower_bound: int = 100, max_iter: int = 100, max_tabu: int = 10,
+                 tabu_mode: str = 'default', progress_bar: bool = False,
                  solution_params=None, neighborhood_params=None, solution_space_params=None):
         super().__init__()
 
@@ -46,6 +49,7 @@ class TabuSearch(BaseMetaheuristic):
         self.max_iter = max_iter
         self.max_tabu = max_tabu
         self.tabu_mode = tabu_mode
+        self.progress_bar = progress_bar
 
         self.params = {'solution': solution_params,
                        'neighborhood': neighborhood_params,
@@ -57,6 +61,8 @@ class TabuSearch(BaseMetaheuristic):
         :return: Solution
         """
         # Initialization of parameters
+        pbar = tqdm(total=self.max_iter) if self.progress_bar else None
+
         n_iter = 0
         T = TabuSearch._TabuList(mode=self.tabu_mode)
         _, N, _ = self.get_problem_components()
@@ -66,7 +72,6 @@ class TabuSearch(BaseMetaheuristic):
         self.evolution_explored_solutions.append(self.actual_solution.cost())
         T.push(self.actual_solution)
         best_iter = 0
-
         # Stop conditions : cost under a minimal expected cost or maximum iteration reached
         while (self.best_solution.cost() > self.lower_bound) and ((n_iter - best_iter) < self.max_iter):
             n_iter += 1
@@ -95,4 +100,10 @@ class TabuSearch(BaseMetaheuristic):
 
             self.evolution_explored_solutions.append(self.actual_solution.cost())
             self.evolution_best_solution.append(self.best_solution.cost())
+
+            if self.progress_bar:
+                pbar.update()
+        if self.progress_bar:
+            pbar.close()
+            
         return self.best_solution
