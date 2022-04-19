@@ -1,7 +1,7 @@
 from typing import Optional, Dict, Tuple, List
 import random
 from copy import deepcopy
-from itertools import combinations, product
+from itertools import combinations, product, permutations
 from math import factorial
 
 from solution import VRPTWSolution as Sol
@@ -25,7 +25,8 @@ class VRPTWNeighborhood(Neighborhood):
         self.choose_mode = 'random'
         self.max_iter = 10
         self.force_new_sol = False
-        self.use_methods = ['intra_route_swap', 'inter_route_swap', 'delete_smallest_route']
+        self.use_methods = ['intra_route_swap', 'inter_route_swap', 'intra_route_swift', 'inter_route_shift',
+                            'delete_smallest_route']
 
         self.valid_params = ['init_sol', 'verbose', 'choose_mode', 'use_methods', 'max_iter', 'force_new_sol']
         if params is not None:
@@ -78,11 +79,7 @@ class VRPTWNeighborhood(Neighborhood):
 
     # NEIGHBORHOOD FUNCTION 1 - INTRA ROUTE SWAP
     def intra_route_swap(self, solution: VRPTWSolution) -> VRPTWSolution:
-        """
-        Switches two random customers in one random route (except the first and last customers who are the depot),
-        then returns    new solution
-        :param : solution
-        """
+        """ Exchange 2 customers randomly on the same randomly chosen route """
         routes = solution.routes
         new_routes = deepcopy(routes)
         S = VRPTWSolution()
@@ -103,6 +100,7 @@ class VRPTWNeighborhood(Neighborhood):
                 index_c1, index_c2 = random.choice(c_index_pairs)
                 c_index_pairs.remove((index_c1, index_c2))
 
+                # Swapping customers of same route
                 route[index_c1], route[index_c2] = route[index_c2], route[index_c1]
                 is_sol = S.route_checker(route)
                 if is_sol:
@@ -111,7 +109,6 @@ class VRPTWNeighborhood(Neighborhood):
 
                 cust_iter += 1
                 route = routes[r_index].copy()
-
             routes_iter += 1
         if self.verbose >= 1:
             print("intra_route_swap wasn't able to find a neighbor for this solution")
@@ -120,6 +117,7 @@ class VRPTWNeighborhood(Neighborhood):
 
     # NEIGHBORHOOD FUNCTION 2 - INTER ROUTE SWAP
     def inter_route_swap(self, solution: VRPTWSolution) -> VRPTWSolution:
+        """  Exchanges 2 clients between 2 random routes """
         routes = solution.routes
         new_routes = deepcopy(routes)
         S = VRPTWSolution()
@@ -139,6 +137,7 @@ class VRPTWNeighborhood(Neighborhood):
                 cust_pairs.remove((cust1, cust2))
                 index_c1, index_c2 = route1.index(cust1), route2.index(cust2)
 
+                # Swapping customers of routes 1 and route 2
                 new_routes[index_r1][index_c1] = cust2
                 new_routes[index_r2][index_c2] = cust1
                 is_sol = S.route_checker(route1) and S.route_checker(route2)
@@ -154,6 +153,89 @@ class VRPTWNeighborhood(Neighborhood):
 
         if self.verbose >= 1:
             print("inter_route_swap wasn't able to find a neighbor for this solution")
+        return solution
+
+    # NEIGHBORHOOD FUNCTION 3 - INTRA ROUTE SHIFT
+    def intra_route_shift(self, solution: VRPTWSolution) -> VRPTWSolution:
+        """ Moves a random client to another position on its same route """
+        routes = solution.routes
+        new_routes = deepcopy(routes)
+        S = VRPTWSolution()
+        is_sol = False
+
+        available_routes_index = list(range(len(routes)))
+        routes_iter = 0
+        while not is_sol and routes_iter < self.max_iter and available_routes_index:
+            r_index = random.choice(available_routes_index)
+            available_routes_index.remove(r_index)
+
+            route: List[int] = routes[r_index].copy()
+            if len(route) < 4:
+                continue
+            c_positions = list(permutations(range(1, len(route) - 1), r=2))
+            cust_iter = 0
+            while not is_sol and cust_iter < self.max_iter and c_positions:
+                index_c, new_position = random.choice(c_positions)
+                c_positions.remove((index_c, new_position))
+
+                # moving customer from one position to another in its same route
+                cust = route.pop(index_c)
+                route.insert(new_position, cust)
+                is_sol = S.route_checker(route)
+                if is_sol:
+                    new_routes[r_index] = route.copy()
+                    return VRPTWSolution(new_routes)
+
+                cust_iter += 1
+                route = routes[r_index].copy()
+            routes_iter += 1
+        if self.verbose >= 1:
+            print("intra_route_shift wasn't able to find a neighbor for this solution")
+
+        return solution
+
+    # NEIGHBORHOOD FUNCTION 4 - INTER ROUTE SHIFT
+    def inter_route_shift(self, solution: VRPTWSolution) -> VRPTWSolution:
+        """ Moves a random client to another position on another route """
+        routes = solution.routes
+        new_routes = deepcopy(routes)
+        S = VRPTWSolution()
+        is_sol = False
+
+        available_routes_index = list(range(len(routes)))
+        routes_iter = 0
+        while not is_sol and routes_iter < self.max_iter and available_routes_index:
+            r_index = random.choice(available_routes_index)
+            available_routes_index.remove(r_index)
+
+            route: List[int] = routes[r_index].copy()
+            customers_index = range(1, len(route) - 1)
+            other_routes_index = list(set(range(len(routes))) - {r_index})
+            possible_positions = []
+            for i in other_routes_index:
+                other_route = routes[i].copy()
+                possible_positions.extend(list(product([i], range(1, len(other_route) - 1))))
+            c_combinations = list(product(customers_index, possible_positions))
+            cust_iter = 0
+            while not is_sol and cust_iter < self.max_iter and c_combinations:
+                index_c, new_position = random.choice(c_combinations)
+                new_position_route, new_position_cust = new_position
+                c_combinations.remove((index_c, new_position))
+
+                # inserting customer in another route
+                cust = new_routes[r_index].pop(index_c)
+                new_routes[new_position_route].insert(new_position_cust, cust)
+                is_sol = S.route_checker(new_routes[r_index]) and S.route_checker(new_routes[new_position_route])
+                if is_sol:
+                    while [0, 0] in new_routes:
+                        new_routes.remove([0, 0])
+                    return VRPTWSolution(new_routes)
+                cust_iter += 1
+                new_routes = deepcopy(routes)
+            routes_iter += 1
+        if self.verbose >= 1:
+            print("inter_route_shift wasn't able to find a neighbor for this solution")
+
         return solution
 
     # NEIGHBORHOOD FUNCTION 7 - DELETE SMALLEST ROUTE
