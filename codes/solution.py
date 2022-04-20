@@ -203,7 +203,7 @@ class VRPTWSolution(Solution):
             output += ' -> ' + str(edge[1])
         print(output)
 
-    def plot_graph(self, name_delta=2, arrows=False, color_map='gist_rainbow'):
+    def plot_graph(self, name_delta=2, arrows=False, color_map='gist_rainbow', figsize=15):
         customers_list = self.context.customers
         depot = customers_list[0]
         customers = customers_list[1:]
@@ -211,14 +211,18 @@ class VRPTWSolution(Solution):
         y_positions = [cust.longitude for cust in customers]
         cmap = get_cmap(color_map)
         color_index = 0.0
-        sign = lambda x : 1 if x >= 0 else -1
 
+        def f(x):
+            return 0.00596113 * x ** 2 + -0.21704307 * x + 2.53306197
+
+        plt.figure(figsize=(figsize, figsize))
         if arrows: 
             for edge in self.graph:
                 cust1, cust2 = customers_list[edge[0]], customers_list[edge[1]]
                 x1, y1, x2, y2 = cust1.latitude, cust1.longitude, cust2.latitude, cust2.longitude
                 plt.arrow(x=x1, y=y1, dx=x2-x1, dy=y2-y1, width=0.1,
-                            head_width=2.0, length_includes_head=True, color=cmap(color_index))
+                          head_width=f(figsize), length_includes_head=True,
+                          color=cmap(color_index))
                 if edge[1] == 0:
                     color_index += 1.0/len(self.routes)
         else:
