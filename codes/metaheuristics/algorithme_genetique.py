@@ -31,9 +31,6 @@ AA               Methode that should be rewrite in the outside vlasses
 LOG              log of the modification of the main structure
 '''
 # TDL:
-##sol_to_list_routes ,solution_checker_ga :__fitness and solution_check_ga
-# solution.cost(), solution_checker()
-# fitness() plays with cost
 
 # ga=GeneticAlgorithm()
 # ga.context=load_solomon()
@@ -63,7 +60,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
         self.num_parent = num_parent
         self.num_population = num_population
         self.best_solution=None
-        self.best_solutions = []
+        self.evolution_explored_solutions = []
         self.penalty_wrong_chromosome=40000
         
 
@@ -78,36 +75,25 @@ class GeneticAlgorithm(BaseMetaheuristic):
     # KK
     def __chromosome_mutation(self, chromosome, prob):
         if random.random() < prob:
-            #set neighbor to reverse_sequence
-            # self.NEIGHBORHOOD.set_params({'choose_mode':'reverse_a_sequence'})
-            self.params['neighborhood']['choose_mode']='reverse_a_sequence'
-            n=self.NEIGHBORHOOD(self.params['neighborhood']) 
-            return n.get_neighbor(chromosome)
+            N=self.NEIGHBORHOOD() 
+            N.set_params({'choose_mode':'reverse_a_sequence'})
+            return N(chromosome)
         else:
             return chromosome
 
     # KK
     def __chromosome_crossover(self, parent1, parent2):  # what about cross-mute?
-        # self.NEIGHBORHOOD.set_params({'choose_mode':'crossover'})
-        self.params['neighborhood']['choose_mode']='crossover'
-        n=self.NEIGHBORHOOD(self.params['neighborhood']) 
-        return n.get_neighbor_from_two(parent1, parent2)
+        N=self.NEIGHBORHOOD()
+        N.set_params({'choose_mode':'crossover'})
+        return N.get_neighbor_from_two(parent1, parent2)
 
     def search(self):
         """ Performs metaheuristic search """
-        # _, N, _ = self.get_problem_components()
-        # init_sol = N.initial_solution()
-        # print('init_sol:',init_sol)
-        # self.best_solution = init_sol
-        # print('best_solution:',self.best_solution)
-        # self.evolution_best_solution.append(self.__fitness(self.best_solution))
-        # self.best_solutions.append(self.best_solution)
 
         for _ in range(self.num_evolu_per_search):
             self.__evolution()
-
-        self.best_solutions.append(self.best_solution)
-        self.evolution_best_solution.append(self.__fitness(self.best_solution))
+            
+        self.evolution_best_solution.append(-self.__fitness(self.best_solution))
         return self.best_solution
 
     def __fitness(self, solution):
@@ -206,15 +192,17 @@ class GeneticAlgorithm(BaseMetaheuristic):
         def __eliminate(self):  # Eliminate the less strong half of the population
             list_fitness = []
             for chromosome in self.population:
-                list_fitness.append(self.__fitness(chromosome))
+                fitness=self.__fitness(chromosome)
+                list_fitness.append(fitness)
+                if fitness >-self.penalty_wrong_chromosome:
+                    self.evolution_explored_solutions.append(-fitness)
             critere = statistics.median(list_fitness)
             best_performance = max(list_fitness)
 
             for chromosome in self.population:
                 if self.__fitness(chromosome) == best_performance:
                     self.best_solution = chromosome
-                    if not chromosome in self.best_solutions:
-                        self.best_solutions.append(chromosome)
+
             while (len(self.population) > self.num_population):
                 for chromosome in self.population:
                     if self.__fitness(chromosome) <= critere:
