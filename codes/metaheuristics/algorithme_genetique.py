@@ -7,6 +7,8 @@ import sys
 from math import sqrt
 import copy
 import numpy as np
+from tqdm import tqdm
+
 from .base_problem import Solution, Neighborhood, SolutionSpace
 from .base_metaheuristic import BaseMetaheuristic
 
@@ -47,7 +49,8 @@ LOG
 
 class GeneticAlgorithm(BaseMetaheuristic):
     def __init__(self,num_evolu_per_search=10, num_parent=4, num_population=20, rate_mutation=0.2,
-                 population=[], solution_params=None, neighborhood_params=None, solution_space_params=None):
+                 population=[], progress_bar=False,
+                 solution_params=None, neighborhood_params=None, solution_space_params=None):
         super().__init__()
 
         self.params = {'solution': solution_params,
@@ -62,6 +65,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
         self.best_solution=None
         self.evolution_explored_solutions = []
         self.penalty_wrong_chromosome=40000
+        self.progress_bar = progress_bar
         
 
     # KK
@@ -90,7 +94,8 @@ class GeneticAlgorithm(BaseMetaheuristic):
     def search(self):
         """ Performs metaheuristic search """
 
-        for _ in range(self.num_evolu_per_search):
+        iterator = tqdm(range(self.num_evolu_per_search)) if self.progress_bar else range(self.num_evolu_per_search)
+        for _ in iterator:
             self.__evolution()
             
         self.evolution_best_solution.append(-self.__fitness(self.best_solution))
