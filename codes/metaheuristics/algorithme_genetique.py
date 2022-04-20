@@ -49,7 +49,7 @@ LOG
 
 
 class GeneticAlgorithm(BaseMetaheuristic):
-    def __init__(self, num_parent=4, num_population=20, rate_mutation=0.2,
+    def __init__(self,num_evolu_per_search=10, num_parent=4, num_population=20, rate_mutation=0.2,
                  population=[], solution_params=None, neighborhood_params=None, solution_space_params=None):
         super().__init__()
 
@@ -57,6 +57,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
                        'neighborhood': neighborhood_params,
                        'solution_space': solution_space_params}
 
+        self.num_evolu_per_search= num_evolu_per_search
         self.population = population
         self.rate_mutation = rate_mutation
         self.num_parent = num_parent
@@ -102,7 +103,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
         # self.evolution_best_solution.append(self.__fitness(self.best_solution))
         # self.best_solutions.append(self.best_solution)
 
-        for _ in range(200):
+        for _ in range(self.num_evolu_per_search):
             self.__evolution()
 
         self.best_solutions.append(self.best_solution)
