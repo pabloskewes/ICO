@@ -25,10 +25,15 @@ class VRPTWNeighborhood(Neighborhood):
         self.choose_mode = 'random'
         self.max_iter = 10
         self.force_new_sol = False
-        self.use_methods = ['intra_route_swap', 'inter_route_swap', 'intra_route_swift', 'inter_route_shift',
-                            'two_intra_route_shift', 'delete_smallest_route', 'delete_random_route']
+        self.id = 1
+        self.use_methods = ['intra_route_swap', 'inter_route_swap',
+                            'intra_route_swift', 'inter_route_shift',
+                            'two_intra_route_shift', 'two_inter_route_shift'
+                            'delete_smallest_route', 'delete_random_route']
+        self.methods_ids = {i+1: method for i, method in enumerate(self.use_methods)}
 
-        self.valid_params = ['init_sol', 'verbose', 'choose_mode', 'use_methods', 'max_iter', 'force_new_sol']
+        self.valid_params = ['init_sol', 'verbose', 'choose_mode', 'use_methods', 'max_iter',
+                             'force_new_sol', 'id']
         if params is not None:
             self.set_params(params)
 
@@ -48,13 +53,24 @@ class VRPTWNeighborhood(Neighborhood):
         if self.choose_mode == 'random':
             method_name = random.choice(self.use_methods)
             new_sol = getattr(self, method_name)(solution)
+
         elif self.choose_mode == 'best':
             solutions_found = [getattr(self, method_name)(solution) for method_name in self.use_methods]
             best_solutions = list(map(lambda sol: sol.cost(), solutions_found))
             index = best_solutions.index(min(best_solutions))
             new_sol = solutions_found[index]
+
+        elif self.choose_mode == 'id':
+            method_name = self.methods_ids[self.id]
+            new_sol = getattr(self, method_name)(solution)
+
         elif hasattr(self, self.choose_mode):
             new_sol = getattr(self, self.choose_mode)(solution)
+
+        elif type(self.choose_mode) == int:
+            method_name = self.methods_ids[self.choose_mode]
+            new_sol = getattr(self, method_name)(solution)
+
         else:
             raise Exception(f'"{self.choose_mode}" is not a valid parameter for choose_mode')
         return new_sol
