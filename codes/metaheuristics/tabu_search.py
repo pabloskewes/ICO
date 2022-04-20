@@ -1,5 +1,6 @@
 from .base_metaheuristic import BaseMetaheuristic
 from .base_problem import Solution
+from random import randint
 
 from tqdm import tqdm
 
@@ -18,8 +19,9 @@ class TabuSearch(BaseMetaheuristic):
             self.mode = mode
 
         def push(self, e):
-            self.tabu_list.append(e)
-            self.size += 1
+            if not self.contains(e):
+                self.tabu_list.append(e)
+                self.size += 1
 
         def remove_first(self):
             self.tabu_list = self.tabu_list[1:]
@@ -45,6 +47,7 @@ class TabuSearch(BaseMetaheuristic):
         super().__init__()
 
         self.actual_solution = None
+        self.last_visited_solution = None
         self.lower_bound = lower_bound
         self.max_iter = max_iter
         self.max_tabu = max_tabu
@@ -62,31 +65,54 @@ class TabuSearch(BaseMetaheuristic):
         """
         # Initialization of parameters
         pbar = tqdm(total=self.max_iter) if self.progress_bar else None
-
         n_iter = 0
         T = TabuSearch._TabuList(mode=self.tabu_mode)
         _, N, _ = self.get_problem_components()
         self.best_solution = N.initial_solution()
         self.actual_solution = self.best_solution
+        self.last_visited_solution = self.best_solution
         self.evolution_best_solution.append(self.best_solution.cost())
         self.evolution_explored_solutions.append(self.actual_solution.cost())
         T.push(self.actual_solution)
         best_iter = 0
+
         # Stop conditions : cost under a minimal expected cost or maximum iteration reached
         while (self.best_solution.cost() > self.lower_bound) and ((n_iter - best_iter) < self.max_iter):
             n_iter += 1
+            if self.progress_bar:
+                pbar.update()
+
 
             # Generates a new solution from the neighborhood of the actual solution
             new_solution = N(self.actual_solution)
+            self.evolution_explored_solutions.append(new_solution.cost())
+            self.evolution_best_solution.append(self.best_solution.cost())
 
             # If the solution is in the Tabu list, another one is generated
+            n_cycle = 0
+            aspiration_condition = False
             while T.contains(new_solution):
                 new_solution = N(self.actual_solution)
+                self.evolution_explored_solutions.append(new_solution.cost())
+                self.evolution_best_solution.append(self.best_solution.cost())
+                if n_cycle == self.max_iter:
+                    T.push(self.actual_solution)
+                    self.actual_solution = self.last_visited_solution
+                    aspiration_condition = True
+                    break
+                n_cycle += 1
+            if aspiration_condition:
+                continue
 
             # If the new solution cost is less than the actual best solution cost, the best solution is updated
             if self.best_solution.cost() > new_solution.cost():
+                if self.progress_bar:
+                    pbar.reset()
+                    pbar.set_description('Cost: %.2f' %new_solution.cost())
+                self.last_visited_solution = self.best_solution
                 self.best_solution = new_solution
                 best_iter = n_iter
+
 
             # The solution found is added to the Tabu list, and the actual solution is updated with the
             # new solution
@@ -98,11 +124,6 @@ class TabuSearch(BaseMetaheuristic):
             if T.size > self.max_tabu:
                 T.remove_first()
 
-            self.evolution_explored_solutions.append(self.actual_solution.cost())
-            self.evolution_best_solution.append(self.best_solution.cost())
-
-            if self.progress_bar:
-                pbar.update()
         if self.progress_bar:
             pbar.close()
 

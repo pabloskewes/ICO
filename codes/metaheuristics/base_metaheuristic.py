@@ -66,8 +66,9 @@ class BaseMetaheuristic(ABC):
             sol_space = None
         return solution, neighborhood, sol_space
 
-    def plot_evolution_cost(self):
+    def plot_evolution_cost(self, figsize=(20, 10)):
         # plt.scatter(x=list(range(len(self.cost_list_best_sol))), y=self.cost_list_best_sol, c='turquoise')
+        plt.figure(figsize=figsize)
         plt.title('Evolution of the cost of the found solutions')
         plt.plot(self.evolution_explored_solutions, c='turquoise', label='explored solutions')
         plt.plot(self.evolution_best_solution, c='orange', label='best solution')
