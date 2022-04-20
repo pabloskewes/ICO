@@ -27,7 +27,7 @@ class VRPTWNeighborhood(Neighborhood):
         self.force_new_sol = False
         self.use_methods = ['intra_route_swap', 'inter_route_swap',
                             'intra_route_swift', 'inter_route_shift',
-                            'two_intra_route_shift', 'two_inter_route_shift'
+                            'two_intra_route_shift', 'two_inter_route_shift',
                             'delete_smallest_route', 'delete_random_route']
         self.methods_ids = {i+1: method for i, method in enumerate(self.use_methods)}
 
