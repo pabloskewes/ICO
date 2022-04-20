@@ -25,7 +25,6 @@ class VRPTWNeighborhood(Neighborhood):
         self.choose_mode = 'random'
         self.max_iter = 10
         self.force_new_sol = False
-        self.id = 1
         self.use_methods = ['intra_route_swap', 'inter_route_swap',
                             'intra_route_swift', 'inter_route_shift',
                             'two_intra_route_shift', 'two_inter_route_shift'
@@ -33,7 +32,7 @@ class VRPTWNeighborhood(Neighborhood):
         self.methods_ids = {i+1: method for i, method in enumerate(self.use_methods)}
 
         self.valid_params = ['init_sol', 'verbose', 'choose_mode', 'use_methods', 'max_iter',
-                             'force_new_sol', 'id']
+                             'force_new_sol']
         if params is not None:
             self.set_params(params)
 
@@ -52,6 +51,7 @@ class VRPTWNeighborhood(Neighborhood):
     def get_neighbor(self, solution) -> Solution:
         if self.choose_mode == 'random':
             method_name = random.choice(self.use_methods)
+            method_name = self.methods_ids[method_name] if type(method_name) == int else method_name
             new_sol = getattr(self, method_name)(solution)
 
         elif self.choose_mode == 'best':
@@ -59,10 +59,6 @@ class VRPTWNeighborhood(Neighborhood):
             best_solutions = list(map(lambda sol: sol.cost(), solutions_found))
             index = best_solutions.index(min(best_solutions))
             new_sol = solutions_found[index]
-
-        elif self.choose_mode == 'id':
-            method_name = self.methods_ids[self.id]
-            new_sol = getattr(self, method_name)(solution)
 
         elif hasattr(self, self.choose_mode):
             new_sol = getattr(self, self.choose_mode)(solution)
