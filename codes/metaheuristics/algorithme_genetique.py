@@ -94,6 +94,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
             self.__evolution()
             
         self.evolution_best_solution.append(-self.__fitness(self.best_solution))
+        self.evolution_explored_solutions=self.evolution_explored_solutions[:len(self.evolution_best_solution)]
         return self.best_solution
 
     def __fitness(self, solution):
