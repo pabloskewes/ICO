@@ -26,8 +26,8 @@ class VRPTWNeighborhood(Neighborhood):
         self.max_iter = 10
         self.force_new_sol = False
         self.use_methods = ['intra_route_swap', 'inter_route_swap',
-                            'intra_route_swift', 'inter_route_shift',
-                            'two_intra_route_shift', 'two_inter_route_shift',
+                            'intra_route_shift', 'inter_route_shift',
+                            'two_intra_route_swap', 'two_intra_route_shift',
                             'delete_smallest_route', 'delete_random_route']
         self.methods_ids = {i+1: method for i, method in enumerate(self.use_methods)}
 
@@ -245,6 +245,45 @@ class VRPTWNeighborhood(Neighborhood):
             routes_iter += 1
         if self.verbose >= 1:
             print("inter_route_shift wasn't able to find a neighbor for this solution")
+        return solution
+
+    # NEIGHBORHOOD FUNCTION 5 - INTRA ROUTE SWAP
+    def two_intra_route_swap(self, solution: VRPTWSolution) -> VRPTWSolution:
+        """ Exchange 2 consecutive customers randomly on the same randomly chosen route for another pair"""
+        routes = solution.routes
+        new_routes = deepcopy(routes)
+        S = VRPTWSolution()
+        is_sol = False
+
+        available_routes_index = list(range(len(routes)))
+        routes_iter = 0
+        while not is_sol and routes_iter < self.max_iter and available_routes_index:
+            r_index = random.choice(available_routes_index)
+            available_routes_index.remove(r_index)
+
+            route: List[int] = routes[r_index].copy()
+            if len(route) < 6:
+                continue
+            c_positions = list(permutations(range(1, len(route) - 2), r=2))
+            c_positions = list(filter(lambda pos: pos[0]+1 != pos[1] and pos[0]-1 != pos[1], c_positions))
+            cust_iter = 0
+            while not is_sol and cust_iter < self.max_iter and c_positions:
+                index_pair_1, index_pair_2 = random.choice(c_positions)
+                c_positions.remove((index_pair_1, index_pair_2))
+                print(index_pair_1, index_pair_2)
+
+                # Swapping customers of same route
+                route[index_pair_1], route[index_pair_2] = route[index_pair_2], route[index_pair_1]
+                route[index_pair_1 + 1], route[index_pair_2 + 1] = route[index_pair_2 + 1], route[index_pair_1 + 1]
+                is_sol = S.route_checker(route)
+                if is_sol:
+                    new_routes[r_index] = route.copy()
+                    return VRPTWSolution(new_routes)
+                cust_iter += 1
+                route = routes[r_index].copy()
+            routes_iter += 1
+        if self.verbose >= 1:
+            print("intra_route_swap wasn't able to find a neighbor for this solution")
         return solution
 
     # NEIGHBORHOOD FUNCTION 6 - TWO INTRA ROUTE SHIFT
