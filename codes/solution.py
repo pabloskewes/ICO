@@ -1,6 +1,8 @@
 from typing import List, Set, Union, Optional, Dict, Any
 from pprint import pformat
 import matplotlib.pyplot as plt
+from matplotlib.cm import get_cmap
+
 
 from metaheuristics.base_problem import Solution
 from context import VRPTWContext
@@ -92,7 +94,7 @@ class VRPTWSolution(Solution):
                 print("All customers are not visited.")
             return False
         return True
-    
+
     def not_repeated_customers_checker(self) -> bool:
         """ Checks if the customers are visited exactly once. """
         # If some nodes (customers) are visited more than once (except for the depot), return False
@@ -193,7 +195,7 @@ class VRPTWSolution(Solution):
         assert isinstance(other, VRPTWSolution), f"Cannot compare VRPTWSolution type with {other} of type {type(other)}"
         return len(self.routes) > len(other.routes) or \
                (len(self.routes) == len(other.routes) and self.cost() >= other.cost())
-    
+
     def print_graph(self):
         output = ''
         output += str(self.graph[0][0])
@@ -201,22 +203,30 @@ class VRPTWSolution(Solution):
             output += ' -> ' + str(edge[1])
         print(output)
 
-    def plot_graph(self, name_delta=2, arrows=False):
+    def plot_graph(self, name_delta=2, arrows=False, color_map='gist_rainbow'):
         customers_list = self.context.customers
         depot = customers_list[0]
         customers = customers_list[1:]
         x_positions = [cust.latitude for cust in customers]
         y_positions = [cust.longitude for cust in customers]
+        cmap = get_cmap(color_map)
+        color_index = 0.0
+        sign = lambda x : 1 if x >= 0 else -1
 
-        if arrows: # doesn't work well
+        if arrows: 
             for edge in self.graph:
                 cust1, cust2 = customers_list[edge[0]], customers_list[edge[1]]
                 x1, y1, x2, y2 = cust1.latitude, cust1.longitude, cust2.latitude, cust2.longitude
-                plt.arrow(x=x1, y=y1, dx=x2-x1, dy=y2-y1, width=0.1)
+                plt.arrow(x=x1, y=y1, dx=x2-x1, dy=y2-y1, width=0.1,
+                            head_width=2.0, length_includes_head=True, color=cmap(color_index))
+                if edge[1] == 0:
+                    color_index += 1.0/len(self.routes)
         else:
             for edge in self.graph:
                 cust1, cust2 = customers_list[edge[0]], customers_list[edge[1]]
-                plt.plot([cust1.latitude, cust2.latitude], [cust1.longitude, cust2.longitude], color='black')
+                plt.plot([cust1.latitude, cust2.latitude], [cust1.longitude, cust2.longitude], color=cmap(color_index))
+                if edge[1] == 0:
+                    color_index += 1.0/len(self.routes)
         plt.annotate(text="Depot", xy=(depot.latitude + name_delta, depot.longitude + name_delta), color='red')
 
         plt.scatter(x=depot.latitude, y=depot.longitude, c='r')
