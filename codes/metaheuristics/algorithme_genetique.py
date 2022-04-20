@@ -49,19 +49,19 @@ LOG
 
 
 class GeneticAlgorithm(BaseMetaheuristic):
-    def __init__(self, solution_initial, num_parent=4, num_population=20, rate_mutation=0.2,
+    def __init__(self, num_parent=4, num_population=20, rate_mutation=0.2,
                  population=[], solution_params=None, neighborhood_params=None, solution_space_params=None):
         super().__init__()
 
         self.params = {'solution': solution_params,
                        'neighborhood': neighborhood_params,
                        'solution_space': solution_space_params}
-        self.modele_chromosome = solution_initial
+
         self.population = population
         self.rate_mutation = rate_mutation
         self.num_parent = num_parent
         self.num_population = num_population
-        self.best_solutions = []
+        self.best_solutions = None 
         self.penalty_wrong_chromosome=40000
 
     # KK
@@ -76,14 +76,14 @@ class GeneticAlgorithm(BaseMetaheuristic):
     def __chromosome_mutation(self, chromosome, prob):
         if random.random() < prob:
             #set neighbor to reverse_sequence
-            self.problem.set_problem_params(None,{'choose_mode':'reverse_a_sequence'},None)
+            self.NEIGHBORHOOD.set_params({'choose_mode':'reverse_a_sequence'})
             return self.NEIGHBORHOOD.get_neighbor(chromosome)
         else:
             return chromosome
 
     # KK
     def __chromosome_crossover(self, parent1, parent2):  # what about cross-mute?
-        self.problem.set_problem_params(None,{'choose_mode':'crossover'},None)
+        self.NEIGHBORHOOD.set_params({'choose_mode':'crossover'})
         return self.NEIGHBORHOOD.get_neighbor_from_two(parent1, parent2)
 
     def search(self):
@@ -105,26 +105,12 @@ class GeneticAlgorithm(BaseMetaheuristic):
         """
         total_cost =solution.cost()
 
-        is_sol = all((solution.checker(route) for route in solution.routes))
+        # is_sol = all((solution.checker(route) for route in solution.routes))
+        is_sol = solution.checker()
         # we need something to evaluate the wrong solution at the same time
         if not is_sol:
             total_cost += self.penalty_wrong_chromosome
         return -total_cost
-
-    # AA
-    # def __generate_chromosome(self, modele_chromosome):
-    #     chromosome = []
-    #     for i in modele_chromosome:
-    #         chromosome.append(i)
-    #     number_car = 9
-    #     for i in range(random.randint(0, number_car)):
-    #         chromosome.append(0)
-    #     random.shuffle(chromosome)
-    #     chromosome.append(0)
-    #     chromosome.insert(0, 0)
-    #     chromosome = str(chromosome).replace('0, 0, 0', '0').replace('0, 0', '0')
-    #     chromosome = list(map(int, chromosome.strip('][').split(',')))
-    #     return chromosome
 
     # KK
     def __generate_chromosome(self):
@@ -138,8 +124,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
     def init(self):
 
         self.population = [self.__generate_chromosome() for _ in range(self.num_population)]
-        if self.best_solution and len(self.best_solution) > 0:
-            self.population[-1] = self.best_solution
+        # might need a good seed to start well
 
     # KK
     def __evolution(self): 
