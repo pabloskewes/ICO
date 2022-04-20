@@ -473,7 +473,7 @@ class VRPTWNeighborhood(Neighborhood):
         sol_code = solution.sol_code
         is_sol = False
         breaker = 0
-        while (not is_sol) or (breaker < 100):
+        while (not is_sol) or (breaker < 10):
             breaker += 1
             head = random.randrange(1, len(sol_code) - 1)
             end = random.randrange(head, len(sol_code) - 1)
@@ -500,9 +500,9 @@ class VRPTWNeighborhood(Neighborhood):
 
         is_sol = False
         breaker = 0
-        sol_code = sol_code1
-        while (not is_sol) or (breaker < 100):
-
+    
+        while (not is_sol) or (breaker < 10):
+            breaker+=1
             pos = random.randrange(1, min(len(sol_code1), len(sol_code2)) - 1)
             child1 = sol_code1[:pos] + sol_code2[pos:]
             child2 = sol_code2[:pos] + sol_code1[pos:]

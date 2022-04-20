@@ -61,8 +61,10 @@ class GeneticAlgorithm(BaseMetaheuristic):
         self.rate_mutation = rate_mutation
         self.num_parent = num_parent
         self.num_population = num_population
-        self.best_solutions = None 
+        self.best_solution=None
+        self.best_solutions = []
         self.penalty_wrong_chromosome=40000
+        
 
     # KK
     def __get_best_solution(self):
@@ -76,26 +78,34 @@ class GeneticAlgorithm(BaseMetaheuristic):
     def __chromosome_mutation(self, chromosome, prob):
         if random.random() < prob:
             #set neighbor to reverse_sequence
-            self.NEIGHBORHOOD.set_params({'choose_mode':'reverse_a_sequence'})
-            return self.NEIGHBORHOOD.get_neighbor(chromosome)
+            # self.NEIGHBORHOOD.set_params({'choose_mode':'reverse_a_sequence'})
+            self.params['neighborhood']['choose_mode']='reverse_a_sequence'
+            n=self.NEIGHBORHOOD(self.params['neighborhood']) 
+            return n.get_neighbor(chromosome)
         else:
             return chromosome
 
     # KK
     def __chromosome_crossover(self, parent1, parent2):  # what about cross-mute?
-        self.NEIGHBORHOOD.set_params({'choose_mode':'crossover'})
-        return self.NEIGHBORHOOD.get_neighbor_from_two(parent1, parent2)
+        # self.NEIGHBORHOOD.set_params({'choose_mode':'crossover'})
+        self.params['neighborhood']['choose_mode']='crossover'
+        n=self.NEIGHBORHOOD(self.params['neighborhood']) 
+        return n.get_neighbor_from_two(parent1, parent2)
 
     def search(self):
         """ Performs metaheuristic search """
-        _, N, _ = self.get_problem_components()
-        init_sol = N.initial_solution()
-        self.best_solution = init_sol
-        self.evolution_best_solution.append(self.__fitness(self.best_solution))
+        # _, N, _ = self.get_problem_components()
+        # init_sol = N.initial_solution()
+        # print('init_sol:',init_sol)
+        # self.best_solution = init_sol
+        # print('best_solution:',self.best_solution)
+        # self.evolution_best_solution.append(self.__fitness(self.best_solution))
+        # self.best_solutions.append(self.best_solution)
 
-        for i in range(200):
+        for _ in range(200):
             self.__evolution()
 
+        self.best_solutions.append(self.best_solution)
         self.evolution_best_solution.append(self.__fitness(self.best_solution))
         return self.best_solution
 
@@ -103,14 +113,22 @@ class GeneticAlgorithm(BaseMetaheuristic):
         """
         is the fitness always has the same definition with the cost of the solution?
         """
-        total_cost =solution.cost()
 
-        # is_sol = all((solution.checker(route) for route in solution.routes))
-        is_sol = solution.checker()
-        # we need something to evaluate the wrong solution at the same time
-        if not is_sol:
-            total_cost += self.penalty_wrong_chromosome
-        return -total_cost
+        total_cost =solution.cost()
+        penalty=0
+
+        if solution.cost()==0:
+            penalty+=float('inf')
+
+        all_customers_check = solution.all_customers_checker()
+        not_repeated_customers_check = solution.not_repeated_customers_checker()
+
+        for route in solution.routes:
+            penalty+=int(not solution.route_checker(route))*self.penalty_wrong_chromosome
+
+        penalty += int(not all_customers_check)*self.penalty_wrong_chromosome
+        penalty += int(not not_repeated_customers_check)*self.penalty_wrong_chromosome
+        return -total_cost-penalty
 
     # KK
     def __generate_chromosome(self):
@@ -194,7 +212,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
             for chromosome in self.population:
                 if self.__fitness(chromosome) == best_performance:
                     self.best_solution = chromosome
-                    if chromosome not in self.best_solutions:
+                    if not chromosome in self.best_solutions:
                         self.best_solutions.append(chromosome)
             while (len(self.population) > self.num_population):
                 for chromosome in self.population:
