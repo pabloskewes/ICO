@@ -40,6 +40,10 @@ class VRPTWNeighborhood(Neighborhood):
         return f"Neighborhood of params: verbose={self.verbose}, init_sol={self.init_sol}"
 
     def initial_solution(self) -> Solution:
+        """
+        Defines how an initial solution is chosen from the 'init_sol' parameter.
+        It can take the values 'random' or directly a solution
+        """
         if self.init_sol == 'random':
             init_sol = self.random_solution(nb_cust=len(self.context.customers) - 1)
         elif isinstance(self.init_sol, Sol):
@@ -49,6 +53,16 @@ class VRPTWNeighborhood(Neighborhood):
         return init_sol
 
     def get_neighbor(self, solution) -> Solution:
+        """
+        Defines the way in which the neighborhood function to be used is chosen through the attribute "choose_mode".
+        "choose_mode" can take the following values:
+        - "random": chooses a random neighborhood from among those found in the "use_methods" attribute
+        - "best": looks for a solution for each neighborhood in "use_methods" and returns the best one.
+        - Directly the name of the method. Ex: "intra_route_swap".
+        - A number between 1 and 8 representing the id of a neighborhood (encoded in the "methods_ids" attribute).
+        :param solution: Solution for which a neighborhood is being sought
+        :return: Neighbor solution found
+        """
         if self.choose_mode == 'random':
             method_name = random.choice(self.use_methods)
             method_name = self.methods_ids[method_name] if type(method_name) == int else method_name
@@ -72,19 +86,23 @@ class VRPTWNeighborhood(Neighborhood):
         return new_sol
 
     def get_neighbor_from_two(self, solution1, solution2) -> Tuple[Solution, Solution]:
-
+        """
+        Similar to "get_neighbor" but gets 2 solutions instead of one. Useful for metaheuristics that require
+        neighborhoods using two solutions (generic algorithm for example).
+        """
         if hasattr(self, self.choose_mode):
             new_sol1, new_sol2 = getattr(self, self.choose_mode)(solution1, solution2)
         else:
             raise Exception(f'"{self.choose_mode}" is not a valid parameter for choose_mode')
         return new_sol1, new_sol2
 
+    # NEIGHBORHOOD FUNCTION 0 - SHUFFLE
     def shuffle(self, solution=None):
         """
         Apply the random_solution function to obtain a valid random solution (you can't even say it's really in the
         neighborhood of the solution, but it can be very useful).
         :param solution: Nothing, only for aesthetic purposes.
-        :return:
+        :return: random solution
         """
         r_sol = self.random_solution(nb_cust=len(self.context.customers) - 1)
         return r_sol
@@ -270,7 +288,6 @@ class VRPTWNeighborhood(Neighborhood):
             while not is_sol and cust_iter < self.max_iter and c_positions:
                 index_pair_1, index_pair_2 = random.choice(c_positions)
                 c_positions.remove((index_pair_1, index_pair_2))
-                print(index_pair_1, index_pair_2)
 
                 # Swapping customers of same route
                 route[index_pair_1], route[index_pair_2] = route[index_pair_2], route[index_pair_1]
@@ -407,67 +424,11 @@ class VRPTWNeighborhood(Neighborhood):
             available_routes.remove(deleted_index)
         return solution
 
-    # NEIGHBORHOOD FUNCTION
-    def switch_three_customers_intra_route(self, solution) -> Solution:
-        """
-        Switches three random customers in one random route (except the first and last customers who are the depot),
-        then returns new solution
-        :param : solution
-        """
-        is_sol = False
-        routes = solution.routes.copy()
-        if self.verbose > 1:
-            print(f"Voici les routes {routes}")
-        breaker = 0  # in case there are no possible neighbors that are solutions with this function
-        route = random.choice(routes)
-        index_route = solution.routes.index(route)
-        # Verification que la route choisie est assez longue (au moins 4 élements)
-        if self.verbose > 1:
-            print(f"Route premièrement choisie est {route} dont l'index est {index_route}")
-        while len(route) < 5 and len(routes) > 0:
-            if self.verbose > 1:
-                print("changement de route")
-            routes.remove(route)
-            route = random.choice(routes)
-            index_route = solution.routes.index(route)
-            if len(routes) == 0:
-                if self.verbose > 0:
-                    print("No possibility to apply this neighborhood function")
-                return solution
-        if self.verbose > 1:
-            print(f"Route sur laquelle on travaille est {route} et son index est {index_route}\n")
-
-        # Etape de swap + vérification que la solution trouvée est bien une solution du problème
-        while (not is_sol) and (breaker < 10):
-            breaker += 1
-            route_test = route.copy()
-            i = random.randint(1, len(route_test) - 2)  # on prend un élément au hasard, extrémités exclues
-            j = random.randint(1, len(route_test) - 2)  # idem
-            k = random.randint(1, len(route_test) - 2)  # idem
-            # On vérifie que i et j sont différents
-            while j == i or j == k or i == k:
-                j = random.randint(1, len(route_test) - 2)
-                k = random.randint(1, len(route_test) - 2)
-            route_test[i], route_test[j], route_test[k] = route_test[k], route_test[i], route_test[j]
-            routes_copy = solution.routes
-            routes_copy[index_route] = route_test
-            sol_found = Sol(routes_copy)
-            is_sol = sol_found.route_checker(route_test)
-            if (not is_sol) and (self.verbose > 1):
-                print("Solution trouvée non conforme\n")
-
-        if not is_sol:
-            if self.verbose > 0:
-                print("No neighbor found that is a solution")
-            return solution
-        neighbor = Sol(routes_copy)
-        return neighbor
-
-    # GA - NEIGHBORHOOD FUNCTION
+    # GA NEIGHBORHOOD FUNCTION 1 - REVERSE A SEQUENCE
     def reverse_a_sequence(self, solution: VRPTWSolution):
         """
-        Reverse a sequence of code by randomly choosing the start position and the end position in the solution_code (except the first,
-        second to last and last customers), then returns new solution
+        Reverse a sequence of code by randomly choosing the start position and the end position in the solution_code
+        (except the first, second to last and last customers), then returns new solution
         :param : solution
         """
         sol_code = solution.sol_code
@@ -488,7 +449,7 @@ class VRPTWNeighborhood(Neighborhood):
         neighbor = Sol(sol_code)
         return neighbor
 
-    # GA NEIGHBORHOOD FUNCTION
+    # GA NEIGHBORHOOD FUNCTION 2 - CROSSOVER
     def crossover(self, solution1: VRPTWSolution, solution2: VRPTWSolution) -> Tuple[VRPTWSolution, VRPTWSolution]:
         """
         Generate two solutions by combining sections from two different solutions (except the first,
@@ -545,6 +506,62 @@ class VRPTWNeighborhood(Neighborhood):
         neighbor1 = Sol(child1)
         neighbor2 = Sol(child2)
         return neighbor1, neighbor2
+
+    # NEIGHBORHOOD FUNCTION
+    def switch_three_customers_intra_route(self, solution) -> Solution:
+        """
+        Switches three random customers in one random route (except the first and last customers who are the depot),
+        then returns new solution
+        :param : solution
+        """
+        is_sol = False
+        routes = solution.routes.copy()
+        if self.verbose > 1:
+            print(f"Voici les routes {routes}")
+        breaker = 0  # in case there are no possible neighbors that are solutions with this function
+        route = random.choice(routes)
+        index_route = solution.routes.index(route)
+        # Verification que la route choisie est assez longue (au moins 4 élements)
+        if self.verbose > 1:
+            print(f"Route premièrement choisie est {route} dont l'index est {index_route}")
+        while len(route) < 5 and len(routes) > 0:
+            if self.verbose > 1:
+                print("changement de route")
+            routes.remove(route)
+            route = random.choice(routes)
+            index_route = solution.routes.index(route)
+            if len(routes) == 0:
+                if self.verbose > 0:
+                    print("No possibility to apply this neighborhood function")
+                return solution
+        if self.verbose > 1:
+            print(f"Route sur laquelle on travaille est {route} et son index est {index_route}\n")
+
+        # Etape de swap + vérification que la solution trouvée est bien une solution du problème
+        while (not is_sol) and (breaker < 10):
+            breaker += 1
+            route_test = route.copy()
+            i = random.randint(1, len(route_test) - 2)  # on prend un élément au hasard, extrémités exclues
+            j = random.randint(1, len(route_test) - 2)  # idem
+            k = random.randint(1, len(route_test) - 2)  # idem
+            # On vérifie que i et j sont différents
+            while j == i or j == k or i == k:
+                j = random.randint(1, len(route_test) - 2)
+                k = random.randint(1, len(route_test) - 2)
+            route_test[i], route_test[j], route_test[k] = route_test[k], route_test[i], route_test[j]
+            routes_copy = solution.routes
+            routes_copy[index_route] = route_test
+            sol_found = Sol(routes_copy)
+            is_sol = sol_found.route_checker(route_test)
+            if (not is_sol) and (self.verbose > 1):
+                print("Solution trouvée non conforme\n")
+
+        if not is_sol:
+            if self.verbose > 0:
+                print("No neighbor found that is a solution")
+            return solution
+        neighbor = Sol(routes_copy)
+        return neighbor
 
     def random_solution(self, nb_cust) -> VRPTWSolution:
         """

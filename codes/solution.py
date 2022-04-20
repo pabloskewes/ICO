@@ -2,6 +2,7 @@ from typing import List, Set, Union, Optional, Dict, Any
 from pprint import pformat
 import matplotlib.pyplot as plt
 from matplotlib.cm import get_cmap
+from collections import Counter
 
 
 from metaheuristics.base_problem import Solution
@@ -98,13 +99,9 @@ class VRPTWSolution(Solution):
     def not_repeated_customers_checker(self) -> bool:
         """ Checks if the customers are visited exactly once. """
         # If some nodes (customers) are visited more than once (except for the depot), return False
-        nb_cust = len(self.context.customers)
-        nb_depot = self.sol_code.count(0)
-        if len(self.sol_code) != nb_depot + nb_cust - 1:
-            if self.verbose >= 1:
-                print("There are customers visited more than once.")
-            return False
-        return True
+        counts = Counter(self.sol_code)
+        del counts[0]
+        return all(val == 1 for val in counts.values())
 
     def route_checker(self, route) -> bool:
         """
@@ -146,7 +143,7 @@ class VRPTWSolution(Solution):
             cust_plus_1 = customers[route[index + 1]]
             # time_delivery += time_matrix[cust.code_customer,cust_plus_1.code_customer]
             time_delivery += time_matrix[cust.id, cust_plus_1.id]
-            # If the vehicle gets there befor the beginning of the customer's time window, return False
+            # If the vehicle gets there before the beginning of the customer's time window, return False
             if time_delivery > cust_plus_1.time_window[1]:
                 if self.verbose >= 1:
                     print(

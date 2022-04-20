@@ -107,6 +107,7 @@ class FlexVRPTWNeighborhood(VRPTWNeighborhood):
                 
         return solution
 
+
 class FlexVRPTWSolutionSpace(VRPTWSolutionSpace):
     pass
 
