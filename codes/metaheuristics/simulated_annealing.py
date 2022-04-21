@@ -33,6 +33,7 @@ class SimulatedAnnealing(BaseMetaheuristic):
         n_iter = 0
         new_cycle = True
         t = self.t0
+        pbar.set_description('Cost: %.2f' %best_sol.cost())
         # begin of cycle
         while new_cycle:
             iter_cycle = 0
