@@ -8,13 +8,15 @@ from metaheuristics.base_problem import Context
 @dataclass(frozen=True)
 class Vehicle:
     """ Class to store the information of a vehicle """
-    vehicle_code: str 
     volume: float
     weight: float
-    cost_fixed_per_km: float
-    cost_variale_per_km: float
-    available_time_from: float
-    available_time_to: float
+    cost_km: float = None
+    vehicle_code: str = None
+    cost_fixed_per_km: float = None
+    cost_variable_per_km: float = None
+    available_time_from: float = None
+    available_time_to: float = None
+
 
 @dataclass(frozen=True)
 class Customer:
