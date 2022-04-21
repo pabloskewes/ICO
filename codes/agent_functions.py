@@ -3,8 +3,8 @@ from random import random
 from metaheuristics.tabu_search import TabuList
 from tqdm import tqdm
 
-class SimulatedAnnealingAgent:
 
+class SimulatedAnnealingAgent:
     def __init__(self, t0: int = 30, cooling_factor: float = 0.9):
         self.t = t0
         self.cooling_factor = cooling_factor
@@ -28,9 +28,7 @@ class SimulatedAnnealingAgent:
         return best_sol
 
 
-
 class TabuAgent:
-
     def __init__(self, max_tabu: int = 10, max_iter: int = 100, tabu_mode: str = 'default'):
         self.max_tabu = max_tabu
         self.tabu_mode = tabu_mode
@@ -58,7 +56,3 @@ class TabuAgent:
             self.last_solution = new_solution
 
         return new_solution
-
-
-
-        return best_sol
