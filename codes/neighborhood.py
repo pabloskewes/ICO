@@ -698,4 +698,3 @@ class VRPTWNeighborhood(Neighborhood):
         if new_cost < self.best_cost:
             self.best_neighbor = solution
             self.best_cost = new_cost
-        # print(self.best_neighbor.cost())

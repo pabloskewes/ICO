@@ -28,9 +28,7 @@ class Customer:
 
 @dataclass(repr=False)
 class VRPTWContext(Context):
-    """
-    Vehicle Routing Problem Time Windows
-    """
+    """ Vehicle Routing Problem Time Windows data """
     customers: List[Customer]
     distances: np.array
     time_matrix: np.array
