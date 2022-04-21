@@ -1,13 +1,12 @@
+import sys
 from typing import Optional, Dict, Tuple, List
 import random
 from copy import deepcopy
 from itertools import combinations, product, permutations
-from math import factorial
 
 from solution import VRPTWSolution as Sol
 from solution import VRPTWSolution
 from context import VRPTWContext
-from solution import sol_to_list_routes
 from metaheuristics.base_problem import Neighborhood, Solution
 
 
@@ -30,9 +29,12 @@ class VRPTWNeighborhood(Neighborhood):
                             'two_intra_route_swap', 'two_intra_route_shift',
                             'delete_smallest_route', 'delete_random_route']
         self.methods_ids = {i+1: method for i, method in enumerate(self.use_methods)}
+        self.full_search = False
+        self.best_neighbor = None
+        self.best_cost = None
 
-        self.valid_params = ['init_sol', 'verbose', 'choose_mode', 'use_methods', 'max_iter',
-                             'force_new_sol']
+        self.valid_params = ['init_sol', 'verbose', 'choose_mode', 'use_methods',
+                             'max_iter', 'force_new_sol', 'full_search']
         if params is not None:
             self.set_params(params)
 
@@ -110,6 +112,7 @@ class VRPTWNeighborhood(Neighborhood):
     # NEIGHBORHOOD FUNCTION 1 - INTRA ROUTE SWAP
     def intra_route_swap(self, solution: VRPTWSolution) -> VRPTWSolution:
         """ Exchange 2 customers randomly on the same randomly chosen route """
+        if self.full_search: self.set_tracker(solution)
         routes = solution.routes
         new_routes = deepcopy(routes)
         S = VRPTWSolution()
@@ -135,18 +138,26 @@ class VRPTWNeighborhood(Neighborhood):
                 is_sol = S.route_checker(route)
                 if is_sol:
                     new_routes[r_index] = route.copy()
-                    return VRPTWSolution(new_routes)
+                    new_sol = VRPTWSolution(new_routes)
+                    if not self.full_search:
+                        return new_sol
+                    self.track_best(new_sol)
+                    new_routes = deepcopy(routes)
+                    is_sol = False
 
                 cust_iter += 1
                 route = routes[r_index].copy()
             routes_iter += 1
-        if self.verbose >= 1:
+
+        if self.verbose >= 1 and not self.full_search:
             print("intra_route_swap wasn't able to find a neighbor for this solution")
-        return solution
+        new_sol = self.best_neighbor if self.full_search else solution
+        return new_sol
 
     # NEIGHBORHOOD FUNCTION 2 - INTER ROUTE SWAP
     def inter_route_swap(self, solution: VRPTWSolution) -> VRPTWSolution:
         """  Exchanges 2 clients between 2 random routes """
+        if self.full_search: self.set_tracker(solution)
         routes = solution.routes
         new_routes = deepcopy(routes)
         S = VRPTWSolution()
@@ -172,6 +183,11 @@ class VRPTWNeighborhood(Neighborhood):
                 is_sol = S.route_checker(route1) and S.route_checker(route2)
                 if is_sol:
                     new_sol = VRPTWSolution(new_routes)
+                    if self.full_search:
+                        self.track_best(new_sol)
+                        new_routes = deepcopy(routes)
+                        is_sol = False
+                        continue
                     if not self.force_new_sol or new_sol != solution:
                         return new_sol
                     is_sol = False
@@ -180,13 +196,15 @@ class VRPTWNeighborhood(Neighborhood):
                 cust_iter += 1
             routes_iter += 1
 
-        if self.verbose >= 1:
+        if self.verbose >= 1 and not self.full_search:
             print("inter_route_swap wasn't able to find a neighbor for this solution")
-        return solution
+        new_sol = self.best_neighbor if self.full_search else solution
+        return new_sol
 
     # NEIGHBORHOOD FUNCTION 3 - INTRA ROUTE SHIFT
     def intra_route_shift(self, solution: VRPTWSolution) -> VRPTWSolution:
         """ Moves a random client to another position on its same route """
+        if self.full_search: self.set_tracker(solution)
         routes = solution.routes
         new_routes = deepcopy(routes)
         S = VRPTWSolution()
@@ -213,18 +231,25 @@ class VRPTWNeighborhood(Neighborhood):
                 is_sol = S.route_checker(route)
                 if is_sol:
                     new_routes[r_index] = route.copy()
-                    return VRPTWSolution(new_routes)
+                    new_sol = VRPTWSolution(new_routes)
+                    if not self.full_search:
+                        return new_sol
+                    self.track_best(new_sol)
+                    new_routes = deepcopy(routes)
+                    is_sol = False
 
                 cust_iter += 1
                 route = routes[r_index].copy()
             routes_iter += 1
-        if self.verbose >= 1:
+        if self.verbose >= 1 and not self.full_search:
             print("intra_route_shift wasn't able to find a neighbor for this solution")
-        return solution
+        new_sol = self.best_neighbor if self.full_search else solution
+        return new_sol
 
     # NEIGHBORHOOD FUNCTION 4 - INTER ROUTE SHIFT
     def inter_route_shift(self, solution: VRPTWSolution) -> VRPTWSolution:
         """ Moves a random client to another position on another route """
+        if self.full_search: self.set_tracker(solution)
         routes = solution.routes
         new_routes = deepcopy(routes)
         S = VRPTWSolution()
@@ -257,17 +282,23 @@ class VRPTWNeighborhood(Neighborhood):
                 if is_sol:
                     while [0, 0] in new_routes:
                         new_routes.remove([0, 0])
-                    return VRPTWSolution(new_routes)
+                    new_sol = VRPTWSolution(new_routes)
+                    if not self.full_search:
+                        return new_sol
+                    self.track_best(new_sol)
+                    is_sol = False
                 cust_iter += 1
                 new_routes = deepcopy(routes)
             routes_iter += 1
-        if self.verbose >= 1:
+        if self.verbose >= 1 and not self.full_search:
             print("inter_route_shift wasn't able to find a neighbor for this solution")
-        return solution
+        new_sol = self.best_neighbor if self.full_search else solution
+        return new_sol
 
     # NEIGHBORHOOD FUNCTION 5 - INTRA ROUTE SWAP
     def two_intra_route_swap(self, solution: VRPTWSolution) -> VRPTWSolution:
         """ Exchange 2 consecutive customers randomly on the same randomly chosen route for another pair"""
+        if self.full_search: self.set_tracker(solution)
         routes = solution.routes
         new_routes = deepcopy(routes)
         S = VRPTWSolution()
@@ -295,17 +326,24 @@ class VRPTWNeighborhood(Neighborhood):
                 is_sol = S.route_checker(route)
                 if is_sol:
                     new_routes[r_index] = route.copy()
-                    return VRPTWSolution(new_routes)
+                    new_sol = VRPTWSolution(new_routes)
+                    if not self.full_search:
+                        return new_sol
+                    self.track_best(new_sol)
+                    new_routes = deepcopy(routes)
+                    is_sol = False
                 cust_iter += 1
                 route = routes[r_index].copy()
             routes_iter += 1
-        if self.verbose >= 1:
+        if self.verbose >= 1 and not self.full_search:
             print("intra_route_swap wasn't able to find a neighbor for this solution")
-        return solution
+        new_sol = self.best_neighbor if self.full_search else solution
+        return new_sol
 
     # NEIGHBORHOOD FUNCTION 6 - TWO INTRA ROUTE SHIFT
     def two_intra_route_shift(self, solution: VRPTWSolution) -> VRPTWSolution:
         """ Moves a random client to another position on its same route """
+        if self.full_search: self.set_tracker(solution)
         routes = solution.routes
         new_routes = deepcopy(routes)
         S = VRPTWSolution()
@@ -336,13 +374,19 @@ class VRPTWNeighborhood(Neighborhood):
                 is_sol = S.route_checker(route)
                 if is_sol:
                     new_routes[r_index] = route.copy()
-                    return VRPTWSolution(new_routes)
+                    new_sol = VRPTWSolution(new_routes)
+                    if not self.full_search:
+                        return new_sol
+                    self.track_best(new_sol)
+                    new_routes = deepcopy(routes)
+                    is_sol = False
                 cust_iter += 1
                 route = routes[r_index].copy()
             routes_iter += 1
-        if self.verbose >= 1:
+        if self.verbose >= 1 and not self.full_search:
             print("two_intra_route_shift wasn't able to find a neighbor for this solution")
-        return solution
+        new_sol = self.best_neighbor if self.full_search else solution
+        return new_sol
 
     # NEIGHBORHOOD FUNCTION 7 - DELETE SMALLEST ROUTE
     def delete_smallest_route(self, solution: VRPTWSolution) -> VRPTWSolution:
@@ -351,39 +395,48 @@ class VRPTWNeighborhood(Neighborhood):
         :param solution
         :return: Solution (or nothing)
         """
+        if self.full_search: raise Exception('full search cannot be used with delete_smallest_route')
+        if self.full_search: self.set_tracker(solution)
         routes = deepcopy(solution.routes)
         lengths_list = list(map(len, routes))
         smallest_route = min(lengths_list)
+        S = VRPTWSolution()
         new_solution = None
         is_sol = False
         n_iter = 0
         available_routes = [i for i, route in enumerate(routes) if len(route) == smallest_route]
 
-        while not is_sol and n_iter < self.max_iter:
+        while not is_sol and n_iter < self.max_iter and available_routes:
             n_iter += 1
-            if len(available_routes) == 0:
-                break
             deleted_index = random.choice(available_routes)
             deleted_route = routes.pop(deleted_index)
+
             n_cycle = 0
-            while n_cycle < self.max_iter:
+            new_routes = deepcopy(routes)
+            available_positions = [(i, j) for i in range(len(new_routes)) for j in range(1, len(new_routes[i]) - 1)]
+            while n_cycle < self.max_iter and available_positions:
                 n_cycle += 1
-                new_routes = deepcopy(routes)
-                available_positions = [(i, j) for i in range(len(new_routes)) for j in range(1,len(new_routes[i])-1)]
                 for i in range(1, len(deleted_route)-1):
+                    if not available_positions: break
                     r = random.choice(available_positions)
                     r_route = r[0]
                     r_pos = r[1]
                     new_routes[r_route].insert(r_pos, deleted_route[i])
                     available_positions.remove(r)
-                new_solution = VRPTWSolution(new_routes)
-                is_sol = all((new_solution.route_checker(route) for route in new_solution.routes))
+                is_sol = all((S.route_checker(route) for route in new_routes))
                 if is_sol:
-                    return new_solution
+                    new_sol = VRPTWSolution(new_routes)
+                    if not self.full_search:
+                        return new_sol
+                    self.track_best(new_sol)
+                    is_sol = False
 
             routes.insert(deleted_index, deleted_route)
             available_routes.remove(deleted_index)
-        return solution
+        if self.verbose >= 1 and not self.full_search:
+            print("delete_smallest_route wasn't able to find a neighbor for this solution")
+        new_sol = self.best_neighbor if self.full_search else solution
+        return new_sol
 
     # NEIGHBORHOOD FUNCTION 8 - DELETE RANDOM ROUTE
     def delete_random_route(self, solution: VRPTWSolution) -> VRPTWSolution:
@@ -392,37 +445,45 @@ class VRPTWNeighborhood(Neighborhood):
         :param solution
         :return: Solution (or nothing)
         """
+        if self.full_search: raise Exception('full search cannot be used with delete_smallest_route')
+        if self.full_search: self.set_tracker(solution)
         routes = deepcopy(solution.routes)
         new_solution = None
+        S = VRPTWSolution()
         is_sol = False
         n_iter = 0
         available_routes = list(range(len(routes)))
 
-        while not is_sol and n_iter < self.max_iter:
+        while not is_sol and n_iter < self.max_iter and available_routes:
             n_iter += 1
-            if len(available_routes) == 0:
-                break
             deleted_index = random.choice(available_routes)
             deleted_route = routes.pop(deleted_index)
             n_cycle = 0
-            while n_cycle < self.max_iter:
+            new_routes = deepcopy(routes)
+            available_positions = [(i, j) for i in range(len(new_routes)) for j in range(1, len(new_routes[i]) - 1)]
+            while n_cycle < self.max_iter and available_positions:
                 n_cycle += 1
-                new_routes = deepcopy(routes)
-                available_positions = [(i, j) for i in range(len(new_routes)) for j in range(1,len(new_routes[i])-1)]
                 for i in range(1, len(deleted_route)-1):
+                    if not available_positions: break
                     r = random.choice(available_positions)
                     r_route = r[0]
                     r_pos = r[1]
                     new_routes[r_route].insert(r_pos, deleted_route[i])
                     available_positions.remove(r)
-                new_solution = VRPTWSolution(new_routes)
-                is_sol = all((new_solution.route_checker(route) for route in new_solution.routes))
+                is_sol = all((S.route_checker(route) for route in new_routes))
                 if is_sol:
-                    return new_solution
+                    new_sol = VRPTWSolution(new_routes)
+                    if not self.full_search:
+                        return new_sol
+                    self.track_best(new_sol)
+                    is_sol = False
 
             routes.insert(deleted_index, deleted_route)
             available_routes.remove(deleted_index)
-        return solution
+        if self.verbose >= 1 and not self.full_search:
+            print("delete_random_route wasn't able to find a neighbor for this solution")
+        new_sol = self.best_neighbor if self.full_search else solution
+        return new_sol
 
     # GA NEIGHBORHOOD FUNCTION 1 - REVERSE A SEQUENCE
     def reverse_a_sequence(self, solution: VRPTWSolution):
@@ -624,3 +685,17 @@ class VRPTWNeighborhood(Neighborhood):
                     print(f'A legitimate solution was successfully generated:\n{solution}')
 
         return solution
+
+    def set_tracker(self, solution: VRPTWSolution):
+        """ Set up for tracker of best solution for a full neighborhood search use """
+        self.max_iter = sys.maxsize
+        self.best_neighbor = solution
+        self.best_cost = solution.cost()
+
+    def track_best(self, solution: VRPTWSolution):
+        """ Keeps track of best solution for a full neighborhood search use """
+        new_cost = solution.cost()
+        if new_cost < self.best_cost:
+            self.best_neighbor = solution
+            self.best_cost = new_cost
+        # print(self.best_neighbor.cost())
