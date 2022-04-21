@@ -23,17 +23,66 @@ constraints = pd.read_excel(CONSTRAINTS_DIR)
 depots_dist = pd.read_excel(DEPOTS_DISTANCES_DIR)
 customers_dist = pd.read_excel(CUSTOMER_DISTANCES_DIR)
 
+# load_vehicle version 1 
+# def load_vehicle(vehicles, MODE_VEHICLE="mean", vehicle_nb=None):
+#     if vehicle_nb:
+#         volume = vehicles[vehicles["VEHICLE_CODE"]==vehicle_nb]["VEHICLE_TOTAL_VOLUME_M3"]
+#         weight = vehicles[vehicles["VEHICLE_CODE"]==vehicle_nb]["VEHICLE_TOTAL_WEIGHT_KG"]
+#         cost_km = vehicles[vehicles["VEHICLE_CODE"]==vehicle_nb]["VEHICLE_VARIABLE_COST_KM"]  
+#     else:
+#         volume = getattr(vehicles["VEHICLE_TOTAL_VOLUME_M3"], MODE_VEHICLE)()
+#         weight = getattr(vehicles["VEHICLE_TOTAL_WEIGHT_KG"], MODE_VEHICLE)()
+#         cost_km = getattr(vehicles["VEHICLE_VARIABLE_COST_KM"], MODE_VEHICLE)()  
+#     vehicle = Vehicle(volume, weight, cost_km)
+#     return vehicle
 
-def load_vehicle(vehicles, MODE_VEHICLE="mean", vehicle_nb=None):
-    if vehicle_nb:
-        volume = vehicles[vehicles["VEHICLE_CODE"]==vehicle_nb]["VEHICLE_TOTAL_VOLUME_M3"]
-        weight = vehicles[vehicles["VEHICLE_CODE"]==vehicle_nb]["VEHICLE_TOTAL_WEIGHT_KG"]
-        cost_km = vehicles[vehicles["VEHICLE_CODE"]==vehicle_nb]["VEHICLE_VARIABLE_COST_KM"]  
+# load_vehicle version 2
+def load_vehicle(vehicles, MODE_VEHICLE="mean", vehicle_code=None):
+
+    if vehicle_code:
+        weight = vehicles[vehicles["VEHICLE_CODE"]==vehicle_code]["VEHICLE_TOTAL_WEIGHT_KG"].iloc[0]
+        volume = vehicles[vehicles["VEHICLE_CODE"]==vehicle_code]["VEHICLE_TOTAL_VOLUME_M3"].iloc[0]
+        cost_fixed_per_km = vehicles[vehicles["VEHICLE_CODE"]==vehicle_code]["VEHICLE_FIXED_COST_KM"].iloc[0]
+        cost_variale_per_km = vehicles[vehicles["VEHICLE_CODE"]==vehicle_code]["VEHICLE_VARIABLE_COST_KM"].iloc[0]
+        available_time_from = vehicles[vehicles["VEHICLE_CODE"]==vehicle_code]["VEHICLE_AVAILABLE_TIME_FROM_MIN"].iloc[0]
+        available_time_to = vehicles[vehicles["VEHICLE_CODE"]==vehicle_code]["VEHICLE_AVAILABLE_TIME_TO_MIN"].iloc[0]
+
+        vehicle = Vehicle(vehicle_code, weight, volume,cost_fixed_per_km,cost_variale_per_km,available_time_from,available_time_to)
+
+    elif MODE_VEHICLE=='unique':
+
+        list_vehicles_code=vehicles['VEHICLE_CODE'].unique().tolist()
+        list_vehicles= []
+
+        for _, code in enumerate(vehicles["VEHICLE_CODE"], start=1):
+            if code in list_vehicles_code:
+
+                vehicle_code = code
+                weight = vehicles[vehicles["VEHICLE_CODE"]==code]["VEHICLE_TOTAL_WEIGHT_KG"].iloc[0]
+                volume = vehicles[vehicles["VEHICLE_CODE"]==code]["VEHICLE_TOTAL_VOLUME_M3"].iloc[0]
+                cost_fixed_per_km = vehicles[vehicles["VEHICLE_CODE"]==code]["VEHICLE_FIXED_COST_KM"].iloc[0]
+                cost_variale_per_km = vehicles[vehicles["VEHICLE_CODE"]==code]["VEHICLE_VARIABLE_COST_KM"].iloc[0]
+                available_time_from = vehicles[vehicles["VEHICLE_CODE"]==code]["VEHICLE_AVAILABLE_TIME_FROM_MIN"].iloc[0]
+                available_time_to = vehicles[vehicles["VEHICLE_CODE"]==code]["VEHICLE_AVAILABLE_TIME_TO_MIN"].iloc[0]
+
+                vehicle = Vehicle(vehicle_code, weight, volume,cost_fixed_per_km,cost_variale_per_km,available_time_from,available_time_to)
+                list_vehicles_code.remove(code)
+                list_vehicles.append(vehicle)
+
+        return list_vehicles
+
     else:
+
+        vehicle_code='J92-T-826'
         volume = getattr(vehicles["VEHICLE_TOTAL_VOLUME_M3"], MODE_VEHICLE)()
         weight = getattr(vehicles["VEHICLE_TOTAL_WEIGHT_KG"], MODE_VEHICLE)()
-        cost_km = getattr(vehicles["VEHICLE_VARIABLE_COST_KM"], MODE_VEHICLE)()  
-    vehicle = Vehicle(volume, weight, cost_km)
+        cost_fixed_per_km = getattr(vehicles["VEHICLE_FIXED_COST_KM"], MODE_VEHICLE)()  
+        cost_variale_per_km = getattr(vehicles["VEHICLE_VARIABLE_COST_KM"], MODE_VEHICLE)()
+        available_time_from = getattr(vehicles["VEHICLE_AVAILABLE_TIME_FROM_MIN"], MODE_VEHICLE)()
+        available_time_to = getattr(vehicles["VEHICLE_AVAILABLE_TIME_TO_MIN"], MODE_VEHICLE)()  
+
+        vehicle = Vehicle(vehicle_code,volume,weight, cost_fixed_per_km,cost_variale_per_km,available_time_from,available_time_to)
+
     return vehicle
 
 
@@ -108,7 +157,7 @@ def matrix_generator(depot_data, customer_data, route_id):
 
 
 # Create VRPTW :
-def create_vrptw(CUSTOMER_DIR, DEPOTS_DIR, VEHICLES_DIR, DEPOTS_DISTANCES_DIR, CUSTOMER_DISTANCES_DIR, route_id=2946091, MODE_VEHICLE="mean", vehicle_nb=None):
+def create_vrptw(CUSTOMER_DIR, DEPOTS_DIR, VEHICLES_DIR, DEPOTS_DISTANCES_DIR, CUSTOMER_DISTANCES_DIR, route_id=2946091, MODE_VEHICLE="mean",vehicle_code=None):
     customers = pd.read_excel(CUSTOMER_DIR)
     vehicles = pd.read_excel(VEHICLES_DIR)
     depots = pd.read_excel(DEPOTS_DIR)
@@ -116,9 +165,10 @@ def create_vrptw(CUSTOMER_DIR, DEPOTS_DIR, VEHICLES_DIR, DEPOTS_DISTANCES_DIR, C
     customers_dist = pd.read_excel(CUSTOMER_DISTANCES_DIR)
     list_costumers = load_customers(customers, depots, route_id=2946091)
     time_matrix, distances, cust_codes = matrix_generator(depots_dist, customers_dist, route_id)
-    vehicle = load_vehicle(vehicles, MODE_VEHICLE="mean", vehicle_nb=None)
+    list_vehicles = load_vehicle(vehicles, MODE_VEHICLE, vehicle_code)
     # vrptw = VRPTW(customers, distances, time_matrix, vehicle, cust_codes)
-    vrptw = VRPTWContext(customers, distances, time_matrix, vehicle)
+    # vrptw = VRPTWContext(customers, distances, time_matrix, vehicle)
+    vrptw = VRPTWContext(list_costumers, distances, time_matrix, list_vehicles, cust_codes)
     return vrptw
 
 

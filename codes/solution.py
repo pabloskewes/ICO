@@ -71,7 +71,7 @@ class VRPTWSolution(Solution):
         # data retrieval
         nb_vehicle = self.sol_code.count(0) - 1
         distance_matrix = self.context.distances
-        cost_km = self.context.vehicle.cost_km
+        cost_km = self.context.vehicle.cost_variale_per_km
 
         # sum of the distance of each route
         route_length = 0
@@ -110,7 +110,7 @@ class VRPTWSolution(Solution):
         :return: bool that indicates whether the input route id valid.
         """
         vehicle = self.context.vehicle
-        volume_capacity, weight_capacity, cost_km = vehicle.volume, vehicle.weight, vehicle.cost_km
+        volume_capacity, weight_capacity, cost_km = vehicle.volume, vehicle.weight, vehicle.cost_variale_per_km
         time_matrix = self.context.time_matrix
         customers = self.context.customers
         if self.verbose >= 2:
