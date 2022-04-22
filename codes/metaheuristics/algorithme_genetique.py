@@ -55,7 +55,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
     def __chromosome_mutation(self, chromosome, prob):
         if random.random() < prob and chromosome.cost()>0:
             N=self.NEIGHBORHOOD() 
-            N.set_params({'choose_mode':'reverse_a_sequence'})
+            N.set_params({'choose_mode':'intra_route_swap'})
             return N(chromosome)
         else:
             return chromosome

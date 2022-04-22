@@ -49,7 +49,7 @@ def load_vehicle(vehicles, MODE_VEHICLE="mean", vehicle_code=None):
         available_time_from = vehicles[vehicles["VEHICLE_CODE"] == vehicle_code]["VEHICLE_AVAILABLE_TIME_FROM_MIN"].iloc[0]
         available_time_to = vehicles[vehicles["VEHICLE_CODE"] == vehicle_code]["VEHICLE_AVAILABLE_TIME_TO_MIN"].iloc[0]
 
-        vehicle = Vehicle(vehicle_code=vehicle_code, weight=weight, volume=volume, cost_fixed_per_km=cost_fixed_per_km,
+        vehicle = Vehicle(vehicle_code=vehicle_code, weight=weight, volume=volume,cost_km=cost_variable_per_km, cost_fixed_per_km=cost_fixed_per_km,
                           cost_variable_per_km=cost_variable_per_km, available_time_from=available_time_from,
                           available_time_to=available_time_to)
 
@@ -83,7 +83,7 @@ def load_vehicle(vehicles, MODE_VEHICLE="mean", vehicle_code=None):
         available_time_from = getattr(vehicles["VEHICLE_AVAILABLE_TIME_FROM_MIN"], MODE_VEHICLE)()
         available_time_to = getattr(vehicles["VEHICLE_AVAILABLE_TIME_TO_MIN"], MODE_VEHICLE)()
 
-        vehicle = Vehicle(vehicle_code=vehicle_code, volume=volume, weight=weight, cost_fixed_per_km=cost_fixed_per_km,
+        vehicle = Vehicle(vehicle_code=vehicle_code, volume=volume, weight=weight,cost_km=cost_variable_per_km ,cost_fixed_per_km=cost_fixed_per_km,
                           cost_variable_per_km=cost_variable_per_km, available_time_from=available_time_from,
                           available_time_to=available_time_to)
 
