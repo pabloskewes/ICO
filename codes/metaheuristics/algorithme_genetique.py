@@ -1,42 +1,19 @@
 import random
-import re
 import statistics
-import pandas as pd
-import os
-import sys
-from math import sqrt
 import copy
 import numpy as np
 from tqdm import tqdm
-
-from .base_problem import Solution, Neighborhood, SolutionSpace
 from .base_metaheuristic import BaseMetaheuristic
 
-'''
-example:
-from vrptw import VRPTW
-context=VRPTW(load_solomon('simple.csv', nb_cust=10, vehicle_speed=100))
-ga=GeneticAlgorithm()
-ga.params=None
-ga.context=context
-ga.init() # initialize the population of ga
-ga.search()# return the best solution ever found 
-'''
+
 '''
 Category:
 Identifier(Ctrl+F)      Content
 --------------------------------------------------------
 SS              code bloques reserved for the SMA,neiborhood params
 TDL              TO DO LIST
-KK               methode that should be kept here
-AA               Methode that should be rewrite in the outside vlasses
 LOG              log of the modification of the main structure
 '''
-# TDL:
-
-# ga=GeneticAlgorithm()
-# ga.context=load_solomon()
-# from solution import sol_to_list_routes
 
 '''
 LOG
@@ -66,9 +43,8 @@ class GeneticAlgorithm(BaseMetaheuristic):
         self.evolution_explored_solutions = []
         self.penalty_wrong_chromosome=40000
         self.progress_bar = progress_bar
+        self.hasinit=False
         
-
-    # KK
     def __get_best_solution(self):
         if self.best_solution:
             return self.best_solution
@@ -76,16 +52,14 @@ class GeneticAlgorithm(BaseMetaheuristic):
             print("Empty solution. To get the best solution, use search() first")
             return False
 
-    # KK
     def __chromosome_mutation(self, chromosome, prob):
-        if random.random() < prob:
+        if random.random() < prob and chromosome.cost()>0:
             N=self.NEIGHBORHOOD() 
             N.set_params({'choose_mode':'reverse_a_sequence'})
             return N(chromosome)
         else:
             return chromosome
 
-    # KK
     def __chromosome_crossover(self, parent1, parent2):  # what about cross-mute?
         N=self.NEIGHBORHOOD()
         N.set_params({'choose_mode':'crossover'})
@@ -93,7 +67,8 @@ class GeneticAlgorithm(BaseMetaheuristic):
 
     def search(self):
         """ Performs metaheuristic search """
-
+        if not self.hasinit:
+            self.__init()
         iterator = tqdm(range(self.num_evolu_per_search)) if self.progress_bar else range(self.num_evolu_per_search)
         for _ in iterator:
             self.__evolution()
@@ -101,6 +76,27 @@ class GeneticAlgorithm(BaseMetaheuristic):
         self.evolution_best_solution.append(-self.__fitness(self.best_solution))
         self.evolution_explored_solutions=self.evolution_explored_solutions[:len(self.evolution_best_solution)]
         return self.best_solution
+
+    def fitness(self, solution):
+        """
+        is the fitness always has the same definition with the cost of the solution?
+        """
+
+        total_cost =solution.cost()
+        penalty=0
+
+        if solution.cost()<solution.omega:
+            penalty+=float('inf')
+
+        all_customers_check = solution.all_customers_checker()
+        not_repeated_customers_check = solution.not_repeated_customers_checker()
+
+        for route in solution.routes:
+            penalty+=int(not solution.route_checker(route))*self.penalty_wrong_chromosome
+
+        penalty += int(not all_customers_check)*self.penalty_wrong_chromosome
+        penalty += int(not not_repeated_customers_check)*self.penalty_wrong_chromosome
+        return -total_cost-penalty
 
     def __fitness(self, solution):
         """
@@ -123,7 +119,6 @@ class GeneticAlgorithm(BaseMetaheuristic):
         penalty += int(not not_repeated_customers_check)*self.penalty_wrong_chromosome
         return -total_cost-penalty
 
-    # KK
     def __generate_chromosome(self):
 
         _, N, _ = self.get_problem_components()
@@ -131,16 +126,13 @@ class GeneticAlgorithm(BaseMetaheuristic):
 
         return chromosome
 
-    # KK
-    def init(self):
-
+    def __init(self):
+        self.hasinit=True
         self.population = [self.__generate_chromosome() for _ in range(self.num_population)]
         # might need a good seed to start well
 
-    # KK
     def __evolution(self): 
 
-        # KKCOMPLET
         def __binary_tournement(self):
             parents = []
             for i in range(self.num_parent):
@@ -183,19 +175,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
             for i in population_new:
                 self.population.append(self.__chromosome_mutation(i, self.rate_mutation))
 
-        # AA
-        # def __optimize(self):
-        #     population_opt = copy.deepcopy(self.population)
-        #     self.population = []
-        #     for i in population_opt:
-        #         string = str(i).replace('0, 0, 0', '0').replace('0, 0', '0')
-        #         i = list(map(int, string.strip('][').split(',')))
-        #         self.population.append(i)
-
-        # KKCOMPLET
-        # log: save the best solution in which form?    
-
-        def __eliminate(self):  # Eliminate the less strong half of the population
+        def __eliminate(self): 
             list_fitness = []
             for chromosome in self.population:
                 fitness=self.__fitness(chromosome)
@@ -214,9 +194,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
                     if self.__fitness(chromosome) <= critere:
                         self.population.remove(chromosome)
 
-        # KKCOMPLET
-        # log think about making the list_fitness an attibut
-        def __regeneration(self):  # Generate new-borns to maintain the number of population remains stable
+        def __regeneration(self):
 
             if len(self.population) < self.num_population:
                 while (len(self.population) < self.num_population):
@@ -236,10 +214,8 @@ class GeneticAlgorithm(BaseMetaheuristic):
                 for _ in range(self.num_population - len(self.population)):
                     self.population.append(self.__generate_chromosome())
 
-        # KK
         parents = __binary_tournement(self)
         __pop_crossover(self, parents)
         __pop_mutation(self)
-        # __optimize(self)
         __eliminate(self)
         __regeneration(self)
