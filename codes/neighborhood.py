@@ -395,7 +395,7 @@ class VRPTWNeighborhood(Neighborhood):
         :param solution
         :return: Solution (or nothing)
         """
-        if self.full_search: raise Exception('full search cannot be used with delete_smallest_route')
+        if self.full_search: self.full_search = False
         if self.full_search: self.set_tracker(solution)
         routes = deepcopy(solution.routes)
         lengths_list = list(map(len, routes))
@@ -445,7 +445,7 @@ class VRPTWNeighborhood(Neighborhood):
         :param solution
         :return: Solution (or nothing)
         """
-        if self.full_search: raise Exception('full search cannot be used with delete_smallest_route')
+        if self.full_search: self.full_search = False
         if self.full_search: self.set_tracker(solution)
         routes = deepcopy(solution.routes)
         new_solution = None

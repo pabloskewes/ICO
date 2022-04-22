@@ -53,9 +53,8 @@ class GeneticAlgorithm(BaseMetaheuristic):
             return False
 
     def __chromosome_mutation(self, chromosome, prob):
-        if random.random() < prob and chromosome.cost()>0:
-            N=self.NEIGHBORHOOD() 
-            N.set_params({'choose_mode':'intra_route_swap'})
+        if random.random() < prob and chromosome.cost() > 0:
+            _, N, _ = self.get_problem_components()
             return N(chromosome)
         else:
             return chromosome
@@ -74,7 +73,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
             self.__evolution()
             
         self.evolution_best_solution.append(-self.__fitness(self.best_solution))
-        self.evolution_explored_solutions=self.evolution_explored_solutions[:len(self.evolution_best_solution)]
+        self.evolution_explored_solutions = self.evolution_explored_solutions[:len(self.evolution_best_solution)]
         return self.best_solution
 
     def fitness(self, solution):
