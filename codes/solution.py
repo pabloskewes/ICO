@@ -84,7 +84,11 @@ class VRPTWSolution(Solution):
         if self.verbose >= 2:
             print('Solution:', self.routes)
             print('Total cost of solution:', total_cost)
-        return total_cost
+
+        if not self.checker():
+            return float('inf')
+        else:
+            return total_cost
 
     def all_customers_checker(self) -> bool:
         """ Checks whether the input 'solution' does visit all the customers """

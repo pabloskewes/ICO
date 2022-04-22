@@ -1,10 +1,8 @@
 import random
 import statistics
 import copy
-import numpy as np
 from tqdm import tqdm
 from .base_metaheuristic import BaseMetaheuristic
-
 
 '''
 Category:
@@ -27,7 +25,7 @@ LOG
 class GeneticAlgorithm(BaseMetaheuristic):
     def __init__(self,num_evolu_per_search=10, num_parent=4, num_population=20, rate_mutation=0.2,
                  population=[], progress_bar=False,
-                 solution_params=None, neighborhood_params=None, solution_space_params=None):
+                 solution_params=None, neighborhood_params=None, solution_space_params=None,threshold=10,reproductive_isolation=False,best_seed=True):
         super().__init__()
 
         self.params = {'solution': solution_params,
@@ -44,7 +42,11 @@ class GeneticAlgorithm(BaseMetaheuristic):
         self.penalty_wrong_chromosome=40000
         self.progress_bar = progress_bar
         self.hasinit=False
-        
+        self.list_nation=[]
+        self.threshold=threshold
+        self.reproductive_isolation= reproductive_isolation
+        self.best_seed=best_seed
+
     def __get_best_solution(self):
         if self.best_solution:
             return self.best_solution
@@ -62,8 +64,13 @@ class GeneticAlgorithm(BaseMetaheuristic):
     def __chromosome_crossover(self, parent1, parent2):  # what about cross-mute?
         N=self.NEIGHBORHOOD()
         N.set_params({'choose_mode':'crossover'})
-        return N.get_neighbor_from_two(parent1, parent2)
 
+        SP=self.SOLUTION_SPACE()
+        if SP.distance(parent1, parent2)<self.threshold and self.reproductive_isolation==True:
+            return N.get_neighbor_from_two(parent1, parent2) 
+        else: 
+            return self.__generate_chromosome(),self.__generate_chromosome()
+            # return parent1,parent2
     def search(self):
         """ Performs metaheuristic search """
         if not self.hasinit:
@@ -98,25 +105,8 @@ class GeneticAlgorithm(BaseMetaheuristic):
         return -total_cost-penalty
 
     def __fitness(self, solution):
-        """
-        is the fitness always has the same definition with the cost of the solution?
-        """
-
-        total_cost =solution.cost()
-        penalty=0
-
-        if solution.cost()==0:
-            penalty+=float('inf')
-
-        all_customers_check = solution.all_customers_checker()
-        not_repeated_customers_check = solution.not_repeated_customers_checker()
-
-        for route in solution.routes:
-            penalty+=int(not solution.route_checker(route))*self.penalty_wrong_chromosome
-
-        penalty += int(not all_customers_check)*self.penalty_wrong_chromosome
-        penalty += int(not not_repeated_customers_check)*self.penalty_wrong_chromosome
-        return -total_cost-penalty
+        
+        return -solution.cost()
 
     def __generate_chromosome(self):
 
@@ -128,7 +118,6 @@ class GeneticAlgorithm(BaseMetaheuristic):
     def __init(self):
         self.hasinit=True
         self.population = [self.__generate_chromosome() for _ in range(self.num_population)]
-        # might need a good seed to start well
 
     def __evolution(self): 
 
@@ -155,7 +144,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
                 self.population.append(child1)
                 self.population.append(child2)
 
-            if self.best_solution:
+            if self.best_solution and self.best_seed:
                 parent = random.sample(parents, 2)
                 child1, child2 = self.__chromosome_crossover(parent[0], self.best_solution)
                 self.population.append(child1)
@@ -167,8 +156,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
                 self.population.append(child1)
                 self.population.append(child2)
 
-        # KKCOMPLET
-        def __pop_mutation(self):  # Realize mutation for all members in the population
+        def __pop_mutation(self):  
             population_new = copy.deepcopy(self.population)
             self.population = []
             for i in population_new:
