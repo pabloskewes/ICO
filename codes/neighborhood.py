@@ -594,7 +594,7 @@ class VRPTWNeighborhood(Neighborhood):
         for  i in list_cust_code:
             if i not in cust_child2:
                 cust_miss_child2.append(i)
-
+ 
         cust_child2=[]
         j=0
         for i in range(len(child2)):
@@ -604,34 +604,6 @@ class VRPTWNeighborhood(Neighborhood):
                 else:
                     child2[i]=cust_miss_child2[j]
                     j+=1
-
-            # child1 = sol_code1[:pos] + sol_code2[pos:]
-            # child2 = sol_code2[:pos] + sol_code1[pos:]
-
-            # copy_child1 = deepcopy(child1)
-            # copy_child2 = deepcopy(child2)
-
-
-            # count1 = 0
-            # for gen1 in copy_child1[:pos]:
-            #     repeat = copy_child1.count(gen1)
-            #     if repeat > 1:  # If need to fix repeated gen
-            #         count2 = 0
-            #         for gen2 in sol_code1[pos:]:  # Choose next available gen
-            #             if gen2 not in copy_child1:
-            #                 child1[count1] = sol_code1[pos:][count2]
-            #             count2 += 1
-            #     count1 += 1
-            # count1 = 0
-            # for gen1 in copy_child2[:pos]:
-            #     repeat = copy_child2.count(gen1)
-            #     if repeat > 1:  # If need to fix repeated gen
-            #         count2 = 0
-            #         for gen2 in sol_code2[pos:]:  # Choose next available gen
-            #             if gen2 not in copy_child2:
-            #                 child2[count1] = sol_code2[pos:][count2]
-            #             count2 += 1
-            #     count1 += 1
 
             solution_found1 = Sol(child1)
             solution_found2 = Sol(child2)
