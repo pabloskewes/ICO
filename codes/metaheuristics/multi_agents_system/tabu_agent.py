@@ -2,7 +2,7 @@ from ..tabu_search import TabuList
 
 
 class TabuAgent:
-    def __init__(self, max_tabu: int = 10, max_iter: int = 100, tabu_mode: str = 'default'):
+    def __init__(self, max_tabu: int = 100, max_iter: int = 100, tabu_mode: str = 'default'):
         self.max_tabu = max_tabu
         self.tabu_mode = tabu_mode
         self.T = TabuList(mode=self.tabu_mode)
