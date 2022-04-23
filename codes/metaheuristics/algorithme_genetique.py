@@ -47,13 +47,6 @@ class GeneticAlgorithm(BaseMetaheuristic):
         self.reproductive_isolation= reproductive_isolation
         self.best_seed=best_seed
 
-    def __get_best_solution(self):
-        if self.best_solution:
-            return self.best_solution
-        else:
-            print("Empty solution. To get the best solution, use search() first")
-            return False
-
     def __chromosome_mutation(self, chromosome, prob):
         if random.random() < prob and chromosome.cost() > 0:
             _, N, _ = self.get_problem_components()
@@ -97,7 +90,11 @@ class GeneticAlgorithm(BaseMetaheuristic):
 
     def __init(self):
         self.hasinit=True
-        self.population = [self.__generate_chromosome() for _ in range(self.num_population)]
+        while(len(self.population)<self.num_population):
+            
+            new_born=self.__generate_chromosome()
+            if new_born.cost()!=0:
+                self.population.append(new_born)
 
     def __evolution(self): 
 
@@ -115,28 +112,27 @@ class GeneticAlgorithm(BaseMetaheuristic):
                         parents.append(candidate[1])
                     else:
                         parents.append(candidate[0])
-            if parents[0].cost() == 0 or parents[1].cost() ==0:
-                print("tournement bug")
+
             return parents
 
         def __pop_crossover(self, parents): 
             for i in range(len(parents) // 2 - 1):
                 parent = random.sample(parents, 2)
                 child1, child2 = self.__chromosome_crossover(parent[0], parent[1])
+
                 self.population.append(child1)
                 self.population.append(child2)
 
             if self.best_solution and self.best_seed:
                 parent = random.sample(parents, 2)
                 child1, child2 = self.__chromosome_crossover(parent[0], self.best_solution)
-                self.population.append(child1)
-                self.population.append(child2)
 
             else:
                 parent = random.sample(parents, 2)
                 child1, child2 = self.__chromosome_crossover(parent[0], parent[1])
-                self.population.append(child1)
-                self.population.append(child2)
+
+            self.population.append(child1)
+            self.population.append(child2)
 
         def __pop_mutation(self):  
             population_new = copy.deepcopy(self.population)

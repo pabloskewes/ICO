@@ -513,59 +513,140 @@ class VRPTWNeighborhood(Neighborhood):
     # GA NEIGHBORHOOD FUNCTION 2 - CROSSOVER
     def crossover(self, solution1: VRPTWSolution, solution2: VRPTWSolution) -> Tuple[VRPTWSolution, VRPTWSolution]:
         """
-        Generate two solutions by combining sections from two different solutions (except the first,
-        second to last and last customers), then returns new solutions
+        Generate two solutions by combining sections from two different solutions, then returns new solutions
         :param : solution
         """
+        if not solution1.all_customers_checker() and solution2.all_customers_checker():
+            return solution1, solution2
+
         sol_code1 = solution1.sol_code
         sol_code2 = solution2.sol_code
+        
+        list_cust_code=[]
+        for i in sol_code1:
+            if i!=0:
+                list_cust_code.append(i) 
 
-        is_sol = False
-        breaker = 0
-    
-        while (not is_sol) or (breaker < 10):
-            breaker+=1
-            pos = random.randrange(1, min(len(sol_code1), len(sol_code2)) - 1)
-            child1 = sol_code1[:pos] + sol_code2[pos:]
-            child2 = sol_code2[:pos] + sol_code1[pos:]
+        pos = random.randrange(1, (len(sol_code1)-sol_code1.count(0)) - 1)
 
-            copy_child1 = deepcopy(child1)
-            copy_child2 = deepcopy(child2)
+        segment_left_1=[]
+        segment_right_1=[]
+        segment_left_2=[]
+        segment_right_2=[]
 
-            count1 = 0
-            for gen1 in copy_child1[:pos]:
-                repeat = 0
-                repeat = copy_child1.count(gen1)
-                if repeat > 1:  # If need to fix repeated gen
-                    count2 = 0
-                    for gen2 in sol_code1[pos:]:  # Choose next available gen
-                        if gen2 not in copy_child1:
-                            child1[count1] = sol_code1[pos:][count2]
-                        count2 += 1
-                count1 += 1
-            count1 = 0
-            for gen1 in copy_child2[:pos]:
-                repeat = 0
-                repeat = copy_child2.count(gen1)
-                if repeat > 1:  # If need to fix repeated gen
-                    count2 = 0
-                    for gen2 in sol_code2[pos:]:  # Choose next available gen
-                        if gen2 not in copy_child2:
-                            child2[count1] = sol_code2[pos:][count2]
-                        count2 += 1
-                count1 += 1
+        pos1=deepcopy(pos)
+        for i in range(len(sol_code1)):
+            if sol_code1[i] != 0:
+                pos1-=1
+            segment_left_1.append(sol_code1[i])
+            if pos1 ==0:
+                break
+        segment_right_1=sol_code1[i+1:]
+
+        pos2=deepcopy(pos)
+        for i in range(len(sol_code2)):
+            if sol_code2[i] != 0:
+                pos2-=1
+            segment_left_2.append(sol_code2[i])
+            if pos2 ==0:
+                break
+        segment_right_2=sol_code2[i+1:]  
+
+        child1=segment_left_1+segment_right_2
+        child2=segment_left_2+segment_right_1
+
+        cust_child1=[]
+        cust_repeat_child1=[]
+        cust_miss_child1=[]
+
+        for i in range(len(child1)):
+            if child1[i]!=0:
+                if child1[i] not in cust_child1:
+                    cust_child1.append(child1[i])
+                else:
+                    cust_repeat_child1.append(child1[i])
+
+        for  i in list_cust_code:
+            if i not in cust_child1:
+                cust_miss_child1.append(i)
+
+        cust_child1=[]
+        j=0
+        for i in range(len(child1)):
+            if  child1[i]!=0:
+                if child1[i] not in cust_child1:
+                    cust_child1.append(child1[i])
+                else:
+                    child1[i]=cust_miss_child1[j]
+                    j+=1
+
+        cust_child2=[]
+        cust_repeat_child2=[]
+        cust_miss_child2=[]
+
+        for i in range(len(child2)):
+            if child2[i]!=0:
+                if child2[i] not in cust_child2:
+                    cust_child2.append(child2[i])
+                else:
+                    cust_repeat_child2.append(child2[i])
+
+        for  i in list_cust_code:
+            if i not in cust_child2:
+                cust_miss_child2.append(i)
+
+        cust_child2=[]
+        j=0
+        for i in range(len(child2)):
+            if  child2[i]!=0:
+                if child2[i] not in cust_child2:
+                    cust_child2.append(child2[i])
+                else:
+                    child2[i]=cust_miss_child2[j]
+                    j+=1
+
+            # child1 = sol_code1[:pos] + sol_code2[pos:]
+            # child2 = sol_code2[:pos] + sol_code1[pos:]
+
+            # copy_child1 = deepcopy(child1)
+            # copy_child2 = deepcopy(child2)
+
+
+            # count1 = 0
+            # for gen1 in copy_child1[:pos]:
+            #     repeat = copy_child1.count(gen1)
+            #     if repeat > 1:  # If need to fix repeated gen
+            #         count2 = 0
+            #         for gen2 in sol_code1[pos:]:  # Choose next available gen
+            #             if gen2 not in copy_child1:
+            #                 child1[count1] = sol_code1[pos:][count2]
+            #             count2 += 1
+            #     count1 += 1
+            # count1 = 0
+            # for gen1 in copy_child2[:pos]:
+            #     repeat = copy_child2.count(gen1)
+            #     if repeat > 1:  # If need to fix repeated gen
+            #         count2 = 0
+            #         for gen2 in sol_code2[pos:]:  # Choose next available gen
+            #             if gen2 not in copy_child2:
+            #                 child2[count1] = sol_code2[pos:][count2]
+            #             count2 += 1
+            #     count1 += 1
 
             solution_found1 = Sol(child1)
             solution_found2 = Sol(child2)
             is_sol = all((solution_found1.route_checker(route) for route in solution_found1.routes)) and \
                      all((solution_found2.route_checker(route) for route in solution_found2.routes))
-
+     
         if (not is_sol) and (self.verbose > 1):
             print("No neighbor found that is a solution")
             return solution1, solution2
 
         neighbor1 = Sol(child1)
         neighbor2 = Sol(child2)
+
+        if neighbor1.cost() == 0 or neighbor2.cost() ==0:
+            print("but bug",neighbor1,neighbor2)
         return neighbor1, neighbor2
 
     # NEIGHBORHOOD FUNCTION
