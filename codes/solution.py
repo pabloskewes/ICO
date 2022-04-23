@@ -68,6 +68,9 @@ class VRPTWSolution(Solution):
         returns the total cost of the solution given for the problem given omega is the weight of each vehicle,
         1000 by default.
         """
+        if not self.sol_code:
+            return float('inf')
+
         # data retrieval
         nb_vehicle = self.sol_code.count(0) - 1
         distance_matrix = self.context.distances
@@ -85,10 +88,7 @@ class VRPTWSolution(Solution):
             print('Solution:', self.routes)
             print('Total cost of solution:', total_cost)
 
-        if not self.checker():
-            return float('inf')
-        else:
-            return total_cost
+        return total_cost
 
     def all_customers_checker(self) -> bool:
         """ Checks whether the input 'solution' does visit all the customers """
