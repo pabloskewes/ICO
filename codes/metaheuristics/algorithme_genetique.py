@@ -24,8 +24,8 @@ LOG
 
 class GeneticAlgorithm(BaseMetaheuristic):
     def __init__(self,num_evolu_per_search=10, num_parent=4, num_population=20, rate_mutation=0.2,
-                 population=[], progress_bar=False,
-                 solution_params=None, neighborhood_params=None, solution_space_params=None,threshold=10,reproductive_isolation=False,best_seed=True):
+                 population=[], progress_bar=False, threshold=10, reproductive_isolation=False, best_seed=True,
+                 solution_params=None, neighborhood_params=None, solution_space_params=None):
         super().__init__()
 
         self.params = {'solution': solution_params,
@@ -71,6 +71,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
         else: 
             return self.__generate_chromosome(),self.__generate_chromosome()
             # return parent1,parent2
+
     def search(self):
         """ Performs metaheuristic search """
         if not self.hasinit:
