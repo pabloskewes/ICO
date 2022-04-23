@@ -84,27 +84,6 @@ class GeneticAlgorithm(BaseMetaheuristic):
         self.evolution_explored_solutions = self.evolution_explored_solutions[:len(self.evolution_best_solution)]
         return self.best_solution
 
-    def fitness(self, solution):
-        """
-        is the fitness always has the same definition with the cost of the solution?
-        """
-
-        total_cost =solution.cost()
-        penalty=0
-
-        if solution.cost()<solution.omega:
-            penalty+=float('inf')
-
-        all_customers_check = solution.all_customers_checker()
-        not_repeated_customers_check = solution.not_repeated_customers_checker()
-
-        for route in solution.routes:
-            penalty+=int(not solution.route_checker(route))*self.penalty_wrong_chromosome
-
-        penalty += int(not all_customers_check)*self.penalty_wrong_chromosome
-        penalty += int(not not_repeated_customers_check)*self.penalty_wrong_chromosome
-        return -total_cost-penalty
-
     def __fitness(self, solution):
         
         return -solution.cost()
@@ -136,6 +115,8 @@ class GeneticAlgorithm(BaseMetaheuristic):
                         parents.append(candidate[1])
                     else:
                         parents.append(candidate[0])
+            if parents[0].cost() == 0 or parents[1].cost() ==0:
+                print("tournement bug")
             return parents
 
         def __pop_crossover(self, parents): 
