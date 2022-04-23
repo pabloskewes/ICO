@@ -42,7 +42,7 @@ class TabuSearch(BaseMetaheuristic):
     """
     Class inherited from BaseMetaheuristic that implements the Tabu Search algorithm
     """
-    def __init__(self, lower_bound: int = 100, max_iter: int = 100, max_tabu: int = 10,
+    def __init__(self, lower_bound: int = 100, max_iter: int = 100, max_tabu: int = 100,
                  tabu_mode: str = 'default', progress_bar: bool = False,
                  solution_params=None, neighborhood_params=None, solution_space_params=None):
         super().__init__()

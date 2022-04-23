@@ -39,7 +39,7 @@ class FlowShopSolution(Solution):
     def __setitem__(self, key, value):
         self.flowshop[key] = value
 
-    def __len(self)__:
+    def __len__(self):
         return len(self.flowshop)
 
     def copy(self):
