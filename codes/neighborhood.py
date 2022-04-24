@@ -614,9 +614,13 @@ class VRPTWNeighborhood(Neighborhood):
             solution_found2 = Sol(child2)
             is_sol = all((solution_found1.route_checker(route) for route in solution_found1.routes)) and \
                         all((solution_found2.route_checker(route) for route in solution_found2.routes))
+            
+            if is_sol:
+                return solution_found1, solution_found2
 
-        if (not is_sol) and (self.verbose > 1):
-            print("No neighbor found that is a solution")
+        if not is_sol:
+            if self.verbose > 1:
+                print("crossover wasn't able to find a neighbor for this solution")
             return solution1, solution2
 
         neighbor1 = Sol(child1)
