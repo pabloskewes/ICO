@@ -23,6 +23,10 @@ class TabuList:
         self.tabu_list = self.tabu_list[1:]
         self.size -= 1
 
+    def empty(self):
+        self.tabu_list = []
+        self.size = 0
+
     def contains_default(self, e):
         return e in self.tabu_list
 
