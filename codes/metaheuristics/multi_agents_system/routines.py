@@ -3,13 +3,13 @@ from numpy import exp
 from typing import Optional
 
 from ..tabu_search import TabuList
-from ..base_problem import Neighborhood
+from ..base_problem import Solution, Neighborhood
 from .base_agent import BaseAgent
 
 
 class SimulatedAnnealingRoutine:
-    """ Routine of Simulated Annealing metaheuristic that can be done in separate iterations"""
-    def __init__(self, t0: int = 30, cooling_factor: float = 0.9, max_iter=100, init_sol=None):
+    """ Routine of Simulated Annealing metaheuristic that can be done in separate iterations """
+    def __init__(self, t0: int = 30, cooling_factor: float = 0.9, max_iter=100, init_sol: Solution = None):
         # Simulated Annealing hyperparameters
         self.t0 = t0
         self.t = self.t0
@@ -23,10 +23,10 @@ class SimulatedAnnealingRoutine:
         self.new_cycle = False
 
         # Base Agent Parameters
-        self.N: Optional[Neighborhood] = None
+        self.agent: Optional[BaseAgent] = None
 
-    def fit(self, agent: BaseAgent):
-        self.N = agent.N
+    def fit_agent(self, agent: BaseAgent):
+        self.agent = agent
 
     def reset_routine(self):
         self.t = self.t0
@@ -39,7 +39,7 @@ class SimulatedAnnealingRoutine:
     def iteration(self):
         if not self.is_finished:
             self.n_iter += 1
-            neighbor = self.N(self.actual_sol)
+            neighbor = self.agent.explore(self.actual_sol)
             dc = neighbor.cost() - self.best_sol.cost()
             # if the neighbor cool down the system (less entropy)
             # we update the best_solution
