@@ -1,13 +1,11 @@
-from typing import Optional, Dict, Callable, Any, Union, Type
-from mesa import Model, Agent
-from mesa.time import RandomActivation
+from typing import Optional, Dict
 from tqdm import tqdm
 
-from .base_problem import Solution, Neighborhood, SolutionSpace, Problem
+from .base_problem import Solution
 from .base_metaheuristic import BaseMetaheuristic
 from .tabu_search import TabuSearch
 from .simulated_annealing import SimulatedAnnealing
-from .agents import CollaborativeSpace, SimpleAgent
+from codes.metaheuristics.multi_agents_system.agents import CollaborativeSpace, SimpleAgent
 AgentType = SimpleAgent
 
 

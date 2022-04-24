@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 from abc import ABC, abstractmethod
 
 from ..base_problem import Solution, SolutionSpace
@@ -8,7 +8,7 @@ class BasePool(ABC):
     def __init__(self, solution_space: SolutionSpace, max_size: int = 10):
         self.SP = solution_space
         self.max_size = max_size
-        self.solutions: List[Solution] = []
+        self.solutions: List[Union[Solution, float]] = []
 
     @abstractmethod
     def push(self, solution: Solution):
