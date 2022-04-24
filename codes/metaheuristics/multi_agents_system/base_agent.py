@@ -1,8 +1,9 @@
+from mesa import Agent as MesaAgent
+from typing import List
+
 from .sequencial_models import SequentialModel
 from ..base_problem import Solution
 from .pools import BasePool
-
-from mesa import Agent as MesaAgent
 
 
 class BaseAgent(MesaAgent):
