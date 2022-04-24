@@ -107,3 +107,33 @@ class TabuRoutine:
                 self.is_finished = True
 
         return self.best_sol
+
+
+class VariableNeighborhoodDescentRoutine:
+
+    def __init__(self, neighborhood, init_sol=None):
+        self.N = neighborhood
+        self.k_neighborhood = 1
+        self.k_max = len(self.N.use_methods)
+        self.init_sol = self.N.initial_solution() if init_sol is None else init_sol
+        self.best_sol = self.init_sol
+        self.is_finished = False
+
+    def reset_routine(self):
+        self.k_neighborhood = 1
+        self.best_sol = self.init_sol
+        self.is_finished = False
+
+    def explore(self):
+        if not self.is_finished:
+            self.N.set_params({'choose_mode': self.k_neighborhood})
+            new_solution = self.N(self.best_sol)
+            if new_solution.cost() < self.best_sol.cost():
+                self.best_sol = new_solution
+                self.k_neighborhood = 1
+            else:
+                self.k_neighborhood += 1
+
+            self.is_finished = self.k_neighborhood == self.k_max
+
+        return self.best_sol
