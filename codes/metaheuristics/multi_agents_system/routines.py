@@ -28,6 +28,7 @@ class BaseRoutine:
         neighbor = self.agent.explore(self.best_sol)
         return neighbor
 
+
 class SimulatedAnnealingRoutine(BaseRoutine):
     """ Routine of Simulated Annealing metaheuristic that can be done in separate iterations """
     def __init__(self, t0: int = 30, cooling_factor: float = 0.9, max_iter=100, init_sol: Solution = None):

@@ -1,18 +1,19 @@
-# importar de BaseMetaheuristic
-# recibe dict de agentes y lista de pools
-from ..metaheuristics.base_metaheuristic import BaseMetaheuristic
+from mesa import Model as MesaModel
+from typing import Dict, List, Union, Type, Optional
+from tqdm import tqdm
+
+from ..base_metaheuristic import BaseMetaheuristic
 from .base_agent import BaseAgent
 from ..base_problem import Solution
-
-from mesa import Model as MesaModel
-
-from tqdm import trange
+from .pools import BasePool
+from .sequencial_models import SequentialModel
 
 AgentCollection = Dict[Union[Type[BaseAgent], str], int]
 PoolCollection = List[Union[str, BasePool]]
 
+
 class MultiAgentSystem(BaseMetaheuristic):
-    def __init__(self, model: MesaModel = None, agents: AgentCollection = None,
+    def __init__(self, model: Type[SequentialModel] = None, agents: AgentCollection = None,
                  pools: PoolCollection = None, max_iter: int = 100, progress_bar: bool = False,
                  solution_params=None, neighborhood_params=None, solution_space_params=None):
         super().__init__()
@@ -23,7 +24,8 @@ class MultiAgentSystem(BaseMetaheuristic):
         # Metaheuristic hyperparameters
         self.max_iter = max_iter
         self.progress_bar = progress_bar
-        self.model = model
+        self.MODEL = model
+        self.model: Optional[SequentialModel] = None
         self.agents = agents
         self.pools = pools
 
@@ -31,7 +33,7 @@ class MultiAgentSystem(BaseMetaheuristic):
             self.setup()
 
     def setup(self):
-        self.model = self.model(self.problem, self.agents, self.pools)
+        self.model = self.MODEL(self.problem, self.agents, self.pools)
 
     def get_best_solution(self) -> Solution:
         for pool in self.pools:

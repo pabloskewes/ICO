@@ -9,7 +9,7 @@ from .pools import BasePool
 
 class QLearningAgent(NeighborhoodQLearning, BaseAgent):
     def __init__(self, unique_id: int, model: SequentialModel,
-                 push_to: List[BasePool] = None, pull_from: List[BasePool] = None, reference_solution: Solution):
+                 push_to: List[BasePool] = None, pull_from: List[BasePool] = None):
         BaseAgent.__init__(unique_id=unique_id, model=model, push_to=push_to, pull_from=pull_from)
         N = self.N
-        NeighborhoodQLearning.__init__(neighborhood=N, )
+        # NeighborhoodQLearning.__init__(neighborhood=N, )
