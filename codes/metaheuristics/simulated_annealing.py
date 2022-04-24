@@ -33,12 +33,8 @@ class SimulatedAnnealing(BaseMetaheuristic):
         n_iter = 0
         new_cycle = True
         t = self.t0
-<<<<<<< HEAD
-        it = 0
-        pbar.set_description('Cost: %.2f' %best_sol.cost())
-=======
-        pbar.set_description('Cost: %.2f' % best_sol.cost())
->>>>>>> 1c197308b43bdc17860a58c65df1752a7538188a
+        if self.progress_bar:
+            pbar.set_description('Cost: %.2f' % best_sol.cost())
         # begin of cycle
         while new_cycle:
             iter_cycle = 0
@@ -76,37 +72,3 @@ class SimulatedAnnealing(BaseMetaheuristic):
         self.best_solution = best_sol
         return best_sol
 
-    def iterate(self) -> Solution:
-        # initial setup
-        while self.new_cycle:
-            self.iter_cycle = 0
-            self.new_cycle = False
-            # entropy of the neighbors calculation
-            while self.iter_cycle < self.max_cycle_iter:
-                if self.progress_bar:
-                    self.pbar.update()
-                self.iter_cycle += 1
-                self.n_iter += 1
-                self.neighbor = self.N(self.actual_sol)
-                self.evolution_best_solution.append(self.best_sol.cost())
-                self.evolution_explored_solutions.append(self.neighbor.cost())
-                dc = self.neighbor.cost() - self.actual_sol.cost()
-                # if the neighbor cool down the system (less entropy)
-                # we update the best_solution
-                if dc < 0:
-                    self.actual_sol = self.neighbor
-                    self.new_cycle = True
-                # if not we calculate the probability
-                elif dc > 0:
-                    prob = np.exp(-1.0 * dc / self.t)
-                    q = random()
-                    if q < prob:
-                        self.actual_sol = self.neighbor
-                        self.new_cycle = True
-                if self.actual_sol.cost() < self.best_sol.cost():
-                    self.best_sol = self.actual_sol
-                self.t *= self.cooling_factor
-            if self.progress_bar:
-                self.pbar.reset()
-                self.pbar.set_description('Cost: %.2f' % self.best_sol.cost())
-        return self.best_sol
