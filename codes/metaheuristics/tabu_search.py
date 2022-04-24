@@ -1,6 +1,5 @@
 from .base_metaheuristic import BaseMetaheuristic
 from .base_problem import Solution
-from random import randint
 
 from tqdm import tqdm
 
