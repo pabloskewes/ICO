@@ -37,6 +37,11 @@ class BestPool(BasePool):
             self.solutions.remove(worst_sol)
             self.solutions.append(solution)
 
+    def get_best_solution(self) -> Solution:
+        costs = [s.cost() for s in self.solutions]
+        best_sol = self.solutions[costs.index(min(costs))]
+        return best_sol
+
 
 class DiversePool(BasePool):
     """ Pool of solution that keeps only its space as diverse as possible """
@@ -69,3 +74,8 @@ class DiversePool(BasePool):
             display += f'Solution = {sol}'
             display += f'Average distance to pool = {dist}'
         return display
+
+    def get_best_solution(self) -> Solution:
+        costs = [s.cost() for s in self.solutions]
+        best_sol = self.solutions[costs.index(min(costs))]
+        return best_sol
