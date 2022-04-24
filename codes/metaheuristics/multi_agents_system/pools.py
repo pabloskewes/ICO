@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 from abc import ABC, abstractmethod
 
 from ..base_problem import Solution, SolutionSpace
@@ -8,15 +8,43 @@ class BasePool(ABC):
     def __init__(self, solution_space: SolutionSpace, max_size: int = 10):
         self.SP = solution_space
         self.max_size = max_size
-        self.solutions: List[Solution] = []
+        self.solutions: List[Union[Solution, float]] = []
 
     @abstractmethod
     def push(self, solution: Solution):
         """  Tries to push a solution into the pool """
 
 
+class BestScorePool(BasePool):
+    """ Pool of solution that keeps the best scores of solutions"""
+    def push(self, solution: Solution):
+        if len(self.solutions) < self.max_size:
+            self.solutions.append(solution.cost())
+        worst_sol = max(self.solutions)
+        if solution.cost() < worst_sol:
+            self.solutions.remove(worst_sol)
+            self.solutions.append(solution.cost())
+
+
+class BestPool(BasePool):
+    """ Pool of solution that keeps the best solutions"""
+    def push(self, solution: Solution):
+        if len(self.solutions) < self.max_size:
+            self.solutions.append(solution)
+        costs = [s.cost() for s in self.solutions]
+        worst_sol = self.solutions[costs.index(max(costs))]
+        if solution.cost() < worst_sol.cost():
+            self.solutions.remove(worst_sol)
+            self.solutions.append(solution)
+
+    def get_best_solution(self) -> Solution:
+        costs = [s.cost() for s in self.solutions]
+        best_sol = self.solutions[costs.index(min(costs))]
+        return best_sol
+
+
 class DiversePool(BasePool):
-    """ Pool of solution that keep only its space as diverse as possible """
+    """ Pool of solution that keeps only its space as diverse as possible """
     def __init__(self, solution_space: SolutionSpace, max_size: int = 10):
         super().__init__(solution_space, max_size)
         self.average_distances: List[float] = []
@@ -47,6 +75,7 @@ class DiversePool(BasePool):
             display += f'Average distance to pool = {dist}'
         return display
 
-
-class ScorePool(BasePool):
-
+    def get_best_solution(self) -> Solution:
+        costs = [s.cost() for s in self.solutions]
+        best_sol = self.solutions[costs.index(min(costs))]
+        return best_sol
