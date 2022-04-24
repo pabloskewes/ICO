@@ -48,7 +48,7 @@ class MultiAgentSystem(BaseMetaheuristic):
         if self.progress_bar:
             pbar.set_description('Agents working...')
 
-        for _ in trange(self.max_iter, desc='Agents working'):
+        for _ in range(self.max_iter):
             self.model.step()
             if self.progress_bar:
                 pbar.update()
