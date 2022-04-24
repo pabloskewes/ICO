@@ -89,3 +89,4 @@ class NeighborhoodQLearning(QLearning):
         self.N.set_params({'use_methods': [action]})
 
 
+
