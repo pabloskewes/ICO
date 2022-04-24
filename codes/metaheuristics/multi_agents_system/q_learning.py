@@ -62,6 +62,8 @@ class QLearning(ABC):
 
     def update_Q(self, *args):
         """ Updates Q-matrix (Q-Learning) """
+        action = self.policy()
+
         r = self.reward(*args)
 
 
