@@ -1,6 +1,9 @@
 from random import random
 from numpy import exp
 
+from ..tabu_search import TabuList
+
+
 
 class SimulatedAnnealingRoutine:
     def __init__(self, t0: int = 30, cooling_factor: float = 0.9, max_iter=100, init_sol=None):
@@ -15,9 +18,13 @@ class SimulatedAnnealingRoutine:
         self.best_sol = self.init_sol
         self.new_cycle = False
 
-    def reset_params(self):
+    def reset_routine(self):
         self.t = self.t0
         self.is_finished = False
+        self.actual_sol = self.init_sol
+        self.best_sol = self.init_sol
+        self.n_iter = 0
+        self.new_cycle = False
 
     def iterate(self, neighborhood):
         if not self.is_finished:
@@ -46,5 +53,57 @@ class SimulatedAnnealingRoutine:
                 if not self.new_cycle:
                     self.is_finished = True
                 self.new_cycle = False
+
+        return self.best_sol
+
+
+class TabuRoutine:
+    def __init__(self, max_tabu: int = 100, max_iter: int = 100, tabu_mode: str = 'default', init_sol=None):
+        self.max_tabu = max_tabu
+        self.T = TabuList(mode=tabu_mode)
+        self.max_iter = max_iter
+        self.init_sol = init_sol
+        self.actual_sol = self.init_sol
+        self.last_visited_sol = self.init_sol
+        self.best_sol = self.init_sol
+        self.is_finished = False
+        self.n_iter = 0
+        self.best_iter = 0
+        self.T.push(self.init_sol)
+
+    def reset_routine(self):
+        self.is_finished = False
+        self.T.empty()
+        self.T.push(self.init_sol)
+        self.last_visited_sol = self.init_sol
+        self.best_sol = self.init_sol
+        self.actual_sol = self.init_sol
+        self.n_iter = 0
+        self.best_iter = 0
+
+    def explore(self, neighborhood):
+        if not self.is_finished:
+            self.n_iter += 1
+            new_solution = neighborhood(self.actual_sol)
+
+            n_cycle = 0
+            while self.T.contains(new_solution):
+                new_solution = neighborhood(self.actual_sol)
+                if n_cycle == self.max_iter:
+                    self.T.push(self.actual_sol)
+                    self.actual_sol = self.last_visited_sol
+                    return self.best_sol
+                n_cycle += 1
+
+            if new_solution.cost() < self.best_sol.cost():
+                self.last_visited_sol = self.best_sol
+                self.best_sol = new_solution
+                self.best_iter = self.n_iter
+
+            self.T.push(new_solution)
+            self.actual_sol = new_solution
+
+            if (self.n_iter - self.best_iter) >= self.max_iter:
+                self.is_finished = True
 
         return self.best_sol
