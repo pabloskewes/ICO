@@ -2,9 +2,10 @@ from metaheuristics.base_problem import Context, Solution, Neighborhood, Solutio
 from dataclasses import dataclass
 from pandas import DataFrame, read_csv
 import numpy as np
-from typing import List
+from typing import List, Union
 import random
 import os
+
 
 @dataclass
 class FlowShopContext(Context):
@@ -21,7 +22,7 @@ class FlowShopContext(Context):
 class FlowShopSolution(Solution):
     context: FlowShopContext = None
 
-    def __init__(self, flowshop: List[int] = None, params=None):
+    def __init__(self, flowshop: Union[List[int], np.array] = None, params=None):
         super().__init__()
 
         self.flowshop = np.array(flowshop)
@@ -45,7 +46,7 @@ class FlowShopSolution(Solution):
     def copy(self):
         return FlowShopSolution(self.flowshop)
 
-    def orderMatrix(self):
+    def order_matrix(self) -> np.array:
         machines = self.context.machines
         num_tasks = self.context.num_tasks
         num_machines = self.context.num_machines
@@ -63,7 +64,7 @@ class FlowShopSolution(Solution):
         """  Returns the cost of a solution """
         machines = self.context.machines
         solution = self.flowshop
-        mat = self.orderMatrix()
+        mat = self.order_matrix()
         T_debut = np.zeros([len(machines),len(solution)])
         T_debut[1][0] = mat[0][0]
         T_debut[2][0] = T_debut[1][0] + mat[1][0]
@@ -90,7 +91,7 @@ class FlowShopNeighborhood(Neighborhood):
         self.methods_ids = {i+1: method for i, method in enumerate(self.use_methods)}
 
         self.valid_params = ['init_sol', 'verbose', 'use_methods', 'choose_mode',
-                            'force_new_sol']
+                             'force_new_sol']
         if params is not None:
             self.set_params(params)
 
@@ -152,7 +153,6 @@ class FlowShopNeighborhood(Neighborhood):
             new_solution[r2] = aux
             if not self.force_new_sol:
                 break
-
         return new_solution
 
     def flip2(self, solution):
@@ -167,9 +167,7 @@ class FlowShopNeighborhood(Neighborhood):
             new_solution[r2] = aux
             if not self.force_new_sol:
                 break
-
         return new_solution
-
 
 
 class FlowShopSolutionSpace(SolutionSpace):
@@ -182,7 +180,7 @@ class FlowShopSolutionSpace(SolutionSpace):
         if params is not None:
             self.set_params(params)
 
-    def distance(self, s1: Solution, s2: Solution) -> float:
+    def distance(self, s1: FlowShopSolution, s2: FlowShopSolution) -> float:
         graph_1 = [(s1[i], s1[i+1]) for i in range(len(s1)-1)]
         graph_2 = [(s2[i], s2[i+1]) for i in range(len(s2)-1)]
         diff_set = set(graph_1)^set(graph_2)
@@ -212,8 +210,9 @@ def generate_flowshop_instance(filename, num_machines=6, num_tasks=9):
     tasks_name = ['T'+str(i) for i in range(num_tasks)]
     min_time = num_tasks*3
     max_time = num_tasks*10 + 1
-    df = DataFrame(np.random.randint(low=min_time, high=max_time, size=(num_machines, num_tasks)),
-                    columns=tasks_name)
+    df = DataFrame(np.random.randint(low=min_time, high=max_time,
+                                     size=(num_machines, num_tasks)),
+                                     columns=tasks_name)
     ROOT_DIR = os.path.abspath('..')
     DATA_DIR = os.path.join(ROOT_DIR, 'data_flowshop')
     DIR = os.path.join(DATA_DIR, filename)

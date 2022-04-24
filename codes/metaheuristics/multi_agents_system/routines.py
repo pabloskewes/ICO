@@ -2,7 +2,7 @@ from random import random
 from numpy import exp
 
 
-class SAAgent:
+class SimulatedAnnealingRoutine:
     def __init__(self, t0: int = 30, cooling_factor: float = 0.9, max_iter=100, init_sol=None):
         self.t0 = t0
         self.t = self.t0
@@ -19,7 +19,7 @@ class SAAgent:
         self.t = self.t0
         self.is_finished = False
 
-    def explore(self, neighborhood):
+    def iterate(self, neighborhood):
         if not self.is_finished:
             self.n_iter += 1
             neighbor = neighborhood(self.actual_sol)
@@ -31,7 +31,7 @@ class SAAgent:
                 self.new_cycle = True
             # if not we calculate the probability
             if dc > 0:
-                prob = exp(-1.0* dc / self.t)
+                prob = exp(-1.0 * dc / self.t)
                 q = random()
                 if q < prob:
                     self.actual_sol = neighbor
