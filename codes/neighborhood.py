@@ -174,13 +174,13 @@ class VRPTWNeighborhood(Neighborhood):
             cust_iter = 0
             while not is_sol and cust_iter < self.max_iter and cust_pairs:
                 cust1, cust2 = random.choice(cust_pairs)
-                cust_pairs.remove((cust1, cust2))
+                cust_pairs.remove((cust1, cust2))           
                 index_c1, index_c2 = route1.index(cust1), route2.index(cust2)
 
                 # Swapping customers of routes 1 and route 2
                 new_routes[index_r1][index_c1] = cust2
                 new_routes[index_r2][index_c2] = cust1
-                is_sol = S.route_checker(route1) and S.route_checker(route2)
+                is_sol = S.route_checker(new_routes[index_r1]) and S.route_checker(new_routes[index_r2])     
                 if is_sol:
                     new_sol = VRPTWSolution(new_routes)
                     if self.full_search:
@@ -516,9 +516,12 @@ class VRPTWNeighborhood(Neighborhood):
         Generate two solutions by combining sections from two different solutions, then returns new solutions
         :param : solution
         """
+
         if not solution1.all_customers_checker() and solution2.all_customers_checker():
             return solution1, solution2
 
+        n_iter=0
+        is_sol=False
         sol_code1 = solution1.sol_code
         sol_code2 = solution2.sol_code
         
@@ -527,89 +530,91 @@ class VRPTWNeighborhood(Neighborhood):
             if i!=0:
                 list_cust_code.append(i) 
 
-        pos = random.randrange(1, (len(sol_code1)-sol_code1.count(0)) - 1)
+        while not is_sol and n_iter < self.max_iter:
+            n_iter += 1
+            pos = random.randrange(1, (len(sol_code1)-sol_code1.count(0)) - 1)
 
-        segment_left_1=[]
-        segment_right_1=[]
-        segment_left_2=[]
-        segment_right_2=[]
+            segment_left_1=[]
+            segment_right_1=[]
+            segment_left_2=[]
+            segment_right_2=[]
 
-        pos1=deepcopy(pos)
-        for i in range(len(sol_code1)):
-            if sol_code1[i] != 0:
-                pos1-=1
-            segment_left_1.append(sol_code1[i])
-            if pos1 ==0:
-                break
-        segment_right_1=sol_code1[i+1:]
+            pos1=deepcopy(pos)
+            for i in range(len(sol_code1)):
+                if sol_code1[i] != 0:
+                    pos1-=1
+                segment_left_1.append(sol_code1[i])
+                if pos1 ==0:
+                    break
+            segment_right_1=sol_code1[i+1:]
 
-        pos2=deepcopy(pos)
-        for i in range(len(sol_code2)):
-            if sol_code2[i] != 0:
-                pos2-=1
-            segment_left_2.append(sol_code2[i])
-            if pos2 ==0:
-                break
-        segment_right_2=sol_code2[i+1:]  
+            pos2=deepcopy(pos)
+            for i in range(len(sol_code2)):
+                if sol_code2[i] != 0:
+                    pos2-=1
+                segment_left_2.append(sol_code2[i])
+                if pos2 ==0:
+                    break
+            segment_right_2=sol_code2[i+1:]  
 
-        child1=segment_left_1+segment_right_2
-        child2=segment_left_2+segment_right_1
+            child1=segment_left_1+segment_right_2
+            child2=segment_left_2+segment_right_1
 
-        cust_child1=[]
-        cust_repeat_child1=[]
-        cust_miss_child1=[]
+            cust_child1=[]
+            cust_repeat_child1=[]
+            cust_miss_child1=[]
 
-        for i in range(len(child1)):
-            if child1[i]!=0:
-                if child1[i] not in cust_child1:
-                    cust_child1.append(child1[i])
-                else:
-                    cust_repeat_child1.append(child1[i])
+            for i in range(len(child1)):
+                if child1[i]!=0:
+                    if child1[i] not in cust_child1:
+                        cust_child1.append(child1[i])
+                    else:
+                        cust_repeat_child1.append(child1[i])
 
-        for  i in list_cust_code:
-            if i not in cust_child1:
-                cust_miss_child1.append(i)
+            for  i in list_cust_code:
+                if i not in cust_child1:
+                    cust_miss_child1.append(i)
 
-        cust_child1=[]
-        j=0
-        for i in range(len(child1)):
-            if  child1[i]!=0:
-                if child1[i] not in cust_child1:
-                    cust_child1.append(child1[i])
-                else:
-                    child1[i]=cust_miss_child1[j]
-                    j+=1
+            cust_child1=[]
+            j=0
+            for i in range(len(child1)):
+                if  child1[i]!=0:
+                    if child1[i] not in cust_child1:
+                        cust_child1.append(child1[i])
+                    else:
+                        child1[i]=cust_miss_child1[j]
+                        j+=1
 
-        cust_child2=[]
-        cust_repeat_child2=[]
-        cust_miss_child2=[]
+            cust_child2=[]
+            cust_repeat_child2=[]
+            cust_miss_child2=[]
 
-        for i in range(len(child2)):
-            if child2[i]!=0:
-                if child2[i] not in cust_child2:
-                    cust_child2.append(child2[i])
-                else:
-                    cust_repeat_child2.append(child2[i])
+            for i in range(len(child2)):
+                if child2[i]!=0:
+                    if child2[i] not in cust_child2:
+                        cust_child2.append(child2[i])
+                    else:
+                        cust_repeat_child2.append(child2[i])
 
-        for  i in list_cust_code:
-            if i not in cust_child2:
-                cust_miss_child2.append(i)
- 
-        cust_child2=[]
-        j=0
-        for i in range(len(child2)):
-            if  child2[i]!=0:
-                if child2[i] not in cust_child2:
-                    cust_child2.append(child2[i])
-                else:
-                    child2[i]=cust_miss_child2[j]
-                    j+=1
+            for  i in list_cust_code:
+                if i not in cust_child2:
+                    cust_miss_child2.append(i)
+    
+            cust_child2=[]
+            j=0
+            for i in range(len(child2)):
+                if  child2[i]!=0:
+                    if child2[i] not in cust_child2:
+                        cust_child2.append(child2[i])
+                    else:
+                        child2[i]=cust_miss_child2[j]
+                        j+=1
 
             solution_found1 = Sol(child1)
             solution_found2 = Sol(child2)
             is_sol = all((solution_found1.route_checker(route) for route in solution_found1.routes)) and \
-                     all((solution_found2.route_checker(route) for route in solution_found2.routes))
-     
+                        all((solution_found2.route_checker(route) for route in solution_found2.routes))
+        
         if (not is_sol) and (self.verbose > 1):
             print("No neighbor found that is a solution")
             return solution1, solution2
@@ -617,8 +622,6 @@ class VRPTWNeighborhood(Neighborhood):
         neighbor1 = Sol(child1)
         neighbor2 = Sol(child2)
 
-        if neighbor1.cost() == 0 or neighbor2.cost() ==0:
-            print("but bug",neighbor1,neighbor2)
         return neighbor1, neighbor2
 
     # NEIGHBORHOOD FUNCTION

@@ -54,7 +54,8 @@ class GeneticAlgorithm(BaseMetaheuristic):
         else:
             return chromosome
 
-    def __chromosome_crossover(self, parent1, parent2):  # what about cross-mute?
+    def __chromosome_crossover(self, parent1, parent2): 
+
         N=self.NEIGHBORHOOD()
         N.set_params({'choose_mode':'crossover'})
 
