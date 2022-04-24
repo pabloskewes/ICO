@@ -1,12 +1,16 @@
 from random import random
 from numpy import exp
+from typing import Optional
 
 from ..tabu_search import TabuList
-
+from ..base_problem import Neighborhood
+from .base_agent import BaseAgent
 
 
 class SimulatedAnnealingRoutine:
+    """ Routine of Simulated Annealing metaheuristic that can be done in separate iterations"""
     def __init__(self, t0: int = 30, cooling_factor: float = 0.9, max_iter=100, init_sol=None):
+        # Simulated Annealing hyperparameters
         self.t0 = t0
         self.t = self.t0
         self.cooling_factor = cooling_factor
@@ -18,6 +22,12 @@ class SimulatedAnnealingRoutine:
         self.best_sol = self.init_sol
         self.new_cycle = False
 
+        # Base Agent Parameters
+        self.N: Optional[Neighborhood] = None
+
+    def fit(self, agent: BaseAgent):
+        self.N = agent.N
+
     def reset_routine(self):
         self.t = self.t0
         self.is_finished = False
@@ -26,10 +36,10 @@ class SimulatedAnnealingRoutine:
         self.n_iter = 0
         self.new_cycle = False
 
-    def iterate(self, neighborhood):
+    def iteration(self):
         if not self.is_finished:
             self.n_iter += 1
-            neighbor = neighborhood(self.actual_sol)
+            neighbor = self.N(self.actual_sol)
             dc = neighbor.cost() - self.best_sol.cost()
             # if the neighbor cool down the system (less entropy)
             # we update the best_solution
@@ -59,6 +69,7 @@ class SimulatedAnnealingRoutine:
 
 class TabuRoutine:
     def __init__(self, max_tabu: int = 100, max_iter: int = 100, tabu_mode: str = 'default', init_sol=None):
+        # Tabu Search Hyperparameters
         self.max_tabu = max_tabu
         self.T = TabuList(mode=tabu_mode)
         self.max_iter = max_iter
@@ -71,6 +82,12 @@ class TabuRoutine:
         self.best_iter = 0
         self.T.push(self.init_sol)
 
+        # Base Agent Parameters
+        self.N: Optional[Neighborhood] = None
+
+    def fit(self, agent: BaseAgent):
+        self.N = agent.NEIGHBORHOOD()
+
     def reset_routine(self):
         self.is_finished = False
         self.T.empty()
@@ -81,7 +98,7 @@ class TabuRoutine:
         self.n_iter = 0
         self.best_iter = 0
 
-    def explore(self, neighborhood):
+    def iteration(self, neighborhood):
         if not self.is_finished:
             self.n_iter += 1
             new_solution = neighborhood(self.actual_sol)
@@ -112,6 +129,7 @@ class TabuRoutine:
 class VariableNeighborhoodDescentRoutine:
 
     def __init__(self, neighborhood, init_sol=None):
+        # VND Hyperparameters
         self.N = neighborhood
         self.k_neighborhood = 1
         self.k_max = len(self.N.use_methods)
@@ -119,12 +137,16 @@ class VariableNeighborhoodDescentRoutine:
         self.best_sol = self.init_sol
         self.is_finished = False
 
+    def fit(self, agent: BaseAgent):
+        self.N = agent.NEIGHBORHOOD()
+
+
     def reset_routine(self):
         self.k_neighborhood = 1
         self.best_sol = self.init_sol
         self.is_finished = False
 
-    def explore(self):
+    def iteration(self):
         if not self.is_finished:
             self.N.set_params({'choose_mode': self.k_neighborhood})
             new_solution = self.N(self.best_sol)
@@ -133,7 +155,6 @@ class VariableNeighborhoodDescentRoutine:
                 self.k_neighborhood = 1
             else:
                 self.k_neighborhood += 1
-
             self.is_finished = self.k_neighborhood == self.k_max
 
         return self.best_sol

@@ -62,6 +62,8 @@ class QLearning(ABC):
 
     def update_Q(self, *args):
         """ Updates Q-matrix (Q-Learning) """
+        action = self.policy()
+
         r = self.reward(*args)
 
 
@@ -87,5 +89,6 @@ class NeighborhoodQLearning(QLearning):
     def choose_neighborhood(self):
         action = self.policy()
         self.N.set_params({'use_methods': [action]})
+
 
 

@@ -46,3 +46,7 @@ class DiversePool(BasePool):
             display += f'Solution = {sol}'
             display += f'Average distance to pool = {dist}'
         return display
+
+
+class ScorePool(BasePool):
+
