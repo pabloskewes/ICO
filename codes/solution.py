@@ -168,6 +168,8 @@ class VRPTWSolution(Solution):
         return True
 
     def checker(self):
+        if not self.sol_code or not self.routes:
+            return False
         all_customers_check = self.all_customers_checker()
         not_repeated_customers_check = self.not_repeated_customers_checker()
         route_check = all((self.route_checker(route) for route in self.routes))
