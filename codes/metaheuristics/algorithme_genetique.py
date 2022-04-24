@@ -3,7 +3,7 @@ import statistics
 import copy
 from tqdm import tqdm
 from .base_metaheuristic import BaseMetaheuristic
-
+import matplotlib.pyplot as plt
 '''
 Category:
 Identifier(Ctrl+F)      Content
@@ -41,11 +41,25 @@ class GeneticAlgorithm(BaseMetaheuristic):
         self.evolution_explored_solutions = []
         self.penalty_wrong_chromosome=40000
         self.progress_bar = progress_bar
-        self.hasinit=False
+        self.has_init=False
         self.list_nation=[]
         self.threshold=threshold
         self.reproductive_isolation= reproductive_isolation
         self.best_seed=best_seed
+        self.avr_cost=0
+        self.evolution_avr_solution=[]
+
+    def plot_evolution_cost(self, figsize=(20, 10)):
+        # plt.scatter(x=list(range(len(self.cost_list_best_sol))), y=self.cost_list_best_sol, c='turquoise')
+        plt.figure(figsize=figsize)
+        plt.title('Evolution of the cost of the found solutions')
+        plt.plot(self.evolution_explored_solutions, c='turquoise', label='explored solutions')
+        plt.plot(self.evolution_best_solution, c='orange', label='best solution')
+        plt.plot(self.evolution_avr_solution, c='blue', label='avr solution')
+        plt.xlabel('Time (iteration)')
+        plt.ylabel('Cost of the solution')
+        plt.legend()
+        plt.show()
 
     def __chromosome_mutation(self, chromosome, prob):
         if random.random() < prob and chromosome.cost() > 0:
@@ -64,18 +78,31 @@ class GeneticAlgorithm(BaseMetaheuristic):
             return N.get_neighbor_from_two(parent1, parent2) 
         else: 
             return self.__generate_chromosome(),self.__generate_chromosome()
-            # return parent1,parent2
 
     def search(self):
         """ Performs metaheuristic search """
-        if not self.hasinit:
+        if not self.has_init:
             self.__init()
-        iterator = tqdm(range(self.num_evolu_per_search)) if self.progress_bar else range(self.num_evolu_per_search)
-        for _ in iterator:
+
+        pbar = tqdm(total=self.num_evolu_per_search)if self.progress_bar else None
+
+        if self.progress_bar and self.best_solution:
+            pbar.set_description('Cost: %.2f' %self.best_solution.cost())
+
+        for _ in range(self.num_evolu_per_search):
             self.__evolution()
             
-        self.evolution_best_solution.append(-self.__fitness(self.best_solution))
-        self.evolution_explored_solutions = self.evolution_explored_solutions[:len(self.evolution_best_solution)]
+            self.evolution_avr_solution.append(self.avr_cost)
+            self.evolution_best_solution.append(-self.__fitness(self.best_solution))
+            self.evolution_explored_solutions = self.evolution_explored_solutions[:len(self.evolution_best_solution)]
+
+            if self.progress_bar:
+                pbar.update()
+                pbar.set_description('Cost: %.2f' % self.best_solution.cost())
+
+        if self.progress_bar:
+            pbar.close()
+
         return self.best_solution
 
     def __fitness(self, solution):
@@ -90,7 +117,8 @@ class GeneticAlgorithm(BaseMetaheuristic):
         return chromosome
 
     def __init(self):
-        self.hasinit=True
+        self.has_init=True
+
         while(len(self.population)<self.num_population):
             
             new_born=self.__generate_chromosome()
@@ -155,6 +183,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
                 if self.__fitness(chromosome) == best_performance:
                     self.best_solution = chromosome
 
+
             while (len(self.population) > self.num_population):
                 for chromosome in self.population:
                     if self.__fitness(chromosome) <= critere:
@@ -165,7 +194,6 @@ class GeneticAlgorithm(BaseMetaheuristic):
             if len(self.population) < self.num_population:
                 while (len(self.population) < self.num_population):
                     self.population.append(self.__generate_chromosome())
-
             else:
                 list_fitness = []
                 for chromosome in self.population:
@@ -180,8 +208,24 @@ class GeneticAlgorithm(BaseMetaheuristic):
                 for _ in range(self.num_population - len(self.population)):
                     self.population.append(self.__generate_chromosome())
 
+            for chromosome in self.population:
+                self.avr_cost+=chromosome.cost()
+            self.avr_cost/=self.num_population
+
         parents = __binary_tournement(self)
         __pop_crossover(self, parents)
+        for chromosome in self.population:
+            if not chromosome.checker():
+                print('err: crossover')
         __pop_mutation(self)
+        for chromosome in self.population:
+            if not chromosome.checker():
+                print('err: mut')
         __eliminate(self)
+        for chromosome in self.population:
+            if not chromosome.checker():
+                print('err: eli')
         __regeneration(self)
+        for chromosome in self.population:
+            if not chromosome.checker():
+                print('err: reg')
