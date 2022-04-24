@@ -31,21 +31,6 @@ class FlowShopSolution(Solution):
         if params is not None:
             self.set_params(params)
 
-    def __repr__(self):
-        return str(self.flowshop)
-
-    def __getitem__(self, key):
-        return self.flowshop[key]
-
-    def __setitem__(self, key, value):
-        self.flowshop[key] = value
-
-    def __len__(self):
-        return len(self.flowshop)
-
-    def copy(self):
-        return FlowShopSolution(self.flowshop)
-
     def order_matrix(self) -> np.array:
         machines = self.context.machines
         num_tasks = self.context.num_tasks
@@ -74,6 +59,24 @@ class FlowShopSolution(Solution):
             for j in range(1,len(solution)):
                 T_debut[i,j] = max(T_debut[i-1][j] + mat[i-1][j], T_debut[i][j-1]+ mat[i][j-1])
         return int(T_debut[-1,-1] + mat[-1][-1])
+
+    def plot_graph(self, figsize=8):
+        print('Solution plot not implemented yet')
+
+    def __repr__(self):
+        return str(self.flowshop)
+
+    def __getitem__(self, key):
+        return self.flowshop[key]
+
+    def __setitem__(self, key, value):
+        self.flowshop[key] = value
+
+    def __len__(self):
+        return len(self.flowshop)
+
+    def copy(self):
+        return FlowShopSolution(self.flowshop)
 
 
 class FlowShopNeighborhood(Neighborhood):

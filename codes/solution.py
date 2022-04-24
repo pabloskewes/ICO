@@ -204,7 +204,7 @@ class VRPTWSolution(Solution):
             output += ' -> ' + str(edge[1])
         print(output)
 
-    def plot_graph(self, name_delta=2, arrows=False, color_map='gist_rainbow', figsize=15):
+    def plot_graph(self, name_delta=2, arrows=True, color_map='gist_rainbow', figsize=8):
         customers_list = self.context.customers
         depot = customers_list[0]
         customers = customers_list[1:]
