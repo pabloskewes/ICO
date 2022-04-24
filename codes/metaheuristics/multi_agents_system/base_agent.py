@@ -14,12 +14,9 @@ class BaseAgent(MesaAgent):
         self.in_solution = None
         self.out_solution = None
 
-    def step(self):
-        pass
-
-    def explore(self) -> Solution:
-        """ Basic explore that simply looks for a neighborhood with the default configuration """
+    def explore(self, solution: Solution) -> Solution:
+        """ Basic explore that simply looks for a neighborhood with the default configuration. It's normally overridden"""
         N = self.N
-        self.out_solution = N(self.in_solution)
-        return self.out_solution
+        new_sol = N(solution)
+        return new_sol
 
