@@ -20,9 +20,11 @@ class VariableNeighborhoodDescent(BaseMetaheuristic):
         _, N, _ = self.get_problem_components()
         solution = N.initial_solution()
         k_neighborhood = 1
-        k_max = len(N.use_methods)
+        use_methods = N.use_methods
+        k_max = len(use_methods)
+
         while k_neighborhood <= k_max:
-            N.set_params({'choose_mode': k_neighborhood})
+            N.set_params({'use_methods': [use_methods[k_neighborhood-1]]})
             # We look for a neighbor
             new_solution = N.get_neighbor(solution)
             self.evolution_best_solution.append(solution.cost())
