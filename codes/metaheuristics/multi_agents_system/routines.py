@@ -21,6 +21,8 @@ class Routine:
 
     def reset_routine(self) -> None:
         """ Resets the parameters in the memory of the metaheuristic. """
+        self.is_finished = False
+        self.init_sol = self.agent.in_solution
         print('reset routine')
 
     def iteration(self) -> Solution:
@@ -56,8 +58,8 @@ class SimulatedAnnealingRoutine(Routine):
         self.hyperparameters = ['t0', 'cooling_factor', 'max_iter']
 
     def reset_routine(self):
+        super().reset_routine()
         self.t = self.t0
-        self.is_finished = False
         self.actual_sol = self.init_sol
         self.best_sol = self.init_sol
         self.n_iter = 0
@@ -114,7 +116,7 @@ class TabuRoutine(Routine):
         self.hyperparameters = ['max_tabu', 'max_iter', 'tabu_mode']
 
     def reset_routine(self):
-        self.is_finished = False
+        super().reset_routine()
         self.T.empty()
         self.T.push(self.init_sol)
         self.last_visited_sol = self.init_sol
@@ -161,9 +163,9 @@ class VariableNeighborhoodDescentRoutine(Routine):
         self.best_sol = self.init_sol
 
     def reset_routine(self):
+        super().reset_routine()
         self.k_neighborhood = 1
         self.best_sol = self.init_sol
-        self.is_finished = False
 
     def iteration(self) -> Solution:
         if not self.is_finished:
