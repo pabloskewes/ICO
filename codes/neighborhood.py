@@ -717,11 +717,7 @@ class VRPTWNeighborhood(Neighborhood):
 
         is_sol = False
         solution = None
-        it = 0
         while not is_sol:
-            it += 1
-            if it%1000 == 0:
-                print(it)
             numbers = list(range(1, nb_cust + 1))
             random.shuffle(numbers)
             proportion = random.random()/2.5 + 0.1
