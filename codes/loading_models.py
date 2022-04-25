@@ -3,6 +3,8 @@ import pandas as pd
 import os
 import sys
 from math import sqrt
+from random import randint
+from gc import collect
 
 from context import Vehicle, Customer, VRPTWContext
 
@@ -29,11 +31,11 @@ customers_dist = pd.read_excel(CUSTOMER_DISTANCES_DIR)
 #     if vehicle_nb:
 #         volume = vehicles[vehicles["VEHICLE_CODE"]==vehicle_nb]["VEHICLE_TOTAL_VOLUME_M3"]
 #         weight = vehicles[vehicles["VEHICLE_CODE"]==vehicle_nb]["VEHICLE_TOTAL_WEIGHT_KG"]
-#         cost_km = vehicles[vehicles["VEHICLE_CODE"]==vehicle_nb]["VEHICLE_VARIABLE_COST_KM"]  
+#         cost_km = vehicles[vehicles["VEHICLE_CODE"]==vehicle_nb]["VEHICLE_VARIABLE_COST_KM"]
 #     else:
 #         volume = getattr(vehicles["VEHICLE_TOTAL_VOLUME_M3"], MODE_VEHICLE)()
 #         weight = getattr(vehicles["VEHICLE_TOTAL_WEIGHT_KG"], MODE_VEHICLE)()
-#         cost_km = getattr(vehicles["VEHICLE_VARIABLE_COST_KM"], MODE_VEHICLE)()  
+#         cost_km = getattr(vehicles["VEHICLE_VARIABLE_COST_KM"], MODE_VEHICLE)()
 #     vehicle = Vehicle(volume, weight, cost_km)
 #     return vehicle
 
@@ -162,7 +164,7 @@ def matrix_generator(depot_data, customer_data, route_id):
 
 
 # Create VRPTW :
-def create_vrptw(CUSTOMER_DIR, DEPOTS_DIR, VEHICLES_DIR, DEPOTS_DISTANCES_DIR, CUSTOMER_DISTANCES_DIR, route_id=2946091,
+def create_vrptw(CUSTOMER_DIR=CUSTOMER_DIR, DEPOTS_DIR=DEPOTS_DIR, VEHICLES_DIR=VEHICLES_DIR, DEPOTS_DISTANCES_DIR=DEPOTS_DISTANCES_DIR, CUSTOMER_DISTANCES_DIR=CUSTOMER_DISTANCES_DIR, route_id=2946091,
                  MODE_VEHICLE="mean", vehicle_code=None):
     customers = pd.read_excel(CUSTOMER_DIR)
     vehicles = pd.read_excel(VEHICLES_DIR)
@@ -178,7 +180,7 @@ def create_vrptw(CUSTOMER_DIR, DEPOTS_DIR, VEHICLES_DIR, DEPOTS_DISTANCES_DIR, C
     return vrptw
 
 
-def load_solomon(filename, nb_cust=None, vehicle_speed=30):
+def load_solomon(filename, nb_cust=None, vehicle_speed=100):
     ROOT_DIR = os.path.abspath('..')
     DATA_DIR = os.path.join(ROOT_DIR, 'data_solomon')
     DIR = os.path.join(DATA_DIR, filename)
@@ -216,4 +218,96 @@ def load_solomon(filename, nb_cust=None, vehicle_speed=30):
                          time_matrix=time_matrix,
                          vehicle=vehicle,
                          cust_codes=cust_codes)
+    return vrptw
+
+
+def load_data(nb_cust=None, route_id=2946091):
+    global customers
+    global vehicles
+    global depots
+    global depots_dist
+    global customers_dist
+
+    df_customers = customers[customers.ROUTE_ID == int(route_id)].reset_index(drop=True)
+    df_vehicles = vehicles[vehicles.ROUTE_ID == int(route_id)].reset_index(drop=True)
+    df_depots = depots[depots.ROUTE_ID == int(route_id)].reset_index(drop=True)
+    df_depots_dist = depots_dist[depots_dist.ROUTE_ID == int(route_id)].reset_index(drop=True)
+    df_customers_dist = customers_dist[customers_dist.ROUTE_ID == int(route_id)].reset_index(drop=True)
+    depot = df_depots.iloc[randint(0, len(df_depots)-1)]
+    r_vehicle = randint(0, len(df_vehicles)-1)
+
+    vehicle = Vehicle(volume=df_vehicles.at[r_vehicle, 'VEHICLE_TOTAL_WEIGHT_KG'],
+                      weight=df_vehicles.at[r_vehicle, 'VEHICLE_TOTAL_VOLUME_M3'],
+                      cost_km=df_vehicles.at[r_vehicle, 'VEHICLE_VARIABLE_COST_KM'],
+                      vehicle_code=df_vehicles.at[r_vehicle, 'VEHICLE_CODE'],
+                      cost_fixed_per_km=df_vehicles.at[r_vehicle, 'VEHICLE_FIXED_COST_KM'],
+                      cost_variable_per_km=df_vehicles.at[r_vehicle, 'VEHICLE_VARIABLE_COST_KM'],
+                      available_time_from=df_vehicles.at[r_vehicle, 'VEHICLE_AVAILABLE_TIME_FROM_MIN'],
+                      available_time_to=df_vehicles.at[r_vehicle, 'VEHICLE_AVAILABLE_TIME_TO_MIN'])
+    if nb_cust is None:
+        nb_cust = len(df_customers)
+    else:
+        df_customers.drop(range(nb_cust + 1, len(df_customers)), axis=0, inplace=True)
+    n = len(df_customers)
+    customers_list = []
+    for k in range(n):
+        cust = Customer(id=k+1,
+                        code_customer=df_customers.at[k, 'CUSTOMER_CODE'],
+                        latitude=df_customers.at[k, 'CUSTOMER_LATITUDE'],
+                        longitude=df_customers.at[k, 'CUSTOMER_LONGITUDE'],
+                        time_window=(df_customers.at[k, 'CUSTOMER_TIME_WINDOW_FROM_MIN'],
+                                     df_customers.at[k, 'CUSTOMER_TIME_WINDOW_TO_MIN']),
+                        request_volume=df_customers.at[k, 'TOTAL_VOLUME_M3'],
+                        request_weight=df_customers.at[k, 'TOTAL_WEIGHT_KG'],
+                        time_service=df_customers.at[k, 'CUSTOMER_DELIVERY_SERVICE_TIME_MIN'])
+        customers_list.append(cust)
+    customers_list.insert(0, Customer(id=0,
+                                 code_customer=depot['DEPOT_CODE'],
+                                 latitude=depot['DEPOT_LATITUDE'],
+                                 longitude=depot['DEPOT_LONGITUDE'],
+                                 time_window=(depot['DEPOT_AVAILABLE_TIME_FROM_MIN'],
+                                 depot['DEPOT_AVAILABLE_TIME_TO_MIN']),
+                                 request_volume=0,
+                                 request_weight=0,
+                                 time_service=0))
+    cust_codes = {customer.id: customer.code_customer for customer in customers_list}
+    distances = np.zeros((n+1, n+1))
+    time_matrix = np.zeros((n+1, n+1))
+    depot2cust = [df_depots_dist[(df_depots_dist.DEPOT_CODE == cust_codes[0]) &
+                                (df_depots_dist.CUSTOMER_CODE == str(cust_codes[i])) &
+                                (df_depots_dist.DIRECTION == 'DEPOT->CUSTOMER')]
+                                .reset_index(drop=True)
+                                .loc[0, ['DISTANCE_KM', 'TIME_DISTANCE_MIN']]
+                                for i in range(1, len(cust_codes))]
+
+    cust2depot = [df_depots_dist[(df_depots_dist.DEPOT_CODE == cust_codes[0]) &
+                                (df_depots_dist.CUSTOMER_CODE == str(cust_codes[i])) &
+                                (df_depots_dist.DIRECTION == 'CUSTOMER->DEPOT')]
+                                .reset_index(drop=True)
+                                .loc[0, ['DISTANCE_KM', 'TIME_DISTANCE_MIN']]
+                                for i in range(1, len(cust_codes))]
+
+
+    for i in range(1, n+1):
+        distances[0, i] = depot2cust[i-1][0]
+        distances[i, 0] = cust2depot[i-1][0]
+        time_matrix[0, i] = depot2cust[i-1][1]
+        time_matrix[i, 0] = cust2depot[i-1][1]
+
+    # customer_i -> customer_j
+    for i in range(1, n+1):
+        for j in range(1, n+1):
+            row = df_customers_dist[(df_customers_dist.CUSTOMER_CODE_FROM == cust_codes[i]) &
+                                    (df_customers_dist.CUSTOMER_CODE_TO == cust_codes[j])].reset_index(drop=True)
+            distances[i, j] = row.at[0, 'DISTANCE_KM']
+            time_matrix[i, j] = row.at[0, 'TIME_DISTANCE_MIN']
+
+    vrptw = VRPTWContext(customers=customers_list,
+                         distances=distances,
+                         time_matrix=time_matrix,
+                         vehicle=vehicle,
+                         cust_codes=cust_codes)
+
+    del df_customers, df_customers_dist, df_depots, df_depots_dist, df_vehicles, depot2cust, cust2depot
+    collect()
     return vrptw

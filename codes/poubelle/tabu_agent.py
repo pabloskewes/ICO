@@ -1,53 +1,55 @@
+from metaheuristics.tabu_search import TabuSearch
 from mesa import Agent, Model
-from FilRouge.ICO.codes.poubelle.tabou import tabu_method
-from recuit_simule import simulated_annealing
-from ga import *
+from mesa.time import RandomActivation
+from mesa.space import MultiGrid
 
-# Agent ordonnanceur Tabou
+from loading_models import load_solomon
+from vrptw import VRPTW
+
+
 class TabuAgent(Agent):
-    def __init__(self, id_agent, sma):
-        super().__init__(id_agent, sma)
-        self.name = "Agent "+str(id_agent)        
+    def __init__(self, unique_id, model):
+        super().__init__(unique_id, model)
         
-    def __str__(self):
-        return "Tabu agent : " + self.name
-    
-    def step(self, vrptw, sol):
-        tabu_method(vrptw, sol)
-
-
-# Agent ordonnanceur Recuit Simulé
-class AgentRS(Agent):
-    #le constructeur
-    def __init__(self,id,model):
-        super().__init__(id,model)
-        self.name = "AgentRS"+str(self.id)
-
-    def __str__(self):
-        return "RS agent : " + self.name
-
-    def step(self, vrptw, sol, T0):
-        simulated_annealing(vrptw, sol, T0, cooling_factor=0.9, max_cycle_iter=100)
-
-class Genetic(Agent):
-
-    def __init__(self,id,model):
-        super().__init__(id,model)
-        self.name = "Agent"+str(id)
-        self.vrp_ga=init_vrpga()
-        self.solution=self.vrp_ga.best_solution
-
-    def __str__(self):
-        return "GA agent : "+self.name
-
+        self.tabu_model = TabuSearch()
+        self.tabu_model.fit(model.problem)
+        
+        self.name = "TabuSearch Agent"
+        self.solution = None
+        
     def step(self):
-        self.vrp_ga.evolution()
+        self.solution = self.tabu_model.search()
 
-# proposition de modèle
-class SMA(Model):
-    def __init__(self, vrptw):
-        self.schedule = []
-        self.vrptw = vrptw
+
+class TestModel(Model):
+    def __init__(self, problem, num_agents=1, width=5, height=5):
+        self.num_agents = num_agents
+        self.grid = MultiGrid(width, height, True)
+        self.schedule = RandomActivation(self)
+        self.problem = problem
         
-    def step(self, sol):
-        self.schedule.step(self.vrptw, sol)
+        # Create agents
+        for i in range(self.num_agents):
+            a = TabuAgent(i, self)
+            self.schedule.add(a)
+            # Add the agent to a random grid cell
+            x = self.random.randrange(self.grid.width)
+            y = self.random.randrange(self.grid.height)
+            self.grid.place_agent(a, (x, y))
+            
+    def step(self):
+        self.schedule.step()
+        
+    def print_solution(self):
+        for a in self.schedule.agents:
+            print(a.name, ":", a.solution, "cost :", a.solution.cost())
+
+
+
+# Example
+
+context = load_solomon('simple.csv', nb_cust=10, vehicle_speed=100)
+vrptw = VRPTW(context)
+model = TestModel(vrptw, num_agents)
+model.step()
+model.print_solution()

@@ -48,6 +48,8 @@ class VRPTWNeighborhood(Neighborhood):
         """
         if self.init_sol == 'random':
             init_sol = self.random_solution(nb_cust=len(self.context.customers) - 1)
+        elif self.init_sol == 'trivial':
+            init_sol = self.trivial_solution(len(self.context.customers) - 1)
         elif isinstance(self.init_sol, Sol):
             init_sol = self.init_sol
         else:
@@ -615,7 +617,7 @@ class VRPTWNeighborhood(Neighborhood):
             solution_found2 = Sol(child2)
             is_sol = all((solution_found1.route_checker(route) for route in solution_found1.routes)) and \
                         all((solution_found2.route_checker(route) for route in solution_found2.routes))
-            
+
             if is_sol:
                 return solution_found1, solution_found2
 
@@ -685,6 +687,15 @@ class VRPTWNeighborhood(Neighborhood):
         neighbor = Sol(routes_copy)
         return neighbor
 
+    def trivial_solution(self, n_cust):
+        sol = []
+        initial_list = list(range(1,n_cust+1))
+        while len(initial_list) > 0:
+            sol.append(0)
+            sol.append(initial_list.pop(0))
+        sol = sol +[0]
+        return Sol(sol)
+
     def random_solution(self, nb_cust) -> VRPTWSolution:
         """
         Generates a random pattern of numbers between 0 and nb_cust, in the form of a solution.
@@ -692,7 +703,9 @@ class VRPTWNeighborhood(Neighborhood):
         :return: Solution (or nothing)
         """
 
-        def simplify(L, simpleL=[], i=0, on_zero=False):
+        def simplify(L, simpleL=None, i=0, on_zero=False):
+            if simpleL is None:
+                simpleL = []
             if i >= len(L):
                 return simpleL
             if L[i] == 0:

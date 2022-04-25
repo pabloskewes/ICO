@@ -1,26 +1,28 @@
+from __future__ import annotations
+from typing import Dict, Any, Optional, List, TYPE_CHECKING
 from random import random
 from numpy import exp
-from typing import Optional
-from abc import ABC, abstractmethod
 
 from ..tabu_search import TabuList
-from ..base_problem import Solution, Neighborhood
-from .base_agent import BaseAgent
+
+if TYPE_CHECKING:
+    from ..base_problem import Solution
+    from .base_agent import BaseAgent
 
 
-class BaseRoutine:
+class Routine:
     """  Base routine of a metaheuristic that can be done iteration by iteration. """
-    def __init__(self, init_sol: Solution = None):
-        self.init_sol = init_sol
-        self.agent: Optional[BaseAgent] = None
+    def __init__(self, agent: BaseAgent):
+        self.agent = agent
+        self.init_sol = self.agent.in_solution
         self.is_finished = False
         self.best_sol = self.init_sol
-
-    def fit_agent(self, agent: BaseAgent):
-        self.agent = agent
+        self.hyperparameters: List[str] = []
 
     def reset_routine(self) -> None:
         """ Resets the parameters in the memory of the metaheuristic. """
+        self.is_finished = False
+        self.init_sol = self.agent.in_solution
         print('reset routine')
 
     def iteration(self) -> Solution:
@@ -28,25 +30,36 @@ class BaseRoutine:
         neighbor = self.agent.explore(self.best_sol)
         return neighbor
 
+    def set_params(self, params: Dict[str, Any]) -> None:
+        if params is None:
+            return
+        """ Set parameters of routine """
+        for varname, value in params.items():
+            if varname not in self.hyperparameters:
+                raise Exception(f'{varname} is not a valid keyword argument')
+            setattr(self, varname, value)
 
-class SimulatedAnnealingRoutine(BaseRoutine):
+
+class SimulatedAnnealingRoutine(Routine):
     """ Routine of Simulated Annealing metaheuristic that can be done in separate iterations """
-    def __init__(self, t0: int = 30, cooling_factor: float = 0.9, max_iter=100, init_sol: Solution = None):
-        super(BaseRoutine).__init__(init_sol=init_sol)
+    def __init__(self, agent: BaseAgent):
+        super().__init__(agent=agent)
 
-        self.t0 = t0
+        self.t0: int = 30
+        self.cooling_factor: float = 0.9
+        self.max_iter: int = 100
+
         self.t = self.t0
-        self.cooling_factor = cooling_factor
-        self.max_iter = max_iter
         self.n_iter = 0
-        self.init_sol = init_sol
         self.actual_sol = self.init_sol
         self.best_sol = self.init_sol
         self.new_cycle = False
 
+        self.hyperparameters = ['t0', 'cooling_factor', 'max_iter']
+
     def reset_routine(self):
+        super().reset_routine()
         self.t = self.t0
-        self.is_finished = False
         self.actual_sol = self.init_sol
         self.best_sol = self.init_sol
         self.n_iter = 0
@@ -83,15 +96,16 @@ class SimulatedAnnealingRoutine(BaseRoutine):
         return self.best_sol
 
 
-class TabuRoutine(BaseRoutine):
+class TabuRoutine(Routine):
     """ Routine of Tabu Search metaheuristic that can be done in separate iterations """
-    def __init__(self, max_tabu: int = 100, max_iter: int = 100, tabu_mode: str = 'default', init_sol: Solution = None):
-        super(BaseRoutine).__init__(init_sol=init_sol)
+    def __init__(self, agent: BaseAgent):
+        super().__init__(agent=agent)
 
-        self.max_tabu = max_tabu
-        self.T = TabuList(mode=tabu_mode)
-        self.max_iter = max_iter
-        self.init_sol = init_sol
+        self.max_tabu: int = 100
+        self.max_iter: int = 100
+        self.tabu_mode: str = 'default'
+
+        self.T = TabuList(mode=self.tabu_mode)
         self.actual_sol = self.init_sol
         self.last_visited_sol = self.init_sol
         self.best_sol = self.init_sol
@@ -99,8 +113,10 @@ class TabuRoutine(BaseRoutine):
         self.best_iter = 0
         self.T.push(self.init_sol)
 
+        self.hyperparameters = ['max_tabu', 'max_iter', 'tabu_mode']
+
     def reset_routine(self):
-        self.is_finished = False
+        super().reset_routine()
         self.T.empty()
         self.T.push(self.init_sol)
         self.last_visited_sol = self.init_sol
@@ -137,20 +153,19 @@ class TabuRoutine(BaseRoutine):
         return self.best_sol
 
 
-class VariableNeighborhoodDescentRoutine(BaseRoutine):
+class VariableNeighborhoodDescentRoutine(Routine):
     """ Routine of VNS metaheuristic that can be done in separate iterations """
-    def __init__(self, neighborhood, init_sol=None):
-        super(BaseRoutine).__init__(init_sol=init_sol)
-        self.N = neighborhood
+    def __init__(self, agent: BaseAgent):
+        super().__init__(agent=agent)
+        self.N = self.agent.N
         self.k_neighborhood = 1
         self.k_max = len(self.N.use_methods)
-        self.init_sol = self.N.initial_solution() if init_sol is None else init_sol
         self.best_sol = self.init_sol
 
     def reset_routine(self):
+        super().reset_routine()
         self.k_neighborhood = 1
         self.best_sol = self.init_sol
-        self.is_finished = False
 
     def iteration(self) -> Solution:
         if not self.is_finished:

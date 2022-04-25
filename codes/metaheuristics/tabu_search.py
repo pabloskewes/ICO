@@ -79,7 +79,8 @@ class TabuSearch(BaseMetaheuristic):
         self.evolution_explored_solutions.append(self.actual_solution.cost())
         T.push(self.actual_solution)
         best_iter = 0
-        pbar.set_description('Cost: %.2f' % self.best_solution.cost())
+        if self.progress_bar:
+            pbar.set_description('Cost: %.2f' % self.best_solution.cost())
 
         # Stop conditions : cost under a minimal expected cost or maximum iteration reached
         while (self.best_solution.cost() > self.lower_bound) and ((n_iter - best_iter) < self.max_iter):

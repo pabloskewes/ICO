@@ -1,10 +1,13 @@
-from typing import List, Union
+from __future__ import annotations
+from typing import List, Union, TYPE_CHECKING
 from abc import ABC, abstractmethod
 
-from ..base_problem import Solution, SolutionSpace
+if TYPE_CHECKING:
+    from ..base_problem import Solution, SolutionSpace
 
 
 class BasePool(ABC):
+    """ Abstract pool of solutions for implementing different kind of pools """
     def __init__(self, solution_space: SolutionSpace, max_size: int = 10):
         self.SP = solution_space
         self.max_size = max_size
@@ -15,19 +18,8 @@ class BasePool(ABC):
         """  Tries to push a solution into the pool """
 
 
-class BestScorePool(BasePool):
-    """ Pool of solution that keeps the best scores of solutions"""
-    def push(self, solution: Solution):
-        if len(self.solutions) < self.max_size:
-            self.solutions.append(solution.cost())
-        worst_sol = max(self.solutions)
-        if solution.cost() < worst_sol:
-            self.solutions.remove(worst_sol)
-            self.solutions.append(solution.cost())
-
-
 class BestPool(BasePool):
-    """ Pool of solution that keeps the best solutions"""
+    """ Pool of solution that keeps the best solutions """
     def push(self, solution: Solution):
         if len(self.solutions) < self.max_size:
             self.solutions.append(solution)
@@ -41,6 +33,17 @@ class BestPool(BasePool):
         costs = [s.cost() for s in self.solutions]
         best_sol = self.solutions[costs.index(min(costs))]
         return best_sol
+
+
+class BestScorePool(BasePool):
+    """ Pool of solution that keeps only the best scores of solutions """
+    def push(self, solution: Solution):
+        if len(self.solutions) < self.max_size:
+            self.solutions.append(solution.cost())
+        worst_sol = max(self.solutions)
+        if solution.cost() < worst_sol:
+            self.solutions.remove(worst_sol)
+            self.solutions.append(solution.cost())
 
 
 class DiversePool(BasePool):

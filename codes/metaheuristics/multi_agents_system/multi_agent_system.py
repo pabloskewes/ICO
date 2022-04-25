@@ -1,21 +1,19 @@
-from mesa import Model as MesaModel
-from typing import Dict, List, Union, Type, Optional
+from __future__ import annotations
+from typing import Dict, List, Union, Type, Optional, TYPE_CHECKING
 from tqdm import tqdm
 
 from ..base_metaheuristic import BaseMetaheuristic
-from .base_agent import BaseAgent
-from ..base_problem import Solution
-from .pools import BasePool
-from .sequencial_models import SequentialModel
 
-AgentCollection = Dict[Union[Type[BaseAgent], str], int]
-PoolCollection = List[Union[str, BasePool]]
+if TYPE_CHECKING:
+    from .sequential_models import SequentialModel, AgentCollection, PoolCollection
+    from ..base_problem import Solution
+    from .base_agent import BaseAgent
 
 
 class MultiAgentSystem(BaseMetaheuristic):
     def __init__(self, model: Type[SequentialModel] = None, agents: AgentCollection = None,
-                 pools: PoolCollection = None, max_iter: int = 100, progress_bar: bool = False,
-                 solution_params=None, neighborhood_params=None, solution_space_params=None):
+                 pools: PoolCollection = None, max_iter: int = 100, progress_bar: bool = False, verbose: int = 0,
+                 solution_params=None, neighborhood_params=None, solution_space_params=None, Li=List):
         super().__init__()
         self.params = {'solution': solution_params,
                        'neighborhood': neighborhood_params,
@@ -26,22 +24,22 @@ class MultiAgentSystem(BaseMetaheuristic):
         self.progress_bar = progress_bar
         self.MODEL = model
         self.model: Optional[SequentialModel] = None
-        self.agents = agents
+        self.agents_collection = agents
         self.pools = pools
+        self.verbose = verbose
+        self.agents: List[BaseAgent] = []
 
-        if self.pools is not None and self.agents is not None and self.model is not None:
+        if None not in [self.pools, self.agents_collection, self.model]:
             self.setup()
 
     def setup(self):
-        self.model = self.MODEL(self.problem, self.agents, self.pools)
+        self.model = self.MODEL(problem=self.problem, agents=self.agents_collection,
+                                push_to=self.pools, pull_from=self.pools,
+                                verbose=self.verbose)
+        self.agents = self.get_agents()
 
-    def get_best_solution(self) -> Solution:
-        for pool in self.pools:
-            if hasattr(pool, 'get_best_solution'):
-                new_solution = pool.get_best_solution()
-                if new_solution.cost() < self.best_solution.cost():
-                    self.best_solution = new_solution
-        return self.best_solution
+    def get_agents(self) -> List[BaseAgent]:
+        return self.model.schedule.agents
 
     def run(self):
         # Initialization of parameters
@@ -58,6 +56,24 @@ class MultiAgentSystem(BaseMetaheuristic):
         if self.progress_bar:
             pbar.close()
 
+    def get_best_solution_from_pool(self) -> Solution:
+        for pool in self.pools:
+            if hasattr(pool, 'get_best_solution'):
+                new_solution = pool.get_best_solution()
+                if new_solution.cost() < self.best_solution.cost():
+                    self.best_solution = new_solution
+        return self.best_solution
+
+    def get_best_solution_from_agents(self) -> Solution:
+        solutions = [agent.in_solution for agent in self.agents]
+        costs = list(map(lambda s: s.cost(), solutions))
+        best_cost = min(costs)
+        index = costs.index(best_cost)
+        return solutions[index]
+
     def search(self) -> Solution:
         self.run()
-        return self.get_best_solution()
+        if self.pools:
+            return self.get_best_solution_from_pool()
+        else:
+            return self.get_best_solution_from_agents()
