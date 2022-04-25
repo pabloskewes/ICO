@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 class SequentialModel(MesaModel):
     def __init__(self, problem: Problem, agents: AgentCollection,
-                 push_to: BasePool = None, pull_from: BasePool = None,
+                 push_to: PoolCollection = None, pull_from: PoolCollection = None,
                  verbose: int = 0):
         super().__init__()
         self.problem = problem
@@ -41,14 +41,14 @@ class SequentialModel(MesaModel):
         unique_id = 0
         for agent_structure, num in self.agents_types.items():
             for i in range(num):
-                if self.verbose >= 2:
+                if self.verbose >= 3:
                     print(f'Assembling agent #{unique_id}')
                 agent = assemble_agent(unique_id=unique_id, model=self, push_to=self.push_to, pull_from=self.pull_from,
                                        agent_structure=agent_structure, initial_solution=init_sol)
                 self.schedule.add(agent)
                 unique_id += 1
 
-        if self.verbose >= 1:
+        if self.verbose >= 2:
             print('All agents were successfully created')
 
     def step(self):

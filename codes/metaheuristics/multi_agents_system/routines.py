@@ -23,7 +23,6 @@ class Routine:
         """ Resets the parameters in the memory of the metaheuristic. """
         self.is_finished = False
         self.init_sol = self.agent.in_solution
-        print('reset routine')
 
     def iteration(self) -> Solution:
         """ Performs an iteration of the metaheuristic and returns the solution found. """

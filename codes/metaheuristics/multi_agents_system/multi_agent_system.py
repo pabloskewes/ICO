@@ -8,12 +8,14 @@ if TYPE_CHECKING:
     from .sequential_models import SequentialModel, AgentCollection, PoolCollection
     from ..base_problem import Solution
     from .base_agent import BaseAgent
+    from .pools import BasePool
+    PoolCollectionClass = List[Union[str, Type[BasePool]]]
 
 
 class MultiAgentSystem(BaseMetaheuristic):
     def __init__(self, model: Type[SequentialModel] = None, agents: AgentCollection = None,
-                 pools: PoolCollection = None, max_iter: int = 100, progress_bar: bool = False, verbose: int = 0,
-                 solution_params=None, neighborhood_params=None, solution_space_params=None, Li=List):
+                 pools: PoolCollectionClass = None, max_iter: int = 100, progress_bar: bool = False, verbose: int = 0,
+                 solution_params=None, neighborhood_params=None, solution_space_params=None):
         super().__init__()
         self.params = {'solution': solution_params,
                        'neighborhood': neighborhood_params,
@@ -25,14 +27,21 @@ class MultiAgentSystem(BaseMetaheuristic):
         self.MODEL = model
         self.model: Optional[SequentialModel] = None
         self.agents_collection = agents
-        self.pools = pools
+        self.POOLS = pools
+        self.pools: List[BasePool] = []
         self.verbose = verbose
         self.agents: List[BaseAgent] = []
+        self.best_pool_solution: Optional[Solution] = None
 
-        if None not in [self.pools, self.agents_collection, self.model]:
+        if None not in [self.POOLS, self.agents_collection, self.model]:
             self.setup()
 
     def setup(self):
+        _, N, SP = self.get_problem_components()
+
+        self.best_pool_solution = N.initial_solution()
+        self.pools: List[BasePool] = [PoolClass(SP) for PoolClass in self.POOLS]
+
         self.model = self.MODEL(problem=self.problem, agents=self.agents_collection,
                                 push_to=self.pools, pull_from=self.pools,
                                 verbose=self.verbose)
@@ -60,20 +69,24 @@ class MultiAgentSystem(BaseMetaheuristic):
         for pool in self.pools:
             if hasattr(pool, 'get_best_solution'):
                 new_solution = pool.get_best_solution()
-                if new_solution.cost() < self.best_solution.cost():
+                if new_solution.cost() < self.best_pool_solution.cost():
                     self.best_solution = new_solution
         return self.best_solution
 
     def get_best_solution_from_agents(self) -> Solution:
         solutions = [agent.in_solution for agent in self.agents]
         costs = list(map(lambda s: s.cost(), solutions))
-        best_cost = min(costs)
-        index = costs.index(best_cost)
+        index = costs.index(min(costs))
         return solutions[index]
 
     def search(self) -> Solution:
         self.run()
-        if self.pools:
-            return self.get_best_solution_from_pool()
+        pool_sol = None
+        if any(hasattr(pool, 'get_best_solution') and pool.solutions for pool in self.pools):
+            pool_sol = self.get_best_solution_from_pool()
+        agent_sol = self.get_best_solution_from_agents()
+        if pool_sol is None:
+            new_sol = agent_sol
         else:
-            return self.get_best_solution_from_agents()
+            new_sol = pool_sol if pool_sol.cost() <= agent_sol.cost() else agent_sol
+        return new_sol
