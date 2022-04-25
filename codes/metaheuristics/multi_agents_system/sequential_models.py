@@ -25,7 +25,7 @@ class SequentialModel(MesaModel):
         self.pull_from = pull_from
         self.schedule = RandomActivation(self)
         self.verbose = verbose
-        self.step = 0
+        self.current_step = 0
 
         self.set_agents_types()
         self.init_agents()
@@ -53,4 +53,4 @@ class SequentialModel(MesaModel):
 
     def step(self):
         self.schedule.step()
-        self.step += 1
+        self.current_step += 1

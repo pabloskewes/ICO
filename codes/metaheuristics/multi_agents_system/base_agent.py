@@ -18,6 +18,7 @@ class BaseAgent(MesaAgent):
     def __init__(self, unique_id: int, model: SequentialModel, init_sol: Solution = None,
                  push_to: List[BasePool] = None, pull_from: List[BasePool] = None):
         super().__init__(unique_id, model)
+        self.model = model
         self.unique_id = unique_id
         self.problem = model.problem
 
@@ -30,8 +31,9 @@ class BaseAgent(MesaAgent):
         self.in_solution = None
         self.set_init_solution(init_sol=init_sol)
         self.out_solution = None
-        
+
         self.explored_solution_cost: List[float] = []
+        self.reset_steps = List[int] = []
 
     def set_init_solution(self, init_sol: Optional[Solution]) -> None:
         if init_sol is None:
@@ -87,6 +89,7 @@ class BaseAgent(MesaAgent):
             self.push_solution(new_sol)
         else:
             new_sol = self.pull_solution()
+            self.reset_steps.append(self.model.current_step)
         self.routine.reset_routine()
         self.in_solution = new_sol
         self.out_solution = None
