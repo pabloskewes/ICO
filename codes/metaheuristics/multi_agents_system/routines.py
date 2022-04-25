@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from .base_agent import BaseAgent
 
 
-class BaseRoutine:
+class Routine:
     """  Base routine of a metaheuristic that can be done iteration by iteration. """
     def __init__(self, agent: BaseAgent):
         self.agent = agent
@@ -29,6 +29,8 @@ class BaseRoutine:
         return neighbor
 
     def set_params(self, params: Dict[str, Any]) -> None:
+        if params is None:
+            return
         """ Set parameters of routine """
         for varname, value in params.items():
             if varname not in self.hyperparameters:
@@ -36,7 +38,7 @@ class BaseRoutine:
             setattr(self, varname, value)
 
 
-class SimulatedAnnealingRoutine(BaseRoutine):
+class SimulatedAnnealingRoutine(Routine):
     """ Routine of Simulated Annealing metaheuristic that can be done in separate iterations """
     def __init__(self, agent: BaseAgent):
         super().__init__(agent=agent)
@@ -92,7 +94,7 @@ class SimulatedAnnealingRoutine(BaseRoutine):
         return self.best_sol
 
 
-class TabuRoutine(BaseRoutine):
+class TabuRoutine(Routine):
     """ Routine of Tabu Search metaheuristic that can be done in separate iterations """
     def __init__(self, agent: BaseAgent):
         super().__init__(agent=agent)
@@ -149,7 +151,7 @@ class TabuRoutine(BaseRoutine):
         return self.best_sol
 
 
-class VariableNeighborhoodDescentRoutine(BaseRoutine):
+class VariableNeighborhoodDescentRoutine(Routine):
     """ Routine of VNS metaheuristic that can be done in separate iterations """
     def __init__(self, agent: BaseAgent):
         super().__init__(agent=agent)

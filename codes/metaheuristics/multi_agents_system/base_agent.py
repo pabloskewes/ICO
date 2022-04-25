@@ -2,32 +2,35 @@ from __future__ import annotations
 from typing import List, Optional, Any, Union, Type, TYPE_CHECKING
 from mesa import Agent as MesaAgent
 import random
+import matplotlib.pyplot as plt
 
 from ..base_problem import Solution
-from .routines import BaseRoutine
+from .routines import Routine
 
 if TYPE_CHECKING:
-    from .sequencial_models import SequentialModel
+    from .sequential_models import SequentialModel
     from .pools import BasePool
     from .q_learning import NeighborhoodQLearning
-
-
-ReinforcedLearning = Union[NeighborhoodQLearning, Any]
+    ReinforcedLearning = Union[NeighborhoodQLearning, Any]
 
 
 class BaseAgent(MesaAgent):
-    def __init__(self, unique_id: int, model: SequentialModel,
+    def __init__(self, unique_id: int, model: SequentialModel, init_sol: Solution = None,
                  push_to: List[BasePool] = None, pull_from: List[BasePool] = None):
         super().__init__(unique_id, model)
         self.unique_id = unique_id
         self.problem = model.problem
+
         self.N = self.problem.neighborhood()
         self.rl: ReinforcedLearning = None
+        self.routine: Optional[Routine] = None
+
         self.push_to = push_to
         self.pull_from = pull_from
         self.in_solution = None
+        self.set_init_solution(init_sol=init_sol)
         self.out_solution = None
-        self.routine: Optional[BaseRoutine] = None
+        
         self.explored_solution_cost: List[float] = []
 
     def set_init_solution(self, init_sol: Optional[Solution]) -> None:
@@ -35,9 +38,9 @@ class BaseAgent(MesaAgent):
             init_sol = self.N.initial_solution()
         self.in_solution = init_sol
 
-    def set_routine(self, ROUTINE: Type[BaseRoutine] = None) -> None:
+    def set_routine(self, ROUTINE: Type[Routine] = None) -> None:
         if ROUTINE is None:
-            ROUTINE = BaseRoutine
+            ROUTINE = Routine
         self.routine = ROUTINE(self)
 
     def set_reinforced_learning(self, RL: Type[ReinforcedLearning]) -> None:
@@ -84,8 +87,17 @@ class BaseAgent(MesaAgent):
             self.push_solution(new_sol)
         else:
             new_sol = self.pull_solution()
+        self.routine.reset_routine()
         self.in_solution = new_sol
         self.out_solution = None
 
+    def plot_evolution_cost(self, figsize=(14, 7)):
+        plt.figure(figsize=figsize)
+        plt.title('Evolution of the cost of the found solutions')
+        plt.plot(self.explored_solution_cost, c='orange', label='explored solution')
+        plt.xlabel('Time (iteration)')
+        plt.ylabel('Cost of the solution')
+        plt.legend()
+        plt.show()
 
 

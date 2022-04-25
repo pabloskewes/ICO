@@ -15,7 +15,7 @@ Action = Any
 
 
 class QLearning(ABC):
-    def __init__(self, states: List[State], actions: List[Action]):
+    def __init__(self, states: List[Any], actions: List[Any]):
         """
         Initializes the main components of a Q-learning:
         - states: States in which an agent can be found
@@ -23,15 +23,17 @@ class QLearning(ABC):
         - alpha: Learning Rate
         - gamma: Decay rate
         """
-        self.states = states
-        self.actions = actions
+        self.states_names = states
+        self.actions_names = actions
+        self.states = list(range(len(states)))
+        self.actions = list(range(len(actions)))
         self.alpha: float = 0.1
         self.gamma: float = 0.9
         self.epsilon = 1
 
         self.rl_parameters: List[str] = ['alpha', 'gamma']
         self.Q = np.zeros((len(self.states), len(self.actions)))
-        self.current_state: State = random.choice(states)
+        self.current_state: State = random.choice(self.states)
 
     def best_action(self) -> Action:
         """ Chooses the best action to take in its current state from its Q matrix """
@@ -52,6 +54,8 @@ class QLearning(ABC):
 
     def set_params(self, params: Dict[str, Any]) -> None:
         """ Set parameters of routine """
+        if params is None:
+            return
         for varname, value in params.items():
             if varname not in self.rl_parameters:
                 raise Exception(f'{varname} is not a valid keyword argument')
@@ -78,7 +82,7 @@ class QLearning(ABC):
         self.current_state = state
 
     def __repr__(self) -> DataFrame:
-        df = DataFrame(data=self.Q, index=self.states, columns=self.actions)
+        df = DataFrame(data=self.Q, index=self.states_names, columns=self.actions_names)
         return df
 
     # TODO: improve this in new version
@@ -107,7 +111,7 @@ class NeighborhoodQLearning(QLearning):
 
     def perform_action(self, action: Action) -> State:
         """ In this context, to choose an action means to use a particular neighborhood function """
-        self.N.set_params({'use_methods': [action]})
+        self.N.set_params({'use_methods': [self.neighborhoods[action]]})
         return action
 
     def explore(self, solution: Solution) -> Solution:
@@ -122,3 +126,11 @@ class NeighborhoodQLearning(QLearning):
         self.update_Q(state=self.current_state, action=action, next_state=new_state, reward=reward)
         self.update_state(new_state)
         return new_sol
+
+    def display_info(self):
+        print('Q-learning of choice of neighborhood structure sequences')
+        print('states:', self.states)
+        print('actions:', self.actions)
+
+    def __repr__(self):
+        return str(self.Q)
