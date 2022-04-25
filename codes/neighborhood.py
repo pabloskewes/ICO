@@ -413,7 +413,7 @@ class VRPTWNeighborhood(Neighborhood):
 
             n_cycle = 0
             new_routes = deepcopy(routes)
-            available_positions = [(i, j) for i in range(len(new_routes)) for j in range(1, len(new_routes[i]) - 1)]
+            available_positions = [(i, j) for i in range(len(new_routes)) for j in range(1, len(new_routes[i]))]
             while n_cycle < self.max_iter and available_positions:
                 n_cycle += 1
                 for i in range(1, len(deleted_route)-1):
@@ -460,7 +460,8 @@ class VRPTWNeighborhood(Neighborhood):
             deleted_route = routes.pop(deleted_index)
             n_cycle = 0
             new_routes = deepcopy(routes)
-            available_positions = [(i, j) for i in range(len(new_routes)) for j in range(1, len(new_routes[i]) - 1)]
+            available_positions = [(i, j) for i in range(len(new_routes)) for j in range(1, len(new_routes[i]))]
+            # available_positions = [(i, j) for i in range(len(new_routes)) for j in range(1, len(new_routes[i]) -1)]
             while n_cycle < self.max_iter and available_positions:
                 n_cycle += 1
                 for i in range(1, len(deleted_route)-1):
@@ -470,7 +471,7 @@ class VRPTWNeighborhood(Neighborhood):
                     r_pos = r[1]
                     new_routes[r_route].insert(r_pos, deleted_route[i])
                     available_positions.remove(r)
-                is_sol = all((S.route_checker(route) for route in new_routes))
+                is_sol = all((S.route_checker(route) for route in new_routes)) 
                 if is_sol:
                     new_sol = VRPTWSolution(new_routes)
                     if not self.full_search:
