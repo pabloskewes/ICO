@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List, Tuple, Dict
 import numpy as np
+from matplotlib.pyplot import scatter
 
 from metaheuristics.base_problem import Context
 
@@ -40,7 +41,16 @@ class VRPTWContext(Context):
     vehicle: Vehicle
     cust_codes: Dict[int, int]
 
-
-
-
-
+    def show(self):
+        customers_list = self.customers
+        depot = customers_list[0]
+        customers = customers_list[1:]
+        vehicle = self.vehicle
+        print('Vehicle:')
+        print('Volume:', vehicle.volume)
+        print('Weight:', vehicle.weight)
+        print('Cost KM:', vehicle.cost_km)
+        x_positions = [cust.latitude for cust in customers]
+        y_positions = [cust.longitude for cust in customers]
+        scatter(x=depot.latitude, y=depot.longitude, c='r')
+        scatter(x=x_positions, y=y_positions, c='b')
