@@ -1,11 +1,14 @@
 from .base_metaheuristic import BaseMetaheuristic
 from .base_problem import Solution
+from tqdm import tqdm
 
 
 class VariableNeighborhoodDescent(BaseMetaheuristic):
 
-    def __init__(self, solution_params=None, neighborhood_params=None, solution_space_params=None):
+    def __init__(self, solution_params=None, neighborhood_params=None,
+                 solution_space_params=None, progress_bar=False):
         super().__init__()
+        self.progress_bar = progress_bar
 
         self.params = {'solution': solution_params,
                        'neighborhood': neighborhood_params,
@@ -22,6 +25,9 @@ class VariableNeighborhoodDescent(BaseMetaheuristic):
         k_neighborhood = 1
         use_methods = N.use_methods
         k_max = len(use_methods)
+        pbar = tqdm(total=k_max) if self.progress_bar else None
+        if self.progress_bar:
+            pbar.set_description('Cost: %.2f' % solution.cost())
 
         while k_neighborhood <= k_max:
             N.set_params({'use_methods': [use_methods[k_neighborhood-1]]})
@@ -35,7 +41,14 @@ class VariableNeighborhoodDescent(BaseMetaheuristic):
             if new_solution.cost() < solution.cost():
                 solution = new_solution
                 k_neighborhood = 1
+                if self.progress_bar:
+                    pbar.reset()
+                    pbar.set_description('Cost: %.2f' % solution.cost())
             else:
                 k_neighborhood += 1
+                if self.progress_bar:
+                    pbar.update()
+        if self.progress_bar:
+            pbar.close()
 
         return solution
