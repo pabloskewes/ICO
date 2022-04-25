@@ -715,10 +715,10 @@ class VRPTWNeighborhood(Neighborhood):
             else:
                 return simplify(L, simpleL+[L[i]], i+1, False)
 
+        numbers = list(range(1, nb_cust + 1))
         is_sol = False
         solution = None
         while not is_sol:
-            numbers = list(range(1, nb_cust + 1))
             random.shuffle(numbers)
             proportion = random.choice([0.05, 0.1, 0.15])
             n_0 = int(nb_cust * proportion)
