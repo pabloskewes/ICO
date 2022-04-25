@@ -23,7 +23,7 @@ LOG
 
 
 class GeneticAlgorithm(BaseMetaheuristic):
-    def __init__(self,num_evolu_per_search=10, num_parent=4, num_population=20, rate_mutation=0.2,
+    def __init__(self,num_evolu_per_search=10, num_parent=4, num_population=20, rate_mutation=0.2,rate_crossover=0.7,
                  population=[], progress_bar=False, threshold=10, reproductive_isolation=False, best_seed=True,
                  solution_params=None, neighborhood_params=None, solution_space_params=None):
         super().__init__()
@@ -35,6 +35,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
         self.num_evolu_per_search= num_evolu_per_search
         self.population = population
         self.rate_mutation = rate_mutation
+        self.rate_crossover= rate_crossover
         self.num_parent = num_parent
         self.num_population = num_population
         self.best_solution=None
@@ -60,24 +61,6 @@ class GeneticAlgorithm(BaseMetaheuristic):
         plt.ylabel('Cost of the solution')
         plt.legend()
         plt.show()
-
-    def __chromosome_mutation(self, chromosome, prob):
-        if random.random() < prob and chromosome.cost() > 0:
-            _, N, _ = self.get_problem_components()
-            return N(chromosome)
-        else:
-            return chromosome
-
-    def __chromosome_crossover(self, parent1, parent2): 
-
-        N=self.NEIGHBORHOOD()
-        N.set_params({'choose_mode':'crossover'})
-
-        SP=self.SOLUTION_SPACE()
-        if SP.distance(parent1, parent2)<self.threshold and self.reproductive_isolation==True:
-            return N.get_neighbor_from_two(parent1, parent2) 
-        else: 
-            return self.__generate_chromosome(),self.__generate_chromosome()
 
     def search(self):
         """ Performs metaheuristic search """
@@ -116,6 +99,26 @@ class GeneticAlgorithm(BaseMetaheuristic):
 
         return chromosome
 
+    def __chromosome_mutation(self, chromosome):
+        if random.random() < self.rate_mutation and chromosome.cost() > 0:
+            _, N, _ = self.get_problem_components()
+            return N(chromosome)
+        else:
+            return chromosome
+
+    def __chromosome_crossover(self, parent1, parent2): 
+        if random.random() < self.rate_crossover:
+            N=self.NEIGHBORHOOD()
+            N.set_params({'choose_mode':'crossover'})
+
+            SP=self.SOLUTION_SPACE()
+            if SP.distance(parent1, parent2)<self.threshold and self.reproductive_isolation==True:
+                return N.get_neighbor_from_two(parent1, parent2) 
+            else: 
+                return self.__generate_chromosome(),self.__generate_chromosome()
+        else:
+            return parent1,parent2
+
     def __init(self):
         self.has_init=True
 
@@ -124,6 +127,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
             new_born=self.__generate_chromosome()
             if new_born.cost()!=0:
                 self.population.append(new_born)
+            self.best_solution=new_born
 
     def __evolution(self): 
 
@@ -145,7 +149,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
             return parents
 
         def __pop_crossover(self, parents): 
-            for i in range(len(parents) // 2 - 1):
+            for _ in range(len(parents) // 2 - 1):
                 parent = random.sample(parents, 2)
                 child1, child2 = self.__chromosome_crossover(parent[0], parent[1])
 
@@ -166,8 +170,8 @@ class GeneticAlgorithm(BaseMetaheuristic):
         def __pop_mutation(self):  
             population_new = copy.deepcopy(self.population)
             self.population = []
-            for i in population_new:
-                self.population.append(self.__chromosome_mutation(i, self.rate_mutation))
+            for chromosome in population_new:
+                self.population.append(self.__chromosome_mutation(chromosome))
 
         def __eliminate(self): 
             list_fitness = []
@@ -176,56 +180,43 @@ class GeneticAlgorithm(BaseMetaheuristic):
                 list_fitness.append(fitness)
                 if fitness >-self.penalty_wrong_chromosome:
                     self.evolution_explored_solutions.append(-fitness)
-            critere = statistics.median(list_fitness)
+            
+            list_fitness.sort()
+            if self.num_population<len(list_fitness):
+                critere = list_fitness[-self.num_population//2]
+
             best_performance = max(list_fitness)
 
             for chromosome in self.population:
+
+                if self.__fitness(chromosome)<= critere:
+                    self.population.remove(chromosome)
                 if self.__fitness(chromosome) == best_performance:
                     self.best_solution = chromosome
 
-
-            while (len(self.population) > self.num_population):
-                for chromosome in self.population:
-                    if self.__fitness(chromosome) <= critere:
-                        self.population.remove(chromosome)
-
         def __regeneration(self):
 
-            if len(self.population) < self.num_population:
+            if len(self.population) <= self.num_population:
                 while (len(self.population) < self.num_population):
                     self.population.append(self.__generate_chromosome())
-            else:
-                list_fitness = []
-                for chromosome in self.population:
-                    list_fitness.append(self.__fitness(chromosome))
-
-                critere = sorted(list_fitness, reverse=True)[self.num_population - 1]
-
-                for chromosome in self.population:
-                    if self.__fitness(chromosome) <= critere:
-                        self.population.remove(chromosome)
-
-                for _ in range(self.num_population - len(self.population)):
-                    self.population.append(self.__generate_chromosome())
-
             for chromosome in self.population:
                 self.avr_cost+=chromosome.cost()
             self.avr_cost/=self.num_population
 
         parents = __binary_tournement(self)
         __pop_crossover(self, parents)
-        for chromosome in self.population:
-            if not chromosome.checker():
-                print('err: crossover')
+        # for chromosome in self.population:
+        #     if not chromosome.checker():
+        #         print('err: crossover')
         __pop_mutation(self)
-        for chromosome in self.population:
-            if not chromosome.checker():
-                print('err: mut')
+        # for chromosome in self.population:
+        #     if not chromosome.checker():
+        #         print('err: mut')
         __eliminate(self)
-        for chromosome in self.population:
-            if not chromosome.checker():
-                print('err: eli')
+        # for chromosome in self.population:
+        #     if not chromosome.checker():
+        #         print('err: eli')
         __regeneration(self)
-        for chromosome in self.population:
-            if not chromosome.checker():
-                print('err: reg')
+        # for chromosome in self.population:
+        #     if not chromosome.checker():
+        #         print('err: reg')
