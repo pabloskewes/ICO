@@ -720,7 +720,7 @@ class VRPTWNeighborhood(Neighborhood):
         while not is_sol:
             numbers = list(range(1, nb_cust + 1))
             random.shuffle(numbers)
-            proportion = random.random()/2.5 + 0.1
+            proportion = random.choice([0.05, 0.1, 0.15])
             n_0 = int(nb_cust * proportion)
             zero_positions = []
             zero_pos_candidates = list(range(1, nb_cust - 1))
