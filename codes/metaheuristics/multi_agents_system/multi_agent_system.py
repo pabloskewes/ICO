@@ -1,12 +1,15 @@
-from mesa import Model as MesaModel
-from typing import Dict, List, Union, Type, Optional
+from __future__ import annotations
+from typing import Dict, List, Union, Type, Optional, TYPE_CHECKING
 from tqdm import tqdm
 
 from ..base_metaheuristic import BaseMetaheuristic
-from .base_agent import BaseAgent
-from ..base_problem import Solution
-from .pools import BasePool
-from .sequencial_models import SequentialModel
+
+if TYPE_CHECKING:
+    from .sequencial_models import SequentialModel
+    from .pools import BasePool
+    from .base_agent import BaseAgent
+    from ..base_problem import Solution
+    from .pools import BasePool
 
 AgentCollection = Dict[Union[Type[BaseAgent], str], int]
 PoolCollection = List[Union[str, BasePool]]

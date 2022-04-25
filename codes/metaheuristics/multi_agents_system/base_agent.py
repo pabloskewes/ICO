@@ -1,11 +1,18 @@
+from __future__ import annotations
+from typing import List, Optional, Any, Union, Type, TYPE_CHECKING
 from mesa import Agent as MesaAgent
-from typing import List, Optional
 import random
 
-from .sequencial_models import SequentialModel
 from ..base_problem import Solution
-from .pools import BasePool
 from .routines import BaseRoutine
+
+if TYPE_CHECKING:
+    from .sequencial_models import SequentialModel
+    from .pools import BasePool
+    from .q_learning import NeighborhoodQLearning
+
+
+ReinforcedLearning = Union[NeighborhoodQLearning, Any]
 
 
 class BaseAgent(MesaAgent):
@@ -15,6 +22,7 @@ class BaseAgent(MesaAgent):
         self.unique_id = unique_id
         self.problem = model.problem
         self.N = self.problem.neighborhood()
+        self.rl: ReinforcedLearning = None
         self.push_to = push_to
         self.pull_from = pull_from
         self.in_solution = None
@@ -22,13 +30,19 @@ class BaseAgent(MesaAgent):
         self.routine: Optional[BaseRoutine] = None
         self.explored_solution_cost: List[float] = []
 
-    def set_init_solution(self, init_sol: Optional[Solution]):
+    def set_init_solution(self, init_sol: Optional[Solution]) -> None:
         if init_sol is None:
             init_sol = self.N.initial_solution()
         self.in_solution = init_sol
 
-    def set_routine(self, routine: BaseRoutine):
-        self.routine = routine
+    def set_routine(self, ROUTINE: Type[BaseRoutine] = None) -> None:
+        if ROUTINE is None:
+            ROUTINE = BaseRoutine
+        self.routine = ROUTINE(self)
+
+    def set_reinforced_learning(self, RL: Type[ReinforcedLearning]) -> None:
+        if RL is not None:
+            self.rl = RL(self)
 
     def push_solution(self, solution: Solution) -> None:
         if self.push_to is None:
@@ -56,9 +70,11 @@ class BaseAgent(MesaAgent):
         return solution
 
     def explore(self, solution: Solution) -> Solution:
-        """ Basic explore that simply looks for a neighborhood with the default configuration. It's normally overridden"""
-        N = self.N
-        new_sol = N(solution)
+        """  """
+        if self.rl:
+            new_sol = self.rl.explore(solution)
+        else:
+            new_sol = self.N(solution)
         return new_sol
 
     def step(self):

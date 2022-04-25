@@ -1,17 +1,21 @@
+from __future__ import annotations
+from typing import List, Any, Dict, Optional, TYPE_CHECKING
 import numpy as np
 from pandas import DataFrame
-from typing import List, Any, Dict
 import random
 from abc import ABC, abstractmethod
 
-from ..base_problem import Solution, Neighborhood
+from .base_agent import BaseAgent
+
+if TYPE_CHECKING:
+    from ..base_problem import Solution, Neighborhood
 
 State = Any
 Action = Any
 
 
 class QLearning(ABC):
-    def __init__(self, states: List[State], actions: List[Action], alpha: float = 0.1, gamma: float = 0.9):
+    def __init__(self, states: List[State], actions: List[Action]):
         """
         Initializes the main components of a Q-learning:
         - states: States in which an agent can be found
@@ -21,10 +25,11 @@ class QLearning(ABC):
         """
         self.states = states
         self.actions = actions
-        self.alpha = alpha
-        self.gamma = gamma
+        self.alpha: float = 0.1
+        self.gamma: float = 0.9
         self.epsilon = 1
 
+        self.rl_parameters: List[str] = ['alpha', 'gamma']
         self.Q = np.zeros((len(self.states), len(self.actions)))
         self.current_state: State = random.choice(states)
 
@@ -45,9 +50,24 @@ class QLearning(ABC):
     def policy(self) -> Action:
         return self.epsilon_greedy()
 
+    def set_params(self, params: Dict[str, Any]) -> None:
+        """ Set parameters of routine """
+        for varname, value in params.items():
+            if varname not in self.rl_parameters:
+                raise Exception(f'{varname} is not a valid keyword argument')
+            setattr(self, varname, value)
+
     @abstractmethod
     def perform_action(self, action: Action) -> State:
         """ Determines the target state after performing an action in the current state  """
+
+    @abstractmethod
+    def reward(self, reward_params: Dict[str, Any]):
+        """ Defines the agent's reward """
+
+    def update_Q(self, state: State, action: Action, next_state: State, reward: float):
+        """ Updates Q-matrix (Q-Learning) """
+        self.Q[state, action] += self.alpha * (reward + self.gamma*np.argmax(self.Q[next_state]) - self.Q[state, action])
 
     # @abstractmethod
     # def observe_state(self, state: State) -> None:
@@ -57,17 +77,9 @@ class QLearning(ABC):
         """ Updates the current state after performing an action in its current state """
         self.current_state = state
 
-    @abstractmethod
-    def reward(self, reward_params: Dict[str, Any]):
-        """ Defines the agent's reward """
-
     def __repr__(self) -> DataFrame:
         df = DataFrame(data=self.Q, index=self.states, columns=self.actions)
         return df
-
-    def update_Q(self, state: State, action: Action, next_state: State, reward: float):
-        """ Updates Q-matrix (Q-Learning) """
-        self.Q[state, action] += self.alpha * (reward + self.gamma*np.argmax(self.Q[next_state]) - self.Q[state, action])
 
     # TODO: improve this in new version
     def q_learn_step(self, reward_params):
@@ -81,11 +93,12 @@ class QLearning(ABC):
 
 
 class NeighborhoodQLearning(QLearning):
-    def __init__(self, neighborhood: Neighborhood, reference_solution: Solution, alpha: float = 0.1, gamma: float = 0.9):
-        self.N = neighborhood
+    def __init__(self, agent: BaseAgent):
+        self.agent = agent
+        self.N = self.agent.N
         self.neighborhoods = self.N.use_methods
-        super().__init__(states=self.neighborhoods, actions=self.neighborhoods, alpha=alpha, gamma=gamma)
-        self.reference_solution = reference_solution
+        super().__init__(states=self.neighborhoods, actions=self.neighborhoods)
+        self.reference_solution = self.agent.in_solution
         self.ref_cost = self.reference_solution.cost()
 
     def reward(self, solution: Solution) -> float:
@@ -98,6 +111,10 @@ class NeighborhoodQLearning(QLearning):
         return action
 
     def explore(self, solution: Solution) -> Solution:
+        """
+        Each time an agent "explores", it uses one solution to find another, through a neighborhood structure, which it
+        chose according to its "policy". In the process, it calculates its reward and updates its state and Q matrix.
+        """
         action = self.policy()
         new_state = self.perform_action(action)
         new_sol = self.N(solution)
