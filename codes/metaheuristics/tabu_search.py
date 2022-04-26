@@ -50,7 +50,7 @@ class TabuSearch(BaseMetaheuristic):
                  solution_params=None, neighborhood_params=None, solution_space_params=None):
         super().__init__()
 
-        self.actual_solution = None
+        self.actual_solution = None    
         self.last_visited_solution = None
         self.lower_bound = lower_bound
         self.max_iter = max_iter
