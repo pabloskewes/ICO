@@ -38,6 +38,8 @@ class FlexVRPTWSolution(VRPTWSolution):
 
 
 class FlexVRPTWNeighborhood(VRPTWNeighborhood):
+    context: VRPTWContext = None
+
     def random_solution(self, nb_cust) -> FlexVRPTWSolution:
         """
         Generates a random pattern of numbers between 0 and nb_cust, in the form of a solution.
@@ -109,5 +111,6 @@ class FlexVRPTWNeighborhood(VRPTWNeighborhood):
 
 
 class FlexVRPTWSolutionSpace(VRPTWSolutionSpace):
+    context: VRPTWContext = None
     pass
 
