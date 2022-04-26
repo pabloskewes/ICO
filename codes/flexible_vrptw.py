@@ -39,8 +39,9 @@ class FlexVRPTWSolution(VRPTWSolution):
 
 
 class FlexVRPTWNeighborhood(VRPTWNeighborhood):
+    context: VRPTWContext = None
 
-    # NEIGHBORHOOD FUNCTION
+    # NEIGHBORHOOD FUNCTION 9 - SKIP CUSTOMER
     def skip_customer(self, solution) -> Solution:
         """ Moves a random client to another position on its same route """
         if self.full_search: self.set_tracker(solution)
@@ -89,7 +90,9 @@ class FlexVRPTWNeighborhood(VRPTWNeighborhood):
         :return: Solution (or nothing)
         """
         
-        def simplify(L, simpleL=[], i=0, on_zero=False):
+        def simplify(L, simpleL=None, i=0, on_zero=False):
+            if simpleL is None:
+                simpleL = []
             if i >= len(L):
                 return simpleL
             if L[i] == 0:
@@ -153,5 +156,6 @@ class FlexVRPTWNeighborhood(VRPTWNeighborhood):
 
 
 class FlexVRPTWSolutionSpace(VRPTWSolutionSpace):
+    context: VRPTWContext = None
     pass
 

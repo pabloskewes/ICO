@@ -106,5 +106,3 @@ class BaseAgent(MesaAgent):
         plt.ylabel('Cost of the solution')
         plt.legend()
         plt.show()
-
-
