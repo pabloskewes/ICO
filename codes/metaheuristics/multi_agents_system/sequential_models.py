@@ -27,13 +27,7 @@ class SequentialModel(MesaModel):
         self.verbose = verbose
         self.current_step = 0
 
-        self.set_agents_types()
         self.init_agents()
-
-    def set_agents_types(self):
-        """ Transform string coded agents in "agent_types" to agent classes """
-        # TODO: Update this whenever we have agents
-        pass
 
     def init_agents(self):
         N = self.problem.neighborhood()
