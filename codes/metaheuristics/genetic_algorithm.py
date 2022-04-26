@@ -1,5 +1,4 @@
 import random
-import statistics
 import copy
 from tqdm import tqdm
 from .base_metaheuristic import BaseMetaheuristic
@@ -40,7 +39,6 @@ class GeneticAlgorithm(BaseMetaheuristic):
         self.num_population = num_population
         self.best_solution=None
         self.evolution_explored_solutions = []
-        self.penalty_wrong_chromosome=40000
         self.progress_bar = progress_bar
         self.has_init=False
         self.list_nation=[]
@@ -74,7 +72,6 @@ class GeneticAlgorithm(BaseMetaheuristic):
 
         for _ in range(self.num_evolu_per_search):
             self.__evolution()
-            
             self.evolution_avr_solution.append(self.avr_cost)
             self.evolution_best_solution.append(-self.__fitness(self.best_solution))
             self.evolution_explored_solutions = self.evolution_explored_solutions[:len(self.evolution_best_solution)]
@@ -86,7 +83,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
         if self.progress_bar:
             pbar.close()
 
-        return self.best_solution
+        return copy.deepcopy(self.best_solution)
 
     def __fitness(self, solution):
         
@@ -96,7 +93,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
 
         _, N, _ = self.get_problem_components()
         chromosome = N.initial_solution()
-
+        
         return chromosome
 
     def __chromosome_mutation(self, chromosome):
@@ -127,7 +124,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
             new_born=self.__generate_chromosome()
             if new_born.cost()!=0:
                 self.population.append(new_born)
-            self.best_solution=new_born
+                self.best_solution=new_born
 
     def __evolution(self): 
 
@@ -178,17 +175,13 @@ class GeneticAlgorithm(BaseMetaheuristic):
             for chromosome in self.population:
                 fitness=self.__fitness(chromosome)
                 list_fitness.append(fitness)
-                if fitness >-self.penalty_wrong_chromosome:
-                    self.evolution_explored_solutions.append(-fitness)
             
             list_fitness.sort()
             if self.num_population<len(list_fitness):
                 critere = list_fitness[-self.num_population//2]
-
             best_performance = max(list_fitness)
 
             for chromosome in self.population:
-
                 if self.__fitness(chromosome)<= critere:
                     self.population.remove(chromosome)
                 if self.__fitness(chromosome) == best_performance:
@@ -205,18 +198,6 @@ class GeneticAlgorithm(BaseMetaheuristic):
 
         parents = __binary_tournement(self)
         __pop_crossover(self, parents)
-        # for chromosome in self.population:
-        #     if not chromosome.checker():
-        #         print('err: crossover')
         __pop_mutation(self)
-        # for chromosome in self.population:
-        #     if not chromosome.checker():
-        #         print('err: mut')
         __eliminate(self)
-        # for chromosome in self.population:
-        #     if not chromosome.checker():
-        #         print('err: eli')
         __regeneration(self)
-        # for chromosome in self.population:
-        #     if not chromosome.checker():
-        #         print('err: reg')
