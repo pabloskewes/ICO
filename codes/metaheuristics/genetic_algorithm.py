@@ -3,23 +3,6 @@ import copy
 from tqdm import tqdm
 from .base_metaheuristic import BaseMetaheuristic
 import matplotlib.pyplot as plt
-'''
-Category:
-Identifier(Ctrl+F)      Content
---------------------------------------------------------
-SS              code bloques reserved for the SMA,neiborhood params
-TDL              TO DO LIST
-LOG              log of the modification of the main structure
-'''
-
-'''
-LOG
----------------------------------------------------
-1.      Cancel the optimize part
-2.      The __chromosome_crossover should be implemented in the outside, but i don't know where for now
-3.      Realize the solution_checker_GA in the cost() like cost_ga() or an override of cost(), or an override of the solution_check()
-'''
-
 
 class GeneticAlgorithm(BaseMetaheuristic):
     def __init__(self,num_evolu_per_search=10, num_parent=4, num_population=20, rate_mutation=0.2,rate_crossover=0.7,
