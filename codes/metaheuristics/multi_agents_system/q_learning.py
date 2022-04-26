@@ -28,7 +28,7 @@ class QLearning(ABC):
         self.states = list(range(len(states)))
         self.actions = list(range(len(actions)))
         self.alpha: float = 0.1
-        self.gamma: float = 0.9
+        self.gamma: float = 0.99
         self.epsilon = 1
 
         self.rl_parameters: List[str] = ['alpha', 'gamma']
@@ -81,9 +81,18 @@ class QLearning(ABC):
         """ Updates the current state after performing an action in its current state """
         self.current_state = state
 
-    def __repr__(self) -> DataFrame:
+    def display(self) -> DataFrame:
         df = DataFrame(data=self.Q, index=self.states_names, columns=self.actions_names)
         return df
+
+    def display_info(self):
+        print('Q Learning Params')
+        print('alpha =', self.alpha)
+        print('gamma =', self.gamma)
+        print('epsilon =', self.epsilon)
+
+    def __repr__(self):
+        return str(self.Q)
 
     # TODO: improve this in new version
     def q_learn_step(self, reward_params):
@@ -128,9 +137,7 @@ class NeighborhoodQLearning(QLearning):
         return new_sol
 
     def display_info(self):
+        super().display_info()
         print('Q-learning of choice of neighborhood structure sequences')
-        print('states:', self.states)
-        print('actions:', self.actions)
-
-    def __repr__(self):
-        return str(self.Q)
+        print('states:', self.states_names)
+        print('actions:', self.actions_names)

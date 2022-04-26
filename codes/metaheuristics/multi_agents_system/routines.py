@@ -1,7 +1,9 @@
 from __future__ import annotations
 from typing import Dict, Any, Optional, List, TYPE_CHECKING
-from random import random
+from random import random, sample
 from numpy import exp
+from copy import deepcopy
+from statistics import median
 
 from ..tabu_search import TabuList
 
@@ -23,7 +25,6 @@ class Routine:
         """ Resets the parameters in the memory of the metaheuristic. """
         self.is_finished = False
         self.init_sol = self.agent.in_solution
-        print('reset routine')
 
     def iteration(self) -> Solution:
         """ Performs an iteration of the metaheuristic and returns the solution found. """
@@ -179,3 +180,175 @@ class VariableNeighborhoodDescentRoutine(Routine):
             self.is_finished = self.k_neighborhood == self.k_max
 
         return self.best_sol
+
+
+class GeneticRoutine(Routine):
+    """ Routine of Genetic Algorithm that can be done in separate iterations """
+    def __init__(self, agent: BaseAgent):
+        super().__init__(agent=agent)
+        self.num_evolu_per_search = 10
+        self.population = []
+        self.rate_mutation = 0.2
+        self.num_parent = 4
+        self.num_population = 20
+        self.penalty_wrong_chromosome = 40000
+        self.has_init = False
+        self.list_nation = []
+        self.threshold = 10
+        self.reproductive_isolation = False
+        self.best_seed = True
+        self.n_iter = 0
+
+    def reset_routine(self):
+        super().reset_routine()
+        self.has_init = False
+        self.n_iter = 0
+        self.population = []
+        self.list_nation = []
+        self.reproductive_isolation = False
+        self.best_seed = True
+
+    def iteration(self) -> Solution:
+        if not self.is_finished:
+            if not self.has_init:
+                self.__init()
+
+            self.n_iter += 1
+            self.__evolution()
+
+            if self.n_iter == self.num_evolu_per_search:
+                self.is_finished = True
+
+        return self.best_sol
+
+
+    def __chromosome_mutation(self, chromosome, prob):
+        if random() < prob and chromosome.cost() > 0:
+            return self.agent.explore(chromosome)
+        else:
+            return chromosome
+
+    def __chromosome_crossover(self, parent1, parent2):
+
+        N = deepcopy(self.agent.N)
+        N.set_params({'use_methods':'crossover'})
+
+        SP=self.agent.problem.solution_space()
+        if SP.distance(parent1, parent2)<self.threshold and self.reproductive_isolation==True:
+            return N.get_neighbor_from_two(parent1, parent2)
+        else:
+            return self.__generate_chromosome(),self.__generate_chromosome()
+
+    def __fitness(self, solution):
+        return -solution.cost()
+
+    def __generate_chromosome(self):
+        return self.init_sol
+
+    def __init(self):
+        self.has_init=True
+
+        while(len(self.population)<self.num_population):
+
+            new_born=self.__generate_chromosome()
+            if new_born.cost()!=0:
+                self.population.append(new_born)
+
+    def __evolution(self):
+
+        def __binary_tournement(self):
+            parents = []
+            for i in range(self.num_parent):
+                candidate = sample(self.population, 2)
+                if self.__fitness(candidate[0]) > self.__fitness(candidate[1]):
+                    if random() < 0.95:
+                        parents.append(candidate[0])
+                    else:
+                        parents.append(candidate[1])
+                else:
+                    if random() < 0.95:
+                        parents.append(candidate[1])
+                    else:
+                        parents.append(candidate[0])
+
+            return parents
+
+        def __pop_crossover(self, parents):
+            for i in range(len(parents) // 2 - 1):
+                parent = sample(parents, 2)
+                child1, child2 = self.__chromosome_crossover(parent[0], parent[1])
+
+                self.population.append(child1)
+                self.population.append(child2)
+
+            if self.best_sol and self.best_seed:
+                parent = sample(parents, 2)
+                child1, child2 = self.__chromosome_crossover(parent[0], self.best_sol)
+
+            else:
+                parent = sample(parents, 2)
+                child1, child2 = self.__chromosome_crossover(parent[0], parent[1])
+
+            self.population.append(child1)
+            self.population.append(child2)
+
+        def __pop_mutation(self):
+            population_new = deepcopy(self.population)
+            self.population = []
+            for i in population_new:
+                self.population.append(self.__chromosome_mutation(i, self.rate_mutation))
+
+        def __eliminate(self):
+            list_fitness = []
+            for chromosome in self.population:
+                fitness=self.__fitness(chromosome)
+                list_fitness.append(fitness)
+            critere = median(list_fitness)
+            best_performance = max(list_fitness)
+
+            for chromosome in self.population:
+                if self.__fitness(chromosome) == best_performance:
+                    self.best_sol = chromosome
+
+
+            while (len(self.population) > self.num_population):
+                for chromosome in self.population:
+                    if self.__fitness(chromosome) <= critere:
+                        self.population.remove(chromosome)
+
+        def __regeneration(self):
+
+            if len(self.population) < self.num_population:
+                while (len(self.population) < self.num_population):
+                    self.population.append(self.__generate_chromosome())
+            else:
+                list_fitness = []
+                for chromosome in self.population:
+                    list_fitness.append(self.__fitness(chromosome))
+
+                critere = sorted(list_fitness, reverse=True)[self.num_population - 1]
+
+                for chromosome in self.population:
+                    if self.__fitness(chromosome) <= critere:
+                        self.population.remove(chromosome)
+
+                for _ in range(self.num_population - len(self.population)):
+                    self.population.append(self.__generate_chromosome())
+
+        parents = __binary_tournement(self)
+        __pop_crossover(self, parents)
+        for chromosome in self.population:
+            if not chromosome.checker():
+                print('err: crossover')
+        __pop_mutation(self)
+        for chromosome in self.population:
+            if not chromosome.checker():
+                print('err: mut')
+        __eliminate(self)
+        for chromosome in self.population:
+            if not chromosome.checker():
+                print('err: eli')
+        __regeneration(self)
+        for chromosome in self.population:
+            if not chromosome.checker():
+                print('err: reg')

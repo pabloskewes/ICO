@@ -33,7 +33,7 @@ class BaseAgent(MesaAgent):
         self.out_solution = None
 
         self.explored_solution_cost: List[float] = []
-        self.reset_steps = List[int] = []
+        self.reset_steps: List[int] = []
 
     def set_init_solution(self, init_sol: Optional[Solution]) -> None:
         if init_sol is None:
@@ -90,7 +90,7 @@ class BaseAgent(MesaAgent):
         else:
             new_sol = self.pull_solution()
             self.reset_steps.append(self.model.current_step)
-        self.routine.reset_routine()
+            self.routine.reset_routine()
         self.in_solution = new_sol
         self.out_solution = None
 
@@ -98,6 +98,10 @@ class BaseAgent(MesaAgent):
         plt.figure(figsize=figsize)
         plt.title('Evolution of the cost of the found solutions')
         plt.plot(self.explored_solution_cost, c='orange', label='explored solution')
+        line_color = 'red'
+        for reset_step in self.reset_steps:
+            plt.axvline(x=reset_step, color=line_color, linestyle='--')
+        plt.plot([], [], color=line_color, label='Reset routine')
         plt.xlabel('Time (iteration)')
         plt.ylabel('Cost of the solution')
         plt.legend()
