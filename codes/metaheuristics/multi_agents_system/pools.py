@@ -30,8 +30,8 @@ class BasePool(ABC):
     def display(self):
         """ Shows pool information """
         data = {'name': self.name, 'n_sols': len(self.solutions),
-                'n_push': self.n_push, 'n_pull': self.n_pull,
-                'agent_name': 'Agent '+str(self.incoming_agent.unique_id)}
+                'n_push': self.n_push, 'n_pull': self.n_pull}
+                # 'agent_name': 'Agent '+str(self.incoming_agent.unique_id)}
 
         clear_output(wait=True)
         display("Pool {name}".format(**data))
@@ -39,7 +39,7 @@ class BasePool(ABC):
         display("Number of solutions : {n_sols}".format(**data))
         display("Number of 'pull' made : {n_pull}".format(**data))
         display("Number of 'push' made : {n_push}".format(**data))
-        display("Incoming Agent -> {agent_name}".format(**data))
+        # display("Incoming Agent -> {agent_name}".format(**data))
         display("Cost of solutions :")
         for i in range(len(self.solutions)):
             display("S"+str(i)+" -> "+"%.2f"%self.solutions[i].cost())
@@ -68,7 +68,7 @@ class BestPool(BasePool):
         self.name = "BestPool"
 
     def push(self, solution: Solution):
-        super().push()
+        super().push(solution=solution)
         if len(self.solutions) < self.max_size:
             self.solutions.append(solution)
         costs = [s.cost() for s in self.solutions]
@@ -90,7 +90,7 @@ class BestScorePool(BasePool):
         self.name = "BestScorePool"
 
     def push(self, solution: Solution):
-        super().push()
+        super().push(solution=solution)
         if len(self.solutions) < self.max_size:
             self.solutions.append(solution.cost())
         worst_sol = max(self.solutions)
@@ -103,14 +103,11 @@ class DiversePool(BasePool):
     """ Pool of solution that keeps only its space as diverse as possible """
     def __init__(self, solution_space: SolutionSpace, max_size: int = 10):
         super().__init__(solution_space, max_size)
+        self.average_distances: List[float] = []
         self.name = "DiversePool"
 
-    def __init__(self, solution_space: SolutionSpace, max_size: int = 10):
-        super().__init__(solution_space, max_size)
-        self.average_distances: List[float] = []
-
     def push(self, solution: Solution):
-        super().push()
+        super().push(solution=solution)
         if len(self.solutions) < self.max_size - 1:
             self.solutions.append(solution)
         elif len(self.solutions) == self.max_size - 1:

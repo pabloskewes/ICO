@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class MultiAgentSystem(BaseMetaheuristic):
     def __init__(self, model: Type[SequentialModel] = None, agents: AgentCollection = None,
                  pools: PoolCollectionClass = None, max_iter: int = 100,
-                 progress_bar: bool = False, display_pool: bool = False, verbose: int = 0,
+                 progress_bar: bool = False, display_pool: int = 0, verbose: int = 0,
                  solution_params=None, neighborhood_params=None, solution_space_params=None):
         super().__init__()
         self.params = {'solution': solution_params,
@@ -60,12 +60,15 @@ class MultiAgentSystem(BaseMetaheuristic):
         if self.progress_bar:
             pbar.set_description('Agents working...')
 
-        for _ in range(self.max_iter):
+        if self.display_pool > 0:
+            display_pool_at_steps = [i * (self.max_iter//self.display_pool) for i in range(self.max_iter)]
+        for i in range(self.max_iter):
             self.model.step()
             if self.progress_bar:
                 pbar.update()
-            if self.display_pool and self.pools:
-                self.pools[0].display()
+            if self.display_pool > 0 and self.pools:
+                if i in display_pool_at_steps:
+                    self.pools[0].display()
 
         if self.progress_bar:
             pbar.close()
