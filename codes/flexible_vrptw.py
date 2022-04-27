@@ -1,13 +1,11 @@
-from typing import Optional, Dict
-from collections import Counter
+from typing import Optional, Dict, List
 import random
-from gc import collect
+from copy import deepcopy
 
 from context import VRPTWContext
-from solution import VRPTWSolution, Routes
+from solution import VRPTWSolution, Routes, Solution
 from neighborhood import VRPTWNeighborhood
 from solution_space import VRPTWSolutionSpace
-from metaheuristics.base_problem import Problem
 
 
 class FlexVRPTWSolution(VRPTWSolution):
@@ -38,6 +36,50 @@ class FlexVRPTWSolution(VRPTWSolution):
 
 
 class FlexVRPTWNeighborhood(VRPTWNeighborhood):
+    context: VRPTWContext = None
+
+    # NEIGHBORHOOD FUNCTION 9 - SKIP CUSTOMER
+    def skip_customer(self, solution) -> Solution:
+        """ Moves a random client to another position on its same route """
+        if self.full_search: self.set_tracker(solution)
+        routes = solution.routes
+        new_routes = deepcopy(routes)
+        s = VRPTWSolution()
+        is_sol = False
+        available_routes_index = list(range(len(routes)))
+        routes_iter = 0
+        while not is_sol and routes_iter < self.max_iter and available_routes_index:
+            r_index = random.choice(available_routes_index)
+            available_routes_index.remove(r_index)
+
+            route: List[int] = routes[r_index].copy()
+            if len(route) < 4:
+                continue
+            cust_iter = 0
+            available_cust_index = list(range(1, len(route)-1))
+            while not is_sol and cust_iter < self.max_iter and available_cust_index:
+                index_cust = random.choice(available_cust_index)
+                available_cust_index.remove(index_cust)
+                # removing the customer from the route
+                route.remove(index_cust)
+                is_sol = s.route_checker(route)
+                if is_sol:
+                    new_routes[r_index] = route.copy()
+                    new_sol = VRPTWSolution(new_routes)
+                    if not self.full_search:
+                        return new_sol
+                    self.track_best(new_sol)
+                    new_routes = deepcopy(routes)
+                    is_sol = False
+
+                cust_iter += 1
+                route = routes[r_index].copy()
+            routes_iter += 1
+        if self.verbose >= 1 and not self.full_search:
+            print("intra_route_shift wasn't able to find a neighbor for this solution")
+        new_sol = self.best_neighbor if self.full_search else solution
+        return new_sol
+
     def random_solution(self, nb_cust) -> FlexVRPTWSolution:
         """
         Generates a random pattern of numbers between 0 and nb_cust, in the form of a solution.
@@ -45,7 +87,9 @@ class FlexVRPTWNeighborhood(VRPTWNeighborhood):
         :return: Solution (or nothing)
         """
         
-        def simplify(L, simpleL=[], i=0, on_zero=False):
+        def simplify(L, simpleL=None, i=0, on_zero=False):
+            if simpleL is None:
+                simpleL = []
             if i >= len(L):
                 return simpleL
             if L[i] == 0:
@@ -60,6 +104,7 @@ class FlexVRPTWNeighborhood(VRPTWNeighborhood):
         is_sol = False
         n_iter = 0
         min_length = len(numbers)//2
+        solution = None
         
         while not is_sol:
             n_iter += 1
@@ -109,5 +154,6 @@ class FlexVRPTWNeighborhood(VRPTWNeighborhood):
 
 
 class FlexVRPTWSolutionSpace(VRPTWSolutionSpace):
+    context: VRPTWContext = None
     pass
 

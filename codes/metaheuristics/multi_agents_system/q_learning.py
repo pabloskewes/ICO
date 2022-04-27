@@ -31,7 +31,7 @@ class QLearning(ABC):
         self.gamma: float = 0.99
         self.epsilon = 1
 
-        self.rl_parameters: List[str] = ['alpha', 'gamma']
+        self.rl_parameters: List[str] = ['alpha', 'gamma', 'epsilon']
         self.Q = np.zeros((len(self.states), len(self.actions)))
         self.current_state: State = random.choice(self.states)
 
@@ -46,8 +46,13 @@ class QLearning(ABC):
             action = random.choice(self.actions)
         else:
             action = self.best_action()
-        self.epsilon *= self.gamma
         return action
+
+    def decrease_epsilon(self):
+        self.epsilon *= self.gamma
+
+    def random_action(self) -> Action:
+        return random.choice(self.actions)
 
     def policy(self) -> Action:
         return self.epsilon_greedy()
@@ -134,6 +139,7 @@ class NeighborhoodQLearning(QLearning):
         reward = self.reward(new_sol)
         self.update_Q(state=self.current_state, action=action, next_state=new_state, reward=reward)
         self.update_state(new_state)
+        self.decrease_epsilon()
         return new_sol
 
     def display_info(self):

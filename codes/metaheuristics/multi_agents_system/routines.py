@@ -221,7 +221,6 @@ class GeneticRoutine(Routine):
 
         return self.best_sol
 
-
     def __chromosome_mutation(self, chromosome, prob):
         if random() < prob and chromosome.cost() > 0:
             return self.agent.explore(chromosome)

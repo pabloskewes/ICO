@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Dict, List, Union, Type, Optional, TYPE_CHECKING
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 from ..base_metaheuristic import BaseMetaheuristic
 
@@ -90,3 +91,32 @@ class MultiAgentSystem(BaseMetaheuristic):
         else:
             new_sol = pool_sol if pool_sol.cost() <= agent_sol.cost() else agent_sol
         return new_sol
+
+    def plot_agents_cost(self, ids=None, figsize=(14,7)):
+        agents = self.get_agents()
+        agents = agents if ids is None else [agent for i, agent in enumerate(agents) if i in ids]
+        plt.figure(figsize=figsize)
+        plt.title('Evolution of the cost of the found solutions')
+        for agent in agents:
+            plt.plot(agent.explored_solution_cost, label=f'solutions agent {agent.unique_id}')
+        plt.xlabel('Time (iteration)')
+        plt.ylabel('Cost of the solution')
+        plt.legend()
+        plt.show()
+        
+    def plot_agent_parallelism(self, height=0.4):
+        epsilon = 0.01
+        agents = self.get_agents()
+        names = []
+        for agent in agents:
+            names.append(f'agent #{agent.unique_id}')
+        plt.barh(names, width=self.max_iter, height=height, label='Agent iterations')
+        for i, agent in enumerate(agents):
+            for reset_step in agent.reset_steps:
+                plt.plot([reset_step, reset_step], [i - (height / 2) + epsilon, i + (height / 2) - epsilon],
+                         color='red')
+        plt.plot([], [], color='red', label='Reset routine')
+        plt.xlabel('Time (Iterations)')
+        plt.ylabel('Agents')
+        plt.title('Parallelism between agents')
+        plt.legend()
