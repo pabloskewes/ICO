@@ -94,14 +94,15 @@ class BaseAgent(MesaAgent):
         self.in_solution = new_sol
         self.out_solution = None
 
-    def plot_evolution_cost(self, figsize=(14, 7)):
+    def plot_evolution_cost(self, figsize=(14, 7), resets=True):
         plt.figure(figsize=figsize)
         plt.title('Evolution of the cost of the found solutions')
         plt.plot(self.explored_solution_cost, c='orange', label='explored solution')
         line_color = 'red'
-        for reset_step in self.reset_steps:
-            plt.axvline(x=reset_step, color=line_color, linestyle='--')
-        plt.plot([], [], color=line_color, label='Reset routine')
+        if resets:
+            for reset_step in self.reset_steps:
+                plt.axvline(x=reset_step, color=line_color, linestyle='--')
+            plt.plot([], [], color=line_color, label='Reset routine')
         plt.xlabel('Time (iteration)')
         plt.ylabel('Cost of the solution')
         plt.legend()
