@@ -3,12 +3,12 @@ from typing import List, Dict, Union, Type, Tuple, TYPE_CHECKING
 from mesa import Model as MesaModel
 from mesa.time import RandomActivation
 
-from .agents import assemble_agent
+from .agents_factory import assemble_agent
 
 if TYPE_CHECKING:
     from .pools import BasePool
     from ..base_problem import Problem
-    from .agents import AgentStructure
+    from .agents_factory import AgentStructure
 
     AgentCollection = Dict[Union[AgentStructure, str], int]
     PoolCollection = List[Union[str, BasePool]]

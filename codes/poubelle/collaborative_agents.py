@@ -5,7 +5,7 @@ from codes.metaheuristics.base_problem import Solution
 from codes.metaheuristics.base_metaheuristic import BaseMetaheuristic
 from codes.metaheuristics.tabu_search import TabuSearch
 from codes.metaheuristics.simulated_annealing import SimulatedAnnealing
-from codes.metaheuristics.multi_agents_system.agents import CollaborativeSpace, SimpleAgent
+from codes.metaheuristics.multi_agents_system.agents_factory import CollaborativeSpace, SimpleAgent
 AgentType = SimpleAgent
 
 
