@@ -35,6 +35,8 @@ class BaseAgent(MesaAgent):
         self.explored_solution_cost: List[float] = []
         self.reset_steps: List[int] = []
 
+        self.n_pull = 0
+
     def set_init_solution(self, init_sol: Optional[Solution]) -> None:
         if init_sol is None:
             init_sol = self.N.initial_solution()
@@ -57,6 +59,7 @@ class BaseAgent(MesaAgent):
 
     def pull_solution(self, choose_mode='random') -> Solution:
         """  Draws a solution from the pool """
+        self.n_pull += 1
         if not self.pull_from:
             return self.out_solution
         if choose_mode == 'random':
@@ -72,6 +75,7 @@ class BaseAgent(MesaAgent):
                 solution = self.out_solution
         else:
             raise Exception(f'{choose_mode} is not a valid form of choose_mode.')
+        pool.receive_agent(self)
         return solution
 
     def explore(self, solution: Solution) -> Solution:
