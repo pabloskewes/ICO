@@ -29,15 +29,16 @@ class GeneticAlgorithm(BaseMetaheuristic):
         self.reproductive_isolation= reproductive_isolation
         self.best_seed=best_seed
         self.avr_cost=0
-        self.evolution_avr_solution=[]
+        self.evolution_avr_solutions=[]
+        self.evolution_best_solutions=[]
 
     def plot_evolution_cost(self, figsize=(20, 10)):
         # plt.scatter(x=list(range(len(self.cost_list_best_sol))), y=self.cost_list_best_sol, c='turquoise')
         plt.figure(figsize=figsize)
         plt.title('Evolution of the cost of the found solutions')
         plt.plot(self.evolution_explored_solutions, c='turquoise', label='explored solutions')
-        plt.plot(self.evolution_best_solution, c='orange', label='best solution')
-        plt.plot(self.evolution_avr_solution, c='blue', label='avr solution')
+        plt.plot(self.evolution_best_solutions, c='orange', label='best solution')
+        plt.plot(self.evolution_avr_solutions, c='blue', label='avr solution')
         plt.xlabel('Time (iteration)')
         plt.ylabel('Cost of the solution')
         plt.legend()
@@ -55,9 +56,9 @@ class GeneticAlgorithm(BaseMetaheuristic):
 
         for _ in range(self.num_evolu_per_search):
             self.__evolution()
-            self.evolution_avr_solution.append(self.avr_cost)
-            self.evolution_best_solution.append(-self.__fitness(self.best_solution))
-            self.evolution_explored_solutions = self.evolution_explored_solutions[:len(self.evolution_best_solution)]
+            self.evolution_avr_solutions.append(self.avr_cost)
+            self.evolution_best_solutions.append(-self.__fitness(self.best_solution))
+            self.evolution_explored_solutions = self.evolution_explored_solutions[:len(self.evolution_best_solutions)]
 
             if self.progress_bar:
                 pbar.update()
@@ -80,7 +81,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
         return chromosome
 
     def __chromosome_mutation(self, chromosome):
-        if random.random() < self.rate_mutation and chromosome.cost() > 0:
+        if random.random() < self.rate_mutation and self.__fitness(chromosome) != 0:
             _, N, _ = self.get_problem_components()
             return N(chromosome)
         else:
@@ -105,7 +106,7 @@ class GeneticAlgorithm(BaseMetaheuristic):
         while(len(self.population)<self.num_population):
             
             new_born=self.__generate_chromosome()
-            if new_born.cost()!=0:
+            if self.__fitness(new_born)!=0:
                 self.population.append(new_born)
                 self.best_solution=new_born
 
