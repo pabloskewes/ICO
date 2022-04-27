@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import List, Union, TYPE_CHECKING
 from abc import ABC, abstractmethod
+from IPython.display import display, clear_output
 
 if TYPE_CHECKING:
     from ..base_problem import Solution, SolutionSpace
@@ -29,33 +30,45 @@ class BasePool(ABC):
     def display(self):
         """ Shows pool information """
         data = {'name': self.name, 'n_sols': len(self.solutions),
-                'n_push': self.n_push, 'n_pull': self.n_pull}
+                'n_push': self.n_push, 'n_pull': self.n_pull,
+                'agent_name': 'Agent '+str(self.incoming_agent.unique_id)}
 
-        solution_string = ""
+        clear_output(wait=True)
+        display("Pool {name}".format(**data))
+        display("------------------------------------------------------")
+        display("Number of solutions : {n_sols}".format(**data))
+        display("Number of 'pull' made : {n_pull}".format(**data))
+        display("Number of 'push' made : {n_push}".format(**data))
+        display("Incoming Agent -> {agent_name}".format(**data))
+        display("Cost of solutions :")
         for i in range(len(self.solutions)):
-            solution_string += "S"+str(i)+" -> "+"%.2f"%self.solutions[i].cost()+"\n"
+            display("S"+str(i)+" -> "+"%.2f"%self.solutions[i].cost())
 
-        final_string = ""
-        final_string += "Pool {name}\n".format(**data)
-        final_string += "------------------------------------------------------\n"
-        final_string += "Number of solutions : {n_sols}\n".format(**data)
-        final_string += "Number of 'pull' made : {n_pull}\n".format(**data)
-        final_string += "Number of 'push' made : {n_push}\n".format(**data)
-        # final_string += "Incoming Agent -> {agent_name}\n".format(**data)
-        final_string += "Cost of solutions :\n"
-        final_string += solution_string
-
-        print(final_string, end='\r')
+        # solution_string = ""
+        # for i in range(len(self.solutions)):
+        #     solution_string += "S"+str(i)+" -> "+"%.2f"%self.solutions[i].cost()+"\n"
+        #
+        # final_string = ""
+        # final_string += ("Pool {name}\n").format(**data)
+        # final_string += "------------------------------------------------------\n"
+        # final_string += ("Number of solutions : {n_sols}\n").format(**data)
+        # final_string += ("Number of 'pull' made : {n_pull}\n").format(**data)
+        # final_string += ("Number of 'push' made : {n_push}\n").format(**data)
+        # final_string += ("Incoming Agent -> {agent_name}\n").format(**data)
+        # final_string += "Cost of solutions :\n"
+        # final_string += solution_string
+        #
+        # print(final_string, end='\r')
 
 
 class BestPool(BasePool):
     """ Pool of solution that keeps the best solutions """
     def __init__(self, solution_space: SolutionSpace, max_size: int = 10):
-        super().__init__(solution_space=solution_space, max_size=max_size)
+        super().__init__(solution_space, max_size)
         self.name = "BestPool"
 
     def push(self, solution: Solution):
-        super().push(solution)
+        super().push()
         if len(self.solutions) < self.max_size:
             self.solutions.append(solution)
         costs = [s.cost() for s in self.solutions]
@@ -72,8 +85,12 @@ class BestPool(BasePool):
 
 class BestScorePool(BasePool):
     """ Pool of solution that keeps only the best scores of solutions """
+    def __init__(self, solution_space: SolutionSpace, max_size: int = 10):
+        super().__init__(solution_space, max_size)
+        self.name = "BestScorePool"
+
     def push(self, solution: Solution):
-        super().push(solution)
+        super().push()
         if len(self.solutions) < self.max_size:
             self.solutions.append(solution.cost())
         worst_sol = max(self.solutions)
@@ -86,10 +103,14 @@ class DiversePool(BasePool):
     """ Pool of solution that keeps only its space as diverse as possible """
     def __init__(self, solution_space: SolutionSpace, max_size: int = 10):
         super().__init__(solution_space, max_size)
+        self.name = "DiversePool"
+
+    def __init__(self, solution_space: SolutionSpace, max_size: int = 10):
+        super().__init__(solution_space, max_size)
         self.average_distances: List[float] = []
 
     def push(self, solution: Solution):
-        super().push(solution)
+        super().push()
         if len(self.solutions) < self.max_size - 1:
             self.solutions.append(solution)
         elif len(self.solutions) == self.max_size - 1:
