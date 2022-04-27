@@ -44,7 +44,7 @@ class AgentFactory:
 
     def build(self) -> Type[AgentStructure]:
         params = self.features_params if self.features_params is not None else {}
-        keys = ['routine', 'reinforced_learning', 'desires']
+        keys = ['routine', 'reinforced_learning', 'desires', 'agent_params']
         for key in keys:
             if key not in params:
                 params[key] = None
@@ -77,6 +77,8 @@ def assemble_agent(unique_id: int, model: SequentialModel, agent_structure: Agen
         agent.set_reinforced_learning(agent_structure.REINFORCED_LEARNING)
         agent.rl.set_params(agent_structure.features_params['reinforced_learning'])
     # TODO: Include Desires setting
+    if agent_structure.features_params['agent_params'] is not None:
+        agent.set_params(agent_structure.features_params['agent_params'])
 
     return agent
 
