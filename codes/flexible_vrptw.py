@@ -1,14 +1,11 @@
 from typing import Optional, Dict, List
-from collections import Counter
 import random
-from gc import collect
 from copy import deepcopy
 
 from context import VRPTWContext
 from solution import VRPTWSolution, Routes, Solution
 from neighborhood import VRPTWNeighborhood
 from solution_space import VRPTWSolutionSpace
-from metaheuristics.base_problem import Problem
 
 
 class FlexVRPTWSolution(VRPTWSolution):
@@ -107,6 +104,7 @@ class FlexVRPTWNeighborhood(VRPTWNeighborhood):
         is_sol = False
         n_iter = 0
         min_length = len(numbers)//2
+        solution = None
         
         while not is_sol:
             n_iter += 1
