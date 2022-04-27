@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import List, Union, TYPE_CHECKING
 from abc import ABC, abstractmethod
+from IPython.display import display, clear_output
 
 if TYPE_CHECKING:
     from ..base_problem import Solution, SolutionSpace
@@ -31,21 +32,25 @@ class BasePool(ABC):
                 'n_push': self.n_push, 'n_pull': self.n_pull,
                 'agent_name': 'Agent '+str(self.incoming_agent.unique_id)}
 
-        solution_string = ""
-        for i in range(len(self.solutions)):
-            solution_string += "S"+str(i)+" -> "+"%.2f"%self.solutions[i].cost()+"\n"
+        clear_output(wait=True)
+        display("Pool {name}\n".format(**data))
 
-        final_string = ""
-        final_string += ("Pool {name}\n").format(**data)
-        final_string += "------------------------------------------------------"
-        final_string += ("Number of solutions : {n_sols}\n").format(**data)
-        final_string += ("Number of 'pull' made : {n_pull}\n").format(**data)
-        final_string += ("Number of 'push' made : {n_push}\n").format(**data)
-        final_string += ("Incoming Agent -> {agent_name}\n").format(**data)
-        final_string += "Cost of solutions :\n"
-        final_string += solution_string
 
-        print(final_string, end='\r')
+        # solution_string = ""
+        # for i in range(len(self.solutions)):
+        #     solution_string += "S"+str(i)+" -> "+"%.2f"%self.solutions[i].cost()+"\n"
+        #
+        # final_string = ""
+        # final_string += ("Pool {name}\n").format(**data)
+        # final_string += "------------------------------------------------------\n"
+        # final_string += ("Number of solutions : {n_sols}\n").format(**data)
+        # final_string += ("Number of 'pull' made : {n_pull}\n").format(**data)
+        # final_string += ("Number of 'push' made : {n_push}\n").format(**data)
+        # final_string += ("Incoming Agent -> {agent_name}\n").format(**data)
+        # final_string += "Cost of solutions :\n"
+        # final_string += solution_string
+        #
+        # print(final_string, end='\r')
 
 
 class BestPool(BasePool):
