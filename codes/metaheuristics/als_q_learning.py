@@ -1,7 +1,7 @@
 from .base_metaheuristic import BaseMetaheuristic
 from .base_problem import Problem, Solution
 from .multi_agents_system.q_learning import NeighborhoodQLearning
-from .multi_agents_system.agents import AgentFactory
+from .multi_agents_system.agents_factory import AgentFactory
 from .multi_agents_system.multi_agent_system import MultiAgentSystem as MAS
 from .multi_agents_system.sequential_models import SequentialModel
 from tqdm import tqdm, trange

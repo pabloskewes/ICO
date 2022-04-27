@@ -15,7 +15,8 @@ if TYPE_CHECKING:
 
 class MultiAgentSystem(BaseMetaheuristic):
     def __init__(self, model: Type[SequentialModel] = None, agents: AgentCollection = None,
-                 pools: PoolCollectionClass = None, max_iter: int = 100, progress_bar: bool = False, verbose: int = 0,
+                 pools: PoolCollectionClass = None, max_iter: int = 100,
+                 progress_bar: bool = False, display_pool: bool = False, verbose: int = 0,
                  solution_params=None, neighborhood_params=None, solution_space_params=None):
         super().__init__()
         self.params = {'solution': solution_params,
@@ -25,6 +26,7 @@ class MultiAgentSystem(BaseMetaheuristic):
         # Metaheuristic hyperparameters
         self.max_iter = max_iter
         self.progress_bar = progress_bar
+        self.display_pool = display_pool
         self.MODEL = model
         self.model: Optional[SequentialModel] = None
         self.agents_collection = agents
@@ -62,6 +64,8 @@ class MultiAgentSystem(BaseMetaheuristic):
             self.model.step()
             if self.progress_bar:
                 pbar.update()
+            if self.display_pool and self.pools:
+                self.pools[0].display()
 
         if self.progress_bar:
             pbar.close()

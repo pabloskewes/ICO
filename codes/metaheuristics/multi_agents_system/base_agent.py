@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from .sequential_models import SequentialModel
     from .pools import BasePool
     from .q_learning import NeighborhoodQLearning
+    from .desires import Desire
     ReinforcedLearning = Union[NeighborhoodQLearning, Any]
 
 
@@ -25,7 +26,7 @@ class BaseAgent(MesaAgent):
 
         self.rl: ReinforcedLearning = None
         self.routine: Optional[Routine] = None
-        self.desires = None
+        self.desires: Optional[Desire] = None
 
         self.push_to: List[BasePool] = push_to
         self.pull_from: List[BasePool] = pull_from
@@ -61,6 +62,10 @@ class BaseAgent(MesaAgent):
         if RL is not None:
             self.rl = RL(self)
 
+    def set_desires(self, DESIRES: Type[Desire]) -> None:
+        if DESIRES is not None:
+            self.desires = DESIRES(self)
+
     def push_solution(self, solution: Solution) -> None:
         if self.push_to is None:
             return
@@ -84,7 +89,15 @@ class BaseAgent(MesaAgent):
                 solution = self.out_solution
         else:
             raise Exception(f'{self.choose_pool} is not a valid form of choose_mode.')
+        pool.receive_agent(self)
         return solution
+
+    def reward(self, solution: Solution) -> float:
+        """ The reward is defined by how much the solution found improves the reference solution. """
+        if not self.desires:
+            return self.ref_cost - solution.cost()
+        else:
+            return self.desires.reward(solution)
 
     def explore(self, solution: Solution) -> Solution:
         """  """
@@ -93,10 +106,6 @@ class BaseAgent(MesaAgent):
         else:
             new_sol = self.N(solution)
         return new_sol
-
-    def reward(self, solution: Solution) -> float:
-        """ The reward is defined by how much the solution found improves the reference solution. """
-        return self.ref_cost - solution.cost()
 
     def step(self):
         if not self.routine.is_finished:

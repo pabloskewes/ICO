@@ -76,7 +76,9 @@ def assemble_agent(unique_id: int, model: SequentialModel, agent_structure: Agen
     if agent_structure.REINFORCED_LEARNING is not None:
         agent.set_reinforced_learning(agent_structure.REINFORCED_LEARNING)
         agent.rl.set_params(agent_structure.features_params['reinforced_learning'])
-    # TODO: Include Desires setting
+    if agent_structure.DESIRES is not None:
+        agent.set_desires(agent_structure.DESIRES)
+        agent.desires.set_params(agent_structure.features_params['desires'])
     if agent_structure.features_params['agent_params'] is not None:
         agent.set_params(agent_structure.features_params['agent_params'])
 

@@ -10,6 +10,7 @@ from ..tabu_search import TabuList
 if TYPE_CHECKING:
     from ..base_problem import Solution
     from .base_agent import BaseAgent
+    from ..base_metaheuristic import BaseMetaheuristic
 
 
 class Routine:
@@ -39,6 +40,15 @@ class Routine:
             if varname not in self.hyperparameters:
                 raise Exception(f'{varname} is not a valid keyword argument')
             setattr(self, varname, value)
+
+
+class MetaheuristicRoutine(Routine):
+    """ Routine that applies a complete metaheuristic at each iteration of the agent """
+    def __init__(self, agent: BaseAgent):
+        super().__init__(agent=agent)
+
+        self.metaheuristic: Optional[BaseMetaheuristic] = None
+        self.metaheuristic_params: Dict[str, Any] = {}
 
 
 class SimulatedAnnealingRoutine(Routine):
