@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Optional, Any, Union, Type, TYPE_CHECKING
+from typing import List, Optional, Any, Union, Type, Dict, TYPE_CHECKING
 from mesa import Agent as MesaAgent
 import random
 import matplotlib.pyplot as plt
@@ -8,6 +8,7 @@ from ..base_problem import Solution
 from .routines import Routine
 
 if TYPE_CHECKING:
+    from ..base_problem import Problem
     from .sequential_models import SequentialModel
     from .pools import BasePool
     from .q_learning import NeighborhoodQLearning
@@ -18,27 +19,38 @@ class BaseAgent(MesaAgent):
     def __init__(self, unique_id: int, model: SequentialModel, init_sol: Solution = None,
                  push_to: List[BasePool] = None, pull_from: List[BasePool] = None):
         super().__init__(unique_id, model)
-        self.model = model
-        self.unique_id = unique_id
-        self.problem = model.problem
+        self.model: SequentialModel = model
+        self.unique_id: int = unique_id
+        self.problem: Problem = model.problem
 
-        self.N = self.problem.neighborhood()
         self.rl: ReinforcedLearning = None
         self.routine: Optional[Routine] = None
+        self.desires = None
 
-        self.push_to = push_to
-        self.pull_from = pull_from
-        self.in_solution = None
+        self.push_to: List[BasePool] = push_to
+        self.pull_from: List[BasePool] = pull_from
+        self.in_solution: Optional[Solution] = None
+        self.ref_cost: Optional[float] = None
         self.set_init_solution(init_sol=init_sol)
-        self.out_solution = None
+        self.out_solution: Optional[Solution] = None
+
+        self.N = self.problem.neighborhood()
+        self.choose_pool: str = 'random'
 
         self.explored_solution_cost: List[float] = []
         self.reset_steps: List[int] = []
+
+    def set_params(self, params: Dict[str, Any]) -> None:
+        for varname, value in params.items():
+            if not hasattr(self, varname):
+                raise Exception(f'{varname} is not a valid keyword argument')
+            setattr(self, varname, value)
 
     def set_init_solution(self, init_sol: Optional[Solution]) -> None:
         if init_sol is None:
             init_sol = self.N.initial_solution()
         self.in_solution = init_sol
+        self.ref_cost = init_sol.cost()
 
     def set_routine(self, ROUTINE: Type[Routine] = None) -> None:
         if ROUTINE is None:
@@ -55,11 +67,11 @@ class BaseAgent(MesaAgent):
         for pool in self.push_to:
             pool.push(solution)
 
-    def pull_solution(self, choose_mode='random') -> Solution:
+    def pull_solution(self) -> Solution:
         """  Draws a solution from the pool """
         if not self.pull_from:
             return self.out_solution
-        if choose_mode == 'random':
+        if self.choose_pool == 'random':
             pool = random.choice(self.pull_from)
             breaker = 10
             while not pool and breaker:
@@ -71,7 +83,7 @@ class BaseAgent(MesaAgent):
             else:
                 solution = self.out_solution
         else:
-            raise Exception(f'{choose_mode} is not a valid form of choose_mode.')
+            raise Exception(f'{self.choose_pool} is not a valid form of choose_mode.')
         return solution
 
     def explore(self, solution: Solution) -> Solution:
@@ -81,6 +93,10 @@ class BaseAgent(MesaAgent):
         else:
             new_sol = self.N(solution)
         return new_sol
+
+    def reward(self, solution: Solution) -> float:
+        """ The reward is defined by how much the solution found improves the reference solution. """
+        return self.ref_cost - solution.cost()
 
     def step(self):
         if not self.routine.is_finished:

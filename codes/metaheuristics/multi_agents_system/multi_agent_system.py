@@ -103,7 +103,7 @@ class MultiAgentSystem(BaseMetaheuristic):
         plt.ylabel('Cost of the solution')
         plt.legend()
         plt.show()
-        
+
     def plot_agent_parallelism(self, height=0.4):
         epsilon = 0.01
         agents = self.get_agents()
