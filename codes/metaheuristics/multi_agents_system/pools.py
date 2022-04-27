@@ -12,15 +12,46 @@ class BasePool(ABC):
         self.SP = solution_space
         self.max_size = max_size
         self.solutions: List[Union[Solution, float]] = []
+        self.n_push = 0
+        self.n_pull = 0
+        self.incoming_agent = None
 
     @abstractmethod
     def push(self, solution: Solution):
         """  Tries to push a solution into the pool """
+        self.n_push += 1
+
+    def receive_agent(self, agent):
+        self.n_pull += 1
+        self.incoming_agent = agent
+
+    def display(self):
+        """ Shows pool information """
+        data = {'name': self.__name__, 'n_sols': len(self.solutions),
+                'n_push': self.n_push, 'n_pull': self.n_pull,
+                'agent_name': 'Agent '+str(self.incoming_agent.unique_id)}
+
+        solution_string = ""
+        for i in range(len(self.solutions)):
+            solution_string += "S"+str(i)+" -> "+"%.2f"%self.solutions[i].cost()+"\n"
+
+        final_string = ""
+        final_string += ("Pool {name}\n").format(**data)
+        final_string += "------------------------------------------------------"
+        final_string += ("Number of solutions : {n_sols}\n").format(**data)
+        final_string += ("Number of 'pull' made : {n_pull}\n").format(**data)
+        final_string += ("Number of 'push' made : {n_push}\n").format(**data)
+        final_string += ("Incoming Agent -> {agent_name}\n").format(**data)
+        final_string += "Cost of solutions :\n"
+        final_string += solution_string
+
+        print(final_string, end='\r')
 
 
 class BestPool(BasePool):
     """ Pool of solution that keeps the best solutions """
     def push(self, solution: Solution):
+        super().push()
         if len(self.solutions) < self.max_size:
             self.solutions.append(solution)
         costs = [s.cost() for s in self.solutions]
@@ -38,6 +69,7 @@ class BestPool(BasePool):
 class BestScorePool(BasePool):
     """ Pool of solution that keeps only the best scores of solutions """
     def push(self, solution: Solution):
+        super().push()
         if len(self.solutions) < self.max_size:
             self.solutions.append(solution.cost())
         worst_sol = max(self.solutions)
@@ -53,6 +85,7 @@ class DiversePool(BasePool):
         self.average_distances: List[float] = []
 
     def push(self, solution: Solution):
+        super().push()
         if len(self.solutions) < self.max_size - 1:
             self.solutions.append(solution)
         elif len(self.solutions) == self.max_size - 1:
