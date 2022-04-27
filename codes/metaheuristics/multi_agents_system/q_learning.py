@@ -10,12 +10,13 @@ from .base_agent import BaseAgent
 if TYPE_CHECKING:
     from ..base_problem import Solution, Neighborhood
 
+
 State = Any
 Action = Any
 
 
 class QLearning(ABC):
-    def __init__(self, states: List[Any], actions: List[Any]):
+    def __init__(self, agent: BaseAgent, states: List[Any], actions: List[Any]):
         """
         Initializes the main components of a Q-learning:
         - states: States in which an agent can be found
@@ -127,7 +128,7 @@ class NeighborhoodQLearning(QLearning):
         self.agent = agent
         self.N = self.agent.N
         self.neighborhoods = self.N.use_methods
-        super().__init__(states=self.neighborhoods, actions=self.neighborhoods)
+        super().__init__(agent=agent, states=self.neighborhoods, actions=self.neighborhoods)
         self.reference_solution = self.agent.in_solution
         self.ref_cost = self.reference_solution.cost()
 
@@ -148,7 +149,7 @@ class NeighborhoodQLearning(QLearning):
         action = self.policy()
         new_state = self.perform_action(action)
         new_sol = self.N(solution)
-        reward = self.reward(new_sol)
+        reward = self.agent.reward(new_sol)
         self.update_Q(state=self.current_state, action=action, next_state=new_state, reward=reward)
         self.update_state(new_state)
         self.decrease_epsilon()
