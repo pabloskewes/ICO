@@ -57,6 +57,7 @@ class BaseAgent(MesaAgent):
         if ROUTINE is None:
             ROUTINE = Routine
         self.routine = ROUTINE(self)
+        self.routine.reset_routine()
 
     def set_reinforced_learning(self, RL: Type[ReinforcedLearning]) -> None:
         if RL is not None:

@@ -7,6 +7,7 @@ from .multi_agents_system.sequential_models import SequentialModel
 from tqdm import tqdm, trange
 from copy import deepcopy
 
+
 class AdaptativeLocalSearchQLearning(BaseMetaheuristic):
 
     def __init__(self, model=None, q_learning_params=None, max_iter_model=10,

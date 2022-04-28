@@ -70,6 +70,8 @@ def assemble_agent(unique_id: int, model: SequentialModel, agent_structure: Agen
                    push_to: List[BasePool] = None, pull_from: List[BasePool] = None,
                    initial_solution: Solution = None) -> BaseAgent:
     agent = BaseAgent(unique_id=unique_id, model=model, init_sol=initial_solution, push_to=push_to, pull_from=pull_from)
+    if agent_structure.features_params['agent_params'] is not None:
+        agent.set_params(agent_structure.features_params['agent_params'])
     if agent_structure.ROUTINE is not None:
         agent.set_routine(agent_structure.ROUTINE)
         agent.routine.set_params(agent_structure.features_params['routine'])
@@ -79,8 +81,6 @@ def assemble_agent(unique_id: int, model: SequentialModel, agent_structure: Agen
     if agent_structure.DESIRES is not None:
         agent.set_desires(agent_structure.DESIRES)
         agent.desires.set_params(agent_structure.features_params['desires'])
-    if agent_structure.features_params['agent_params'] is not None:
-        agent.set_params(agent_structure.features_params['agent_params'])
 
     return agent
 
