@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, Any, Optional, List, TYPE_CHECKING
+from typing import Dict, Any, Optional, List, Type, TYPE_CHECKING
 from random import random, sample
 from numpy import exp
 from copy import deepcopy
@@ -10,6 +10,7 @@ from ..tabu_search import TabuList
 if TYPE_CHECKING:
     from ..base_problem import Solution
     from .base_agent import BaseAgent
+    from ..base_metaheuristic import BaseMetaheuristic
 
 
 class Routine:
@@ -39,6 +40,41 @@ class Routine:
             if varname not in self.hyperparameters:
                 raise Exception(f'{varname} is not a valid keyword argument')
             setattr(self, varname, value)
+
+
+# TODO: FIX SETUP TO MATCH THIS ROUTINE
+class MetaheuristicRoutine(Routine):
+    """ Routine that applies a complete metaheuristic at each iteration of the agent """
+    def __init__(self, agent: BaseAgent):
+        super().__init__(agent=agent)
+
+        self.metaheuristic_params: Dict[str, Any] = {}
+        self.METAHEURISTIC: Optional[Type[BaseMetaheuristic]] = None
+        # noinspection PyArgumentList
+        self.metaheuristic: Optional[BaseMetaheuristic] = None
+        self.set_initial_solution()
+
+        self.hyperparameters = ['METAHEURISTIC', 'metaheuristic_params']
+
+    def set_initial_solution(self):
+        if 'neighborhood_params' not in self.metaheuristic_params:
+            print('this')
+            self.metaheuristic_params['neighborhood_params'] = {}
+        self.metaheuristic_params['neighborhood_params']['init_sol'] = self.init_sol
+
+    def reset_routine(self) -> None:
+        self.set_initial_solution()
+        # noinspection PyArgumentList
+        self.metaheuristic = self.METAHEURISTIC(**self.metaheuristic_params)
+        print(self.metaheuristic)
+
+    def iteration(self) -> Solution:
+        if self.metaheuristic is None:
+            return self.init_sol
+        problem = self.agent.model.problem
+        new_sol = self.metaheuristic.fit_search(problem)
+        self.is_finished = True
+        return new_sol
 
 
 class SimulatedAnnealingRoutine(Routine):
@@ -154,34 +190,6 @@ class TabuRoutine(Routine):
         return self.best_sol
 
 
-class VariableNeighborhoodDescentRoutine(Routine):
-    """ Routine of VNS metaheuristic that can be done in separate iterations """
-    def __init__(self, agent: BaseAgent):
-        super().__init__(agent=agent)
-        self.N = self.agent.N
-        self.k_neighborhood = 1
-        self.k_max = len(self.N.use_methods)
-        self.best_sol = self.init_sol
-
-    def reset_routine(self):
-        super().reset_routine()
-        self.k_neighborhood = 1
-        self.best_sol = self.init_sol
-
-    def iteration(self) -> Solution:
-        if not self.is_finished:
-            self.N.set_params({'choose_mode': self.k_neighborhood})
-            new_solution = self.N(self.best_sol)
-            if new_solution.cost() < self.best_sol.cost():
-                self.best_sol = new_solution
-                self.k_neighborhood = 1
-            else:
-                self.k_neighborhood += 1
-            self.is_finished = self.k_neighborhood == self.k_max
-
-        return self.best_sol
-
-
 class GeneticRoutine(Routine):
     """ Routine of Genetic Algorithm that can be done in separate iterations """
     def __init__(self, agent: BaseAgent):
@@ -220,7 +228,6 @@ class GeneticRoutine(Routine):
                 self.is_finished = True
 
         return self.best_sol
-
 
     def __chromosome_mutation(self, chromosome, prob):
         if random() < prob and chromosome.cost() > 0:
@@ -352,3 +359,31 @@ class GeneticRoutine(Routine):
         for chromosome in self.population:
             if not chromosome.checker():
                 print('err: reg')
+
+
+class VariableNeighborhoodDescentRoutine(Routine):
+    """ Routine of VNS metaheuristic that can be done in separate iterations """
+    def __init__(self, agent: BaseAgent):
+        super().__init__(agent=agent)
+        self.N = self.agent.N
+        self.k_neighborhood = 1
+        self.k_max = len(self.N.use_methods)
+        self.best_sol = self.init_sol
+
+    def reset_routine(self):
+        super().reset_routine()
+        self.k_neighborhood = 1
+        self.best_sol = self.init_sol
+
+    def iteration(self) -> Solution:
+        if not self.is_finished:
+            self.N.set_params({'choose_mode': self.k_neighborhood})
+            new_solution = self.N(self.best_sol)
+            if new_solution.cost() < self.best_sol.cost():
+                self.best_sol = new_solution
+                self.k_neighborhood = 1
+            else:
+                self.k_neighborhood += 1
+            self.is_finished = self.k_neighborhood == self.k_max
+
+        return self.best_sol

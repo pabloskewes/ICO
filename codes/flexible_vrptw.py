@@ -1,15 +1,15 @@
 from typing import Optional, Dict, List
-from collections import Counter
 import random
+
 import sys
 from gc import collect
+
 from copy import deepcopy
 
 from context import VRPTWContext
 from solution import VRPTWSolution, Routes, Solution
 from neighborhood import VRPTWNeighborhood
 from solution_space import VRPTWSolutionSpace
-from metaheuristics.base_problem import Problem
 
 
 class FlexVRPTWSolution(VRPTWSolution):
@@ -100,11 +100,11 @@ class FlexVRPTWNeighborhood(VRPTWNeighborhood):
         return FlexVRPTWSolution(new_sol.sol_code)
     
     def trivial_solution(self, n_cust):
-        new_sol = super().trivial_solution(solution)
+        new_sol = super().trivial_solution(n_cust)
         return FlexVRPTWSolution(new_sol.sol_code)
     
-    def random_solution(self, nb_cust) -> VRPTWSolution:
-        new_sol = super().random_solution(solution)
+    def random_solution(self, nb_cust) -> FlexVRPTWSolution:
+        new_sol = super().random_solution(nb_cust)
         return FlexVRPTWSolution(new_sol.sol_code)
     
     def set_tracker(self, solution: FlexVRPTWSolution):
@@ -203,6 +203,7 @@ class FlexVRPTWNeighborhood(VRPTWNeighborhood):
         is_sol = False
         n_iter = 0
         min_length = len(numbers)//2
+        solution = None
         
         while not is_sol:
             n_iter += 1

@@ -10,12 +10,13 @@ from .base_agent import BaseAgent
 if TYPE_CHECKING:
     from ..base_problem import Solution, Neighborhood
 
+
 State = Any
 Action = Any
 
 
 class QLearning(ABC):
-    def __init__(self, states: List[Any], actions: List[Any]):
+    def __init__(self, agent: BaseAgent, states: List[Any], actions: List[Any]):
         """
         Initializes the main components of a Q-learning:
         - states: States in which an agent can be found
@@ -30,8 +31,10 @@ class QLearning(ABC):
         self.alpha: float = 0.1
         self.gamma: float = 0.99
         self.epsilon = 1
+        self.choose_policy = 'epsilon_greedy'
+        self.is_desire = False
 
-        self.rl_parameters: List[str] = ['alpha', 'gamma']
+        self.rl_parameters: List[str] = ['alpha', 'gamma', 'epsilon', 'choose_policy']
         self.Q = np.zeros((len(self.states), len(self.actions)))
         self.current_state: State = random.choice(self.states)
 
@@ -39,18 +42,29 @@ class QLearning(ABC):
         """ Chooses the best action to take in its current state from its Q matrix """
         return np.argmax(self.Q[self.current_state])
 
+    def random_action(self) -> Action:
+        """ Chooses a random action """
+        return random.choice(self.actions)
+
     def epsilon_greedy(self) -> Action:
         """ Choose an action with an epsilon-greedy policy """
         p = random.random()
         if p <= self.epsilon:
-            action = random.choice(self.actions)
+            action = self.random_action()
         else:
             action = self.best_action()
-        self.epsilon *= self.gamma
         return action
 
+    def decrease_epsilon(self):
+        """ Decreases epsilon by a factor of gamma """
+        self.epsilon *= self.gamma
+
     def policy(self) -> Action:
-        return self.epsilon_greedy()
+        """ Determines the policy """
+        if self.choose_policy == 'epsilon_greedy':
+            return self.epsilon_greedy()
+        else:
+            raise Exception(f"{self.choose_policy} is not a valid policy")
 
     def set_params(self, params: Dict[str, Any]) -> None:
         """ Set parameters of routine """
@@ -82,6 +96,7 @@ class QLearning(ABC):
         self.current_state = state
 
     def display(self) -> DataFrame:
+        """ Displays Q-matrix """
         df = DataFrame(data=self.Q, index=self.states_names, columns=self.actions_names)
         return df
 
@@ -106,17 +121,21 @@ class QLearning(ABC):
 
 
 class NeighborhoodQLearning(QLearning):
+    """
+    Q-learning implementation that learns which neighborhood function application sequence is useful for
+    improving a solution.
+    """
     def __init__(self, agent: BaseAgent):
         self.agent = agent
         self.N = self.agent.N
         self.neighborhoods = self.N.use_methods
-        super().__init__(states=self.neighborhoods, actions=self.neighborhoods)
+        super().__init__(agent=agent, states=self.neighborhoods, actions=self.neighborhoods)
         self.reference_solution = self.agent.in_solution
         self.ref_cost = self.reference_solution.cost()
 
     def reward(self, solution: Solution) -> float:
-        """ The reward is defined by how much the solution found improves the reference solution. """
-        return self.ref_cost - solution.cost()
+        """ The reward is defined by the reward function of the agent """
+        return self.agent.reward(solution)
 
     def perform_action(self, action: Action) -> State:
         """ In this context, to choose an action means to use a particular neighborhood function """
@@ -131,12 +150,16 @@ class NeighborhoodQLearning(QLearning):
         action = self.policy()
         new_state = self.perform_action(action)
         new_sol = self.N(solution)
-        reward = self.reward(new_sol)
+        if self.is_desire:
+            self.agent.desires.pool.set_reward_value(new_sol)
+        reward = self.agent.reward(new_sol)
         self.update_Q(state=self.current_state, action=action, next_state=new_state, reward=reward)
         self.update_state(new_state)
+        self.decrease_epsilon()
         return new_sol
 
     def display_info(self):
+        """ Displays useful information about the state of the Neighborhood Sequence Q-learning """
         super().display_info()
         print('Q-learning of choice of neighborhood structure sequences')
         print('states:', self.states_names)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Dict, List, Union, Type, Optional, TYPE_CHECKING
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 from ..base_metaheuristic import BaseMetaheuristic
 
@@ -14,7 +15,8 @@ if TYPE_CHECKING:
 
 class MultiAgentSystem(BaseMetaheuristic):
     def __init__(self, model: Type[SequentialModel] = None, agents: AgentCollection = None,
-                 pools: PoolCollectionClass = None, max_iter: int = 100, progress_bar: bool = False, verbose: int = 0,
+                 pools: PoolCollectionClass = None, max_iter: int = 100,
+                 progress_bar: bool = False, display_pool: int = 0, verbose: int = 0,
                  solution_params=None, neighborhood_params=None, solution_space_params=None):
         super().__init__()
         self.params = {'solution': solution_params,
@@ -24,6 +26,7 @@ class MultiAgentSystem(BaseMetaheuristic):
         # Metaheuristic hyperparameters
         self.max_iter = max_iter
         self.progress_bar = progress_bar
+        self.display_pool = display_pool
         self.MODEL = model
         self.model: Optional[SequentialModel] = None
         self.agents_collection = agents
@@ -57,10 +60,17 @@ class MultiAgentSystem(BaseMetaheuristic):
         if self.progress_bar:
             pbar.set_description('Agents working...')
 
-        for _ in range(self.max_iter):
+        if self.display_pool > 0:
+            pool.set_max_iteration(self.max_iter)
+            display_pool_at_steps = [i * (self.max_iter//self.display_pool) for i in range(self.max_iter)]
+        for i in range(self.max_iter):
             self.model.step()
             if self.progress_bar:
                 pbar.update()
+            if self.display_pool > 0 and self.pools:
+                if i in display_pool_at_steps:
+                    pool.set_iteration(i)
+                    self.pools[0].display()
 
         if self.progress_bar:
             pbar.close()
@@ -90,3 +100,32 @@ class MultiAgentSystem(BaseMetaheuristic):
         else:
             new_sol = pool_sol if pool_sol.cost() <= agent_sol.cost() else agent_sol
         return new_sol
+
+    def plot_agents_cost(self, ids=None, figsize=(14,7)):
+        agents = self.get_agents()
+        agents = agents if ids is None else [agent for i, agent in enumerate(agents) if i in ids]
+        plt.figure(figsize=figsize)
+        plt.title('Evolution of the cost of the found solutions')
+        for agent in agents:
+            plt.plot(agent.explored_solution_cost, label=f'solutions agent {agent.unique_id}')
+        plt.xlabel('Time (iteration)')
+        plt.ylabel('Cost of the solution')
+        plt.legend()
+        plt.show()
+
+    def plot_agent_parallelism(self, height=0.4):
+        epsilon = 0.01
+        agents = self.get_agents()
+        names = []
+        for agent in agents:
+            names.append(f'agent #{agent.unique_id}')
+        plt.barh(names, width=self.max_iter, height=height, label='Agent iterations')
+        for i, agent in enumerate(agents):
+            for reset_step in agent.reset_steps:
+                plt.plot([reset_step, reset_step], [i - (height / 2) + epsilon, i + (height / 2) - epsilon],
+                         color='red')
+        plt.plot([], [], color='red', label='Reset routine')
+        plt.xlabel('Time (Iterations)')
+        plt.ylabel('Agents')
+        plt.title('Parallelism between agents')
+        plt.legend()
