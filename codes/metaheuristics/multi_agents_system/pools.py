@@ -17,6 +17,9 @@ class BasePool(ABC):
         self.n_pull = 0
         self.incoming_agent = None
         self.name = "BasePool"
+        self.max_iter = 0
+        self.n_iter = 0
+        self.reward_value = 0
 
     @abstractmethod
     def push(self, solution: Solution):
@@ -27,15 +30,23 @@ class BasePool(ABC):
         self.n_pull += 1
         self.incoming_agent = agent
 
+    def set_iteration(self, n_iteration: int):
+        self.n_iter = n_iteration
+
+    def set_max_iteration(self, n_max: int):
+        self.max_iter = n_max
+
     def display(self):
         """ Shows pool information """
         data = {'name': self.name, 'n_sols': len(self.solutions),
-                'n_push': self.n_push, 'n_pull': self.n_pull}
+                'n_push': self.n_push, 'n_pull': self.n_pull,
+                'n_iter': self.n_iter, 'max_iter': self.max_iter}
                 # 'agent_name': 'Agent '+str(self.incoming_agent.unique_id)}
 
         clear_output(wait=True)
         display("Pool {name}".format(**data))
         display("------------------------------------------------------")
+        display("Iteration {n_iter}/{max_iter}".format(**data))
         display("Number of solutions : {n_sols}".format(**data))
         display("Number of 'pull' made : {n_pull}".format(**data))
         display("Number of 'push' made : {n_push}".format(**data))
@@ -43,22 +54,6 @@ class BasePool(ABC):
         display("Cost of solutions :")
         for i in range(len(self.solutions)):
             display("S"+str(i)+" -> "+"%.2f"%self.solutions[i].cost())
-
-        # solution_string = ""
-        # for i in range(len(self.solutions)):
-        #     solution_string += "S"+str(i)+" -> "+"%.2f"%self.solutions[i].cost()+"\n"
-        #
-        # final_string = ""
-        # final_string += ("Pool {name}\n").format(**data)
-        # final_string += "------------------------------------------------------\n"
-        # final_string += ("Number of solutions : {n_sols}\n").format(**data)
-        # final_string += ("Number of 'pull' made : {n_pull}\n").format(**data)
-        # final_string += ("Number of 'push' made : {n_push}\n").format(**data)
-        # final_string += ("Incoming Agent -> {agent_name}\n").format(**data)
-        # final_string += "Cost of solutions :\n"
-        # final_string += solution_string
-        #
-        # print(final_string, end='\r')
 
 
 class BestPool(BasePool):
@@ -98,6 +93,12 @@ class BestScorePool(BasePool):
             self.solutions.remove(worst_sol)
             self.solutions.append(solution.cost())
 
+    def set_reward_value(self, solution: Solution) -> None:
+        rewards = []
+        for cost in self.solutions:
+            rewards.append(cost - solution.cost())
+        self.reward_value = sum(rewards)/len(rewards)
+
 
 class DiversePool(BasePool):
     """ Pool of solution that keeps only its space as diverse as possible """
@@ -105,6 +106,16 @@ class DiversePool(BasePool):
         super().__init__(solution_space, max_size)
         self.average_distances: List[float] = []
         self.name = "DiversePool"
+        self.max_average_dist = 1
+
+    def get_average_distance(solution: Solution = None) -> float:
+        if solution:
+            distance = sum((self.SP.distance(solution, sol_i) for sol_i in self.solutions)) \
+                               / self.max_size
+        else:
+            distance = sum((self.SP.distance(sol_i, sol_j) for sol_j in self.solutions
+                                if sol_i != sol_j)) / (self.max_size - 1)
+        return distance
 
     def push(self, solution: Solution):
         super().push(solution=solution)
@@ -113,13 +124,11 @@ class DiversePool(BasePool):
         elif len(self.solutions) == self.max_size - 1:
             self.solutions.append(solution)
             for sol_i in self.solutions:
-                average_dist = sum((self.SP.distance(sol_i, sol_j) for sol_j in self.solutions
-                                    if sol_i != sol_j)) / (self.max_size - 1)
+                average_dist = get_average_distance()
                 self.average_distances.append(average_dist)
         else:
-            new_average_dist = sum((self.SP.distance(solution, sol_i) for sol_i in self.solutions)) \
-                               / self.max_size
-            max_average_dist = max(self.average_distances)
+            new_average_dist = get_average_distance(solution)
+            self.max_average_dist = max(self.average_distances)
             if new_average_dist > max_average_dist:
                 index = self.average_distances.index(max_average_dist)
                 self.solutions[index] = solution
@@ -137,3 +146,11 @@ class DiversePool(BasePool):
         costs = [s.cost() for s in self.solutions]
         best_sol = self.solutions[costs.index(min(costs))]
         return best_sol
+
+    def set_reward_value(self, solution: Solution) -> None:
+        for sol_i in self.solutions:
+            average_dist = get_average_distance()
+            self.average_distances.append(average_dist)
+        new_average_dist = get_average_distance(solution)
+        self.max_average_dist = max(self.average_distances)
+        self.reward_value = new_average_dist - self.max_average_dist
