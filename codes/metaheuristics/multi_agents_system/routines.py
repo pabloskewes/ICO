@@ -42,6 +42,7 @@ class Routine:
             setattr(self, varname, value)
 
 
+# TODO: FIX SETUP TO MATCH THIS ROUTINE
 class MetaheuristicRoutine(Routine):
     """ Routine that applies a complete metaheuristic at each iteration of the agent """
     def __init__(self, agent: BaseAgent):
@@ -50,15 +51,29 @@ class MetaheuristicRoutine(Routine):
         self.metaheuristic_params: Dict[str, Any] = {}
         self.METAHEURISTIC: Optional[Type[BaseMetaheuristic]] = None
         # noinspection PyArgumentList
-        self.metaheuristic = self.METAHEURISTIC(**self.metaheuristic_params)
+        self.metaheuristic: Optional[BaseMetaheuristic] = None
+        self.set_initial_solution()
+
+        self.hyperparameters = ['METAHEURISTIC', 'metaheuristic_params']
+
+    def set_initial_solution(self):
+        if 'neighborhood_params' not in self.metaheuristic_params:
+            print('this')
+            self.metaheuristic_params['neighborhood_params'] = {}
+        self.metaheuristic_params['neighborhood_params']['init_sol'] = self.init_sol
 
     def reset_routine(self) -> None:
+        self.set_initial_solution()
         # noinspection PyArgumentList
         self.metaheuristic = self.METAHEURISTIC(**self.metaheuristic_params)
+        print(self.metaheuristic)
 
     def iteration(self) -> Solution:
+        if self.metaheuristic is None:
+            return self.init_sol
         problem = self.agent.model.problem
         new_sol = self.metaheuristic.fit_search(problem)
+        self.is_finished = True
         return new_sol
 
 
