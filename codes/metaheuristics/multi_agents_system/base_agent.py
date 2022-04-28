@@ -61,43 +61,53 @@ class BaseAgent(MesaAgent):
     def set_reinforced_learning(self, RL: Type[ReinforcedLearning]) -> None:
         if RL is not None:
             self.rl = RL(self)
+            if self.desires:
+                self.rl.is_desire = True
 
     def set_desires(self, DESIRES: Type[Desire]) -> None:
         if DESIRES is not None:
             self.desires = DESIRES(self)
+            if self.rl:
+                self.rl.is_desire = True
 
     def push_solution(self, solution: Solution) -> None:
-        if self.push_to is None:
-            return
-        for pool in self.push_to:
-            pool.push(solution)
+        if self.desires:
+            return self.desires.push_solution(solution)
+        else:
+            if self.push_to is None:
+                return
+            for pool in self.push_to:
+                pool.push(solution)
 
     def pull_solution(self) -> Solution:
         """  Draws a solution from the pool """
-        if not self.pull_from:
-            return self.out_solution
-        if self.choose_pool == 'random':
-            pool = random.choice(self.pull_from)
-            breaker = 10
-            while not pool and breaker:
-                pool = random.choice(self.pull_from)
-                breaker -= 1
-            if pool:
-                r_index = random.choice(range(len(pool.solutions)))
-                solution = pool.solutions.pop(r_index)
-            else:
-                solution = self.out_solution
+        if self.desires:
+            return self.desires.pull_solution()
         else:
-            raise Exception(f'{self.choose_pool} is not a valid form of choose_mode.')
-        pool.receive_agent(self)
-        return solution
+            if not self.pull_from:
+                return self.out_solution
+            if self.choose_pool == 'random':
+                pool = random.choice(self.pull_from)
+                breaker = 10
+                while not pool and breaker:
+                    pool = random.choice(self.pull_from)
+                    breaker -= 1
+                if pool:
+                    r_index = random.choice(range(len(pool.solutions)))
+                    solution = pool.solutions.pop(r_index)
+                else:
+                    solution = self.out_solution
+            else:
+                raise Exception(f'{self.choose_pool} is not a valid form of choose_mode.')
+            pool.receive_agent(self)
+            return solution
 
     def reward(self, solution: Solution) -> float:
         """ The reward is defined by how much the solution found improves the reference solution. """
-        if not self.desires:
-            return self.ref_cost - solution.cost()
-        else:
+        if self.desires:
             return self.desires.reward(solution)
+        else:
+            return self.ref_cost - solution.cost()
 
     def explore(self, solution: Solution) -> Solution:
         """  """
