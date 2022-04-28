@@ -1,10 +1,9 @@
 from __future__ import annotations
 from typing import Dict, Any, Optional, List, TYPE_CHECKING
 from abc import ABC, abstractmethod
-from random import choice
+import random
 
 from .pools import BestScorePool, DiversePool
-from ..tabu_search import TabuList
 
 if TYPE_CHECKING:
     from ..base_problem import Solution
@@ -58,8 +57,8 @@ class Competition(Desire):
         if self.pool is None:
             return self.agent.out_solution
         else:
-            r_index = choice(range(len(self.pool.solutions)))
-            solution = pool.solutions.pop(r_index)
+            r_index = random.choice(range(len(self.pool.solutions)))
+            solution = self.pool.solutions.pop(r_index)
         return solution
 
     def push_solution(self, solution: Solution) -> None:
@@ -73,7 +72,11 @@ class Competition(Desire):
         desire_extra_value = 0
         if self.pool:
             reward_value = self.pool.reward_value
-            desire_extra_value = (reward_value/max(self.pool.solutions))*original_reward + min(self.agent.rl.ref_cost, solution.cost())
+            try:
+                desire_extra_value = (reward_value/max(self.pool.solutions))*original_reward \
+                                     + min(self.agent.rl.ref_cost, solution.cost())
+            except ValueError:
+                desire_extra_value = 0
         return desire_extra_value + original_reward
 
 
@@ -96,8 +99,8 @@ class Diversification(Desire):
         if self.pool is None:
             return self.agent.out_solution
         else:
-            r_index = choice(range(len(self.pool.solutions)))
-            solution = pool.solutions.pop(r_index)
+            r_index = random.choice(range(len(self.pool.solutions)))
+            solution = self.pool.solutions.pop(r_index)
         return solution
 
     def push_solution(self, solution: Solution) -> None:
@@ -111,5 +114,10 @@ class Diversification(Desire):
         desire_extra_value = 0
         if self.pool:
             reward_value = self.pool.reward_value
-            desire_extra_value = (reward_value/self.pool.max_average_dist)*original_reward + min(self.agent.rl.ref_cost, solution.cost())
+            try:
+                desire_extra_value = (reward_value/self.pool.max_average_dist)*original_reward \
+                                        + min(self.agent.rl.ref_cost, solution.cost())
+            except ZeroDivisionError:
+                desire_extra_value = 0
+
         return desire_extra_value + original_reward

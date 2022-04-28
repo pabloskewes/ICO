@@ -38,6 +38,11 @@ class FlexVRPTWSolution(VRPTWSolution):
 class FlexVRPTWNeighborhood(VRPTWNeighborhood):
     context: VRPTWContext = None
 
+    # NEIGHBORHOOD FUNCTION 1 - INTRA ROUTE SWAP
+    def intra_route_swap(self, solution: FlexVRPTWSolution) -> FlexVRPTWSolution:
+        new_sol = super().intra_route_swap(solution)
+        return FlexVRPTWSolution(new_sol.sol_code)
+
     # NEIGHBORHOOD FUNCTION 9 - SKIP CUSTOMER
     def skip_customer(self, solution) -> Solution:
         """ Moves a random client to another position on its same route """

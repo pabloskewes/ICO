@@ -32,6 +32,7 @@ class MultiAgentSystem(BaseMetaheuristic):
         self.agents_collection = agents
         self.POOLS = pools
         self.pools: List[BasePool] = []
+        self.first_pool = None
         self.verbose = verbose
         self.agents: List[BaseAgent] = []
         self.best_pool_solution: Optional[Solution] = None
@@ -44,6 +45,8 @@ class MultiAgentSystem(BaseMetaheuristic):
 
         self.best_pool_solution = N.initial_solution()
         self.pools: List[BasePool] = [PoolClass(SP) for PoolClass in self.POOLS]
+        if self.pools:
+            self.first_pool = self.pools[0]
 
         self.model = self.MODEL(problem=self.problem, agents=self.agents_collection,
                                 push_to=self.pools, pull_from=self.pools,
@@ -61,7 +64,7 @@ class MultiAgentSystem(BaseMetaheuristic):
             pbar.set_description('Agents working...')
 
         if self.display_pool > 0:
-            pool.set_max_iteration(self.max_iter)
+            self.first_pool.set_max_iteration(self.max_iter)
             display_pool_at_steps = [i * (self.max_iter//self.display_pool) for i in range(self.max_iter)]
         for i in range(self.max_iter):
             self.model.step()
@@ -69,7 +72,7 @@ class MultiAgentSystem(BaseMetaheuristic):
                 pbar.update()
             if self.display_pool > 0 and self.pools:
                 if i in display_pool_at_steps:
-                    pool.set_iteration(i)
+                    self.first_pool.set_iteration(i)
                     self.pools[0].display()
 
         if self.progress_bar:

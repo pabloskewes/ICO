@@ -97,7 +97,10 @@ class BestScorePool(BasePool):
         rewards = []
         for cost in self.solutions:
             rewards.append(cost - solution.cost())
-        self.reward_value = sum(rewards)/len(rewards)
+        try:
+            self.reward_value = sum(rewards)/len(rewards)
+        except ZeroDivisionError:
+            self.reward_value = 0
 
 
 class DiversePool(BasePool):
@@ -108,14 +111,13 @@ class DiversePool(BasePool):
         self.name = "DiversePool"
         self.max_average_dist = 1
 
-    def get_average_distance(solution: Solution = None) -> float:
-        if solution:
-            distance = sum((self.SP.distance(solution, sol_i) for sol_i in self.solutions)) \
-                               / self.max_size
-        else:
-            distance = sum((self.SP.distance(sol_i, sol_j) for sol_j in self.solutions
-                                if sol_i != sol_j)) / (self.max_size - 1)
-        return distance
+    def get_average_distance(self, solution: Solution = None) -> float:
+        distance = sum((self.SP.distance(solution, sol_i) for sol_i in self.solutions))
+        try:
+            avg_dist = distance / len(self.solutions)
+        except ZeroDivisionError:
+            avg_dist = 0
+        return avg_dist
 
     def push(self, solution: Solution):
         super().push(solution=solution)
@@ -124,13 +126,15 @@ class DiversePool(BasePool):
         elif len(self.solutions) == self.max_size - 1:
             self.solutions.append(solution)
             for sol_i in self.solutions:
-                average_dist = get_average_distance()
+                average_dist = self.get_average_distance(sol_i)
                 self.average_distances.append(average_dist)
         else:
-            new_average_dist = get_average_distance(solution)
+            new_average_dist = self.get_average_distance(solution)
             self.max_average_dist = max(self.average_distances)
-            if new_average_dist > max_average_dist:
-                index = self.average_distances.index(max_average_dist)
+            if new_average_dist > self.max_average_dist:
+                # print(f'len={len(self.average_distances)}')
+                index = self.average_distances.index(self.max_average_dist)
+                # print(index)
                 self.solutions[index] = solution
                 self.average_distances[index] = new_average_dist
 
@@ -149,8 +153,11 @@ class DiversePool(BasePool):
 
     def set_reward_value(self, solution: Solution) -> None:
         for sol_i in self.solutions:
-            average_dist = get_average_distance()
+            average_dist = self.get_average_distance(sol_i)
             self.average_distances.append(average_dist)
-        new_average_dist = get_average_distance(solution)
-        self.max_average_dist = max(self.average_distances)
+        new_average_dist = self.get_average_distance(solution)
+        try:
+            self.max_average_dist = max(self.average_distances)
+        except ValueError:
+            self.max_average_dist = 0
         self.reward_value = new_average_dist - self.max_average_dist
