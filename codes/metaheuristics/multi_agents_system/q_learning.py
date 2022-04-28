@@ -32,6 +32,7 @@ class QLearning(ABC):
         self.gamma: float = 0.99
         self.epsilon = 1
         self.choose_policy = 'epsilon_greedy'
+        self.is_desire = False
 
         self.rl_parameters: List[str] = ['alpha', 'gamma', 'epsilon', 'choose_policy']
         self.Q = np.zeros((len(self.states), len(self.actions)))
@@ -149,6 +150,8 @@ class NeighborhoodQLearning(QLearning):
         action = self.policy()
         new_state = self.perform_action(action)
         new_sol = self.N(solution)
+        if self.is_desire:
+            self.agent.desires.pool.set_reward_value(new_sol)
         reward = self.agent.reward(new_sol)
         self.update_Q(state=self.current_state, action=action, next_state=new_state, reward=reward)
         self.update_state(new_state)
