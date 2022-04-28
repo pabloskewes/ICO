@@ -32,7 +32,7 @@ class FlexVRPTWSolution(VRPTWSolution):
         total_cost = super().cost()
         total_cost += len(self.missing_customers) * self.cust_penalty
         return total_cost
-    
+
     def checker(self):
         not_repeated_customers_check = self.not_repeated_customers_checker()
         route_check = all((self.route_checker(route) for route in self.routes))
@@ -89,6 +89,65 @@ class FlexVRPTWNeighborhood(VRPTWNeighborhood):
     def delete_random_route(self, solution: VRPTWSolution) -> VRPTWSolution:
         new_sol = super().delete_random_route(solution)
         return FlexVRPTWSolution(new_sol.sol_code)
+
+    # NEIGHBORHOOD FUNCTION 9 - SKIP CUSTOMER
+    def skip_customer(self, solution) -> Solution:
+        """ Moves a random client to another position on its same route """
+        if self.full_search: self.set_tracker(solution)
+        routes = solution.routes
+        new_routes = deepcopy(routes)
+        print("Solution initiale : ", new_routes)
+        s = VRPTWSolution()
+        is_sol = False
+        available_routes_index = list(range(len(routes)))
+        print("available_routes_index : ", available_routes_index)
+        routes_iter = 0
+        while not is_sol and routes_iter < self.max_iter and available_routes_index[1:-1]:
+            r_index = random.choice(available_routes_index)
+            print("r_index : ", r_index)
+            available_routes_index.remove(r_index)
+            print("available_routes_index : ", available_routes_index)
+
+            route: List[int] = routes[r_index].copy()
+            print("route : ", route)
+            #            if len(route) < 4:
+            #                print("Route trop courte \n")
+            #                continue
+            cust_iter = 0
+            available_cust_index = list(range(1, len(route) - 1))
+            print("available_cust_index 1er while : ", available_cust_index)
+            while not is_sol and cust_iter < self.max_iter and available_cust_index:
+                index_cust = random.choice(available_cust_index)
+                print("index_cust : ", index_cust)
+                available_cust_index.remove(index_cust)
+                print("available_cust_index : ", available_cust_index)
+                # removing the customer from the route
+                cust = route[index_cust]
+                route.remove(cust)
+                print("route : ", route)
+                is_sol = s.route_checker(route)
+                print("is_sol \n", is_sol)
+                if is_sol:
+                    if route == [0, 0]:
+                        new_routes.remove(r_index)
+                        new_sol = VRPTWSolution(new_routes)
+                    else:
+                        new_routes[r_index] = route.copy()
+                        new_sol = VRPTWSolution(new_routes)
+                    if not self.full_search:
+                        return new_sol
+                    self.track_best(new_sol)
+                    new_routes = deepcopy(routes)
+                    is_sol = False
+
+                cust_iter += 1
+                route = routes[r_index].copy()
+            routes_iter += 1
+            print("\n")
+        if self.verbose >= 1 and not self.full_search:
+            print("skip_customer wasn't able to find a neighbor for this solution")
+        new_sol = self.best_neighbor if self.full_search else solution
+        return new_sol
     
     # NEIGHBORHOOD FUNCTION
     def switch_three_customers_intra_route(self, solution) -> Solution:
@@ -115,65 +174,6 @@ class FlexVRPTWNeighborhood(VRPTWNeighborhood):
         if new_cost < self.best_cost:
             self.best_neighbor = solution
             self.best_cost = new_cost
-
-    # NEIGHBORHOOD FUNCTION 9 - SKIP CUSTOMER
-    def skip_customer(self, solution) -> Solution:
-        """ Moves a random client to another position on its same route """
-        if self.full_search: self.set_tracker(solution)
-        routes = solution.routes
-        new_routes = deepcopy(routes)
-        print("Solution initiale : ", new_routes)
-        s = VRPTWSolution()
-        is_sol = False
-        available_routes_index = list(range(len(routes)))
-        print("available_routes_index : ", available_routes_index)
-        routes_iter = 0
-        while not is_sol and routes_iter < self.max_iter and available_routes_index[1:-1]:
-            r_index = random.choice(available_routes_index)
-            print("r_index : ", r_index)
-            available_routes_index.remove(r_index)
-            print("available_routes_index : ",available_routes_index)
-
-            route: List[int] = routes[r_index].copy()
-            print("route : ", route)
-#            if len(route) < 4:
-#                print("Route trop courte \n")
-#                continue
-            cust_iter = 0
-            available_cust_index = list(range(1, len(route)-1))
-            print("available_cust_index 1er while : ", available_cust_index)
-            while not is_sol and cust_iter < self.max_iter and available_cust_index:
-                index_cust = random.choice(available_cust_index)
-                print("index_cust : ", index_cust)
-                available_cust_index.remove(index_cust)
-                print("available_cust_index : ", available_cust_index)
-                # removing the customer from the route
-                cust = route[index_cust]
-                route.remove(cust)
-                print("route : ", route)
-                is_sol = s.route_checker(route)
-                print("is_sol \n", is_sol)
-                if is_sol:
-                    if route == [0,0]:
-                        new_routes.remove(r_index)
-                        new_sol = VRPTWSolution(new_routes)
-                    else :
-                        new_routes[r_index] = route.copy()
-                        new_sol = VRPTWSolution(new_routes)
-                    if not self.full_search:
-                        return new_sol
-                    self.track_best(new_sol)
-                    new_routes = deepcopy(routes)
-                    is_sol = False
-
-                cust_iter += 1
-                route = routes[r_index].copy()
-            routes_iter += 1
-            print("\n")
-        if self.verbose >= 1 and not self.full_search:
-            print("skip_customer wasn't able to find a neighbor for this solution")
-        new_sol = self.best_neighbor if self.full_search else solution
-        return new_sol
 
     def random_solution(self, nb_cust) -> FlexVRPTWSolution:
         """

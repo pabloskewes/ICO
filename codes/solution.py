@@ -173,6 +173,43 @@ class VRPTWSolution(Solution):
         route_check = all((self.route_checker(route) for route in self.routes))
         return all_customers_check and not_repeated_customers_check and route_check
 
+    def plot_graph(self, name_delta=2, arrows=True, color_map='gist_rainbow', figsize=8):
+        customers_list = self.context.customers
+        depot = customers_list[0]
+        customers = customers_list[1:]
+        x_positions = [cust.latitude for cust in customers]
+        y_positions = [cust.longitude for cust in customers]
+        cmap = get_cmap(color_map)
+        color_index = 0.0
+
+        def f(x):
+            return 0.00596113 * x ** 2 + -0.21704307 * x + 2.53306197
+
+        plt.figure(figsize=(figsize, figsize))
+        if arrows:
+            for edge in self.graph:
+                cust1, cust2 = customers_list[edge[0]], customers_list[edge[1]]
+                x1, y1, x2, y2 = cust1.latitude, cust1.longitude, cust2.latitude, cust2.longitude
+                plt.arrow(x=x1, y=y1, dx=x2-x1, dy=y2-y1, width=0.1,
+                          head_width=f(figsize), length_includes_head=True,
+                          color=cmap(color_index))
+                if edge[1] == 0:
+                    color_index += 1.0/len(self.routes)
+        else:
+            for edge in self.graph:
+                cust1, cust2 = customers_list[edge[0]], customers_list[edge[1]]
+                plt.plot([cust1.latitude, cust2.latitude], [cust1.longitude, cust2.longitude], color=cmap(color_index))
+                if edge[1] == 0:
+                    color_index += 1.0/len(self.routes)
+        plt.annotate(text="Depot", xy=(depot.latitude + name_delta, depot.longitude + name_delta), color='red')
+
+        plt.scatter(x=depot.latitude, y=depot.longitude, c='r')
+        plt.scatter(x=x_positions, y=y_positions, c='b')
+
+        for cust in customers:
+            plt.annotate(text=str(cust.id), xy=(cust.latitude + name_delta, cust.longitude))
+        plt.title('Graph representation of solution')
+
     def __eq__(self, other):
         if isinstance(other, VRPTWSolution):
             assert isinstance(other, VRPTWSolution), f"Cannot compare VRPTWSolution type with {other} of type {type(other)}"
@@ -204,39 +241,4 @@ class VRPTWSolution(Solution):
             output += ' -> ' + str(edge[1])
         print(output)
 
-    def plot_graph(self, name_delta=2, arrows=True, color_map='gist_rainbow', figsize=8):
-        customers_list = self.context.customers
-        depot = customers_list[0]
-        customers = customers_list[1:]
-        x_positions = [cust.latitude for cust in customers]
-        y_positions = [cust.longitude for cust in customers]
-        cmap = get_cmap(color_map)
-        color_index = 0.0
 
-        def f(x):
-            return 0.00596113 * x ** 2 + -0.21704307 * x + 2.53306197
-
-        plt.figure(figsize=(figsize, figsize))
-        if arrows: 
-            for edge in self.graph:
-                cust1, cust2 = customers_list[edge[0]], customers_list[edge[1]]
-                x1, y1, x2, y2 = cust1.latitude, cust1.longitude, cust2.latitude, cust2.longitude
-                plt.arrow(x=x1, y=y1, dx=x2-x1, dy=y2-y1, width=0.1,
-                          head_width=f(figsize), length_includes_head=True,
-                          color=cmap(color_index))
-                if edge[1] == 0:
-                    color_index += 1.0/len(self.routes)
-        else:
-            for edge in self.graph:
-                cust1, cust2 = customers_list[edge[0]], customers_list[edge[1]]
-                plt.plot([cust1.latitude, cust2.latitude], [cust1.longitude, cust2.longitude], color=cmap(color_index))
-                if edge[1] == 0:
-                    color_index += 1.0/len(self.routes)
-        plt.annotate(text="Depot", xy=(depot.latitude + name_delta, depot.longitude + name_delta), color='red')
-
-        plt.scatter(x=depot.latitude, y=depot.longitude, c='r')
-        plt.scatter(x=x_positions, y=y_positions, c='b')
-
-        for cust in customers:
-            plt.annotate(text=str(cust.id), xy=(cust.latitude + name_delta, cust.longitude))
-        plt.title('Graph representation of solution')

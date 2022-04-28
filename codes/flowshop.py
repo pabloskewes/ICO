@@ -142,6 +142,7 @@ class FlowShopNeighborhood(Neighborhood):
             raise Exception(f'"{self.choose_mode}" is not a valid parameter for choose_mode')
         return new_sol
 
+    # NEIGHBORHOOD FUNCTION 1 - SWAP2
     def swap2(self, solution):
         num_tasks = self.context.num_tasks
         new_solution = solution.copy()
@@ -158,6 +159,7 @@ class FlowShopNeighborhood(Neighborhood):
                 break
         return new_solution
 
+    # NEIGHBORHOOD FUNCTION 2 - FLIP2
     def flip2(self, solution):
         num_tasks = self.context.num_tasks
         new_solution = solution.copy()
