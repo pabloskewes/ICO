@@ -61,6 +61,7 @@ class MultiAgentSystem(BaseMetaheuristic):
             pbar.set_description('Agents working...')
 
         if self.display_pool > 0:
+            pool.set_max_iteration(self.max_iter)
             display_pool_at_steps = [i * (self.max_iter//self.display_pool) for i in range(self.max_iter)]
         for i in range(self.max_iter):
             self.model.step()
@@ -68,6 +69,7 @@ class MultiAgentSystem(BaseMetaheuristic):
                 pbar.update()
             if self.display_pool > 0 and self.pools:
                 if i in display_pool_at_steps:
+                    pool.set_iteration(i)
                     self.pools[0].display()
 
         if self.progress_bar:
