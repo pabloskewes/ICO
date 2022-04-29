@@ -1,4 +1,0 @@
-TODO:
-
-1) Fix the functions to load a vrptw instance with the actual data.
-2)
